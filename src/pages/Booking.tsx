@@ -85,8 +85,9 @@ export function Booking() {
               <CustomDropdown
                 value={selectedService}
                 onChange={setSelectedService}
-                placeholder="No additional service"
+                placeholder={selected ? "No additional service" : "Select a package first"}
                 ariaLabel="Choose an additional service"
+                disabled={!selected}
                 options={[
                   { value: "", label: "No additional service" },
                   ...services.map((service) => ({
