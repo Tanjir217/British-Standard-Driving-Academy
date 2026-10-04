@@ -206,3 +206,83 @@ h1, h2, h3, h4, h5, h6,
 .dash h3 {
   font-family: "Times New Roman", Times, serif;
 }
+
+
+/* UK client readability specification */
+nav > a:not(.navbook) {
+  font-size: 24px;
+}
+
+nav .navbook {
+  font-size: 32px;
+}
+
+.btn {
+  font-size: 32px;
+}
+
+body :where(p, li) {
+  font-size: 18px;
+}
+
+label,
+input,
+select,
+textarea {
+  font-size: 18px;
+}
+
+.servicepricing {
+  margin-top: 85px;
+}
+
+.servicegrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.servicecard {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 22px;
+  min-height: 235px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: .25s;
+}
+
+.servicecard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+}
+
+.servicecard h3 {
+  font: 700 24px/1.15 "Times New Roman", Times, serif;
+  margin: 8px 0;
+}
+
+.servicecard p {
+  color: var(--muted);
+  margin: 0;
+}
+
+@media(max-width:980px) {
+  .servicegrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(max-width:560px) {
+  nav > a:not(.navbook),
+  nav .navbook,
+  .btn {
+    font-size: 24px;
+  }
+
+  .servicegrid {
+    grid-template-columns: 1fr;
+  }
+}
