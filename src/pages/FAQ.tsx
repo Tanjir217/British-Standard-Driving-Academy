@@ -1,42 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Icon } from "../components/Icon";
-import { Heading } from "../components/Heading";
-import { faqs } from "../data/site";
+import { FAQSection } from "../components/FAQSection";
+
 export function FAQ() {
-  const [o, setO] = useState(0);
-  return (
-    <section className="page">
-      <div className="container faq">
-        <Heading
-          center
-          ey="Frequently Asked Questions"
-          title="Answers before you need to ask."
-          text="A clear FAQ reduces friction and helps prospective students choose the right next step."
-        />
-        <div>
-          {faqs.map((f, i) => (
-            <div className={o === i ? "faqitem open" : "faqitem"} key={f[0]}>
-              <button onClick={() => setO(o === i ? -1 : i)}>
-                <span>{f[0]}</span>
-                <Icon n={o === i ? "close" : "arrow"} s={18} />
-              </button>
-              {o === i && <p>{f[1]}</p>}
-            </div>
-          ))}
-        </div>
-        <div className="faqcta">
-          <div>
-            <h3>Still have a question?</h3>
-            <p>
-              Send us your situation and we'll point you in the right direction.
-            </p>
-          </div>
-          <Link className="btn red" to="/booking">
-            Send an inquiry <Icon n="arrow" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+  return <FAQSection />;
 }
