@@ -1,15 +1,11 @@
 export function Brand() {
   return (
     <div className="brand">
-      <div className="wheel">
-        <i />
-      </div>
-      <div>
-        <b>
-          <span>BRITISH</span> STANDARD
-        </b>
-        <small>DRIVING ACADEMY</small>
-      </div>
+      <img
+        className="brandlogo"
+        src="/bsda-logo.jpg"
+        alt="British Standard Driving Academy"
+      />
     </div>
   );
 }
