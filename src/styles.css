@@ -2452,3 +2452,19 @@ textarea {
     font-size: 24px;
   }
 }
+
+
+/* Final body-copy scale: readable 16px copy across the site, 22px controls. */
+body :where(p, span, a, label, input, select, textarea, li, small, b, strong) {
+  font-size: 16px !important;
+}
+
+nav > a:not(.navbook) {
+  font-size: 18px !important;
+}
+
+button,
+.btn,
+nav .navbook {
+  font-size: 22px !important;
+}
