@@ -1,4 +1,4 @@
-export type BookingRequest={name:string;phone:string;email?:string;date?:string;packageId?:string;notes?:string;paymentMethod?:string};
+export type BookingRequest={name:string;phone:string;email?:string;date?:string;packageId?:string;additionalService?:string;notes?:string;paymentMethod?:string};
 export type BookingResult={ok:boolean;reference:string};
 export async function submitBooking(request:BookingRequest):Promise<BookingResult>{
   // Integration boundary: replace this mock with Wix/Velo, REST, or another backend adapter.

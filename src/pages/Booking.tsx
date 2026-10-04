@@ -3,11 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CustomDropdown } from "../components/CustomDropdown";
 import { Heading } from "../components/Heading";
-import { packages } from "../data/site";
+import { packages, services } from "../data/site";
 import { submitBooking } from "../services/bookingService";
 export function Booking() {
   const [sp] = useSearchParams();
   const [selected, setSelected] = useState(sp.get("package") || "");
+  const [selectedService, setSelectedService] = useState("");
   const [pay, setPay] = useState("bank");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,7 @@ export function Booking() {
       email: String(f.get("email") || ""),
       date: String(f.get("date") || ""),
       packageId: selected,
+      additionalService: selectedService,
       notes: String(f.get("notes") || ""),
       paymentMethod: pay,
     });
@@ -74,6 +76,22 @@ export function Booking() {
                   ...packages.map((p) => ({
                     value: p.id,
                     label: `${p.name} — ${p.price}`,
+                  })),
+                ]}
+              />
+            </label>
+            <label>
+              Additional service
+              <CustomDropdown
+                value={selectedService}
+                onChange={setSelectedService}
+                placeholder="No additional service"
+                ariaLabel="Choose an additional service"
+                options={[
+                  { value: "", label: "No additional service" },
+                  ...services.map((service) => ({
+                    value: service.name,
+                    label: `${service.name} — ${service.price}`,
                   })),
                 ]}
               />
