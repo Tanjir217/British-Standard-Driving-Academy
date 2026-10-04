@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { CustomDropdown } from "../components/CustomDropdown";
 import { Heading } from "../components/Heading";
 import { packages } from "../data/site";
 import { submitBooking } from "../services/bookingService";
@@ -63,17 +64,19 @@ export function Booking() {
             </div>
             <label>
               Choose package
-              <select
+              <CustomDropdown
                 value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-              >
-                <option value="">I need help choosing</option>
-                {packages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — {p.price}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelected}
+                placeholder="I need help choosing"
+                ariaLabel="Choose package"
+                options={[
+                  { value: "", label: "I need help choosing" },
+                  ...packages.map((p) => ({
+                    value: p.id,
+                    label: `${p.name} — ${p.price}`,
+                  })),
+                ]}
+              />
             </label>
             <label>
               Inquiry / notes

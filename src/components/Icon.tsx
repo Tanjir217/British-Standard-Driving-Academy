@@ -45,7 +45,7 @@ export function Icon({ n, s = 20 }: { n: string; s?: number }) {
         <path d="M6 6l12 12M18 6L6 18" />
       </>
     ),
-    check: <path d="m5 12 4 4L19 6" />,
+    check: <path d="m5 12 4 4L19 6" />,\n    chevron: <path d="m6 9 6 6 6-6" />,
     shield: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />,
     play: <path d="m9 6 9 6-9 6" />,
   };
