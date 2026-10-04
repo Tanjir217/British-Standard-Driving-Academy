@@ -177,12 +177,6 @@ export function Home() {
 
       <FAQSection />
 
-      <section className="cta">
-        <div className="container ctain">
-          <div><span className="ey">Ready when you are</span><h2>Your first lesson is one decision away.</h2></div>
-          <Link className="btn white" to="/booking">Start booking <Icon n="arrow" /></Link>
-        </div>
-      </section>
     </>
   );
 }
