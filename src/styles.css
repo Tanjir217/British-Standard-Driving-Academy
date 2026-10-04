@@ -2581,3 +2581,14 @@ nav .navbook {
     transform: translateY(0);
   }
 }
+
+
+/* Package card alignment: keep all package CTAs on the same baseline. */
+.pagecards .card {
+  display: flex;
+  flex-direction: column;
+}
+
+.pagecards .card > .btn {
+  margin-top: auto;
+}
