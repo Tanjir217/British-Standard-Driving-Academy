@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
-
 :root{
   --navy:#111827;--navy2:#1c2638;--red:#d51f2a;--red2:#ae1720;
   --cream:#f6f2eb;--paper:#fffdfa;--ink:#172033;--muted:#697181;
@@ -7,7 +5,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.6;overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Times New Roman", Times, serif;line-height:1.6;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;background:radial-gradient(circle at 85% 8%,rgba(213,31,42,.035),transparent 30%),radial-gradient(circle at 10% 65%,rgba(17,24,39,.025),transparent 28%)}
 a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}button{cursor:pointer}
 .container{width:min(1180px,calc(100% - 40px));margin:auto}
@@ -162,4 +160,49 @@ body :where(p, span, a, button, label, input, select, textarea, li, small, b, st
     width:118px;
     height:70px;
   }
+}
+
+
+/* Typography update: Times New Roman site-wide, with 16px minimum for non-heading copy. */
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Times New Roman", Times, serif;
+}
+
+body {
+  font-size: 16px;
+}
+
+body :where(p, span, a, button, label, input, select, textarea, li, small, b, strong) {
+  font-family: "Times New Roman", Times, serif;
+  font-size: max(16px, 1em);
+}
+
+/* Preserve the existing heading sizes while changing their typeface. */
+h1, h2, h3, h4, h5, h6,
+.hero h1,
+.testimonialgrid h2,
+.faqmark,
+.cta h2,
+.footlead h2,
+.portalgrid > div > h1,
+.dashhead h1,
+.empty h1,
+.instructorhero h1,
+.detailcopy h1,
+.detailcontent h2,
+.packagecard h3,
+.lessoncard h3,
+.journeycard h3,
+.instructorbody h3,
+.faqaside h3,
+.payment h3,
+.aside h3,
+.panel h2,
+.matchpanel h2,
+.dash h3 {
+  font-family: "Times New Roman", Times, serif;
 }
