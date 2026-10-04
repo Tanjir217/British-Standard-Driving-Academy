@@ -7,6 +7,7 @@ import { Booking } from "./pages/Booking";
 import { Packages } from "./pages/Packages";
 import { Lessons } from "./pages/Lessons";
 import { Instructors } from "./pages/Instructors";
+import { InstructorDetail } from "./pages/InstructorDetail";
 import { Portal } from "./pages/Portal";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
@@ -33,7 +34,7 @@ function App() {
           <Route path="/packages" element={<Packages />} />
           <Route path="/lessons" element={<Lessons />} />
           <Route path="/instructors" element={<Instructors />} />
-          <Route path="/instructors/:instructorId" element={<Instructors />} />
+          <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
           <Route path="/portal" element={<Portal />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="*" element={<NotFound />} />
