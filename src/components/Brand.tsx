@@ -1,1 +1,15 @@
-export function Brand(){return <div className="brand"><div className="wheel"><i/></div><div><b><span>BRITISH</span> STANDARD</b><small>DRIVING ACADEMY</small></div></div>}
+export function Brand() {
+  return (
+    <div className="brand">
+      <div className="wheel">
+        <i />
+      </div>
+      <div>
+        <b>
+          <span>BRITISH</span> STANDARD
+        </b>
+        <small>DRIVING ACADEMY</small>
+      </div>
+    </div>
+  );
+}

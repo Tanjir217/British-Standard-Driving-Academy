@@ -1,2 +1,83 @@
-import {ReactNode,useState} from "react";import{Link,NavLink}from"react-router-dom";import{Brand}from"./Brand";import{Icon}from"./Icon";
-export function SiteLayout({children}:{children:ReactNode}){const[open,setOpen]=useState(false);const nav=[["/booking","Booking & Inquiry"],["/packages","Package & Price"],["/lessons","Driving Lesson"],["/portal","Learning Portal"],["/faq","FAQ"]];return <div><header><div className="container nav"><Link to="/" onClick={()=>setOpen(false)}><Brand/></Link><button className="menu" onClick={()=>setOpen(!open)}><Icon n={open?"close":"menu"}/></button><nav className={open?"open":""}>{nav.map(([p,t])=><NavLink key={p} to={p} onClick={()=>setOpen(false)} className={({isActive})=>isActive?"active":""}>{t}</NavLink>)}<Link className="navbook" to="/booking" onClick={()=>setOpen(false)}>Book a Lesson <Icon n="arrow" s={15}/></Link></nav></div></header><main>{children}</main><footer><div className="container footgrid"><div><Brand/><p>Professional, safety-first driving education designed to build capable and confident road users.</p></div><div><h4>Explore</h4><Link to="/packages">Packages</Link><Link to="/lessons">Driving Lessons</Link><Link to="/portal">Learning Portal</Link><Link to="/faq">FAQ</Link></div><div><h4>Contact</h4><span>Dhaka, Bangladesh</span><span>+880 1XXX-XXXXXX</span><span>hello@bsda.example</span></div><div><h4>Follow</h4><span>Facebook · Instagram · YouTube</span><span className="muted">Social feed is shown on the homepage.</span></div></div><div className="container footbottom"><span>© 2026 British Standard Driving Academy</span><span>Demo — payment gateway and portal authentication are not live.</span></div></footer></div>}
+import { ReactNode, useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { Brand } from "./Brand";
+import { Icon } from "./Icon";
+export function SiteLayout({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const nav = [
+    ["/booking", "Booking & Inquiry"],
+    ["/packages", "Package & Price"],
+    ["/lessons", "Driving Lesson"],
+    ["/portal", "Learning Portal"],
+    ["/faq", "FAQ"],
+  ];
+  return (
+    <div>
+      <header>
+        <div className="container nav">
+          <Link to="/" onClick={() => setOpen(false)}>
+            <Brand />
+          </Link>
+          <button className="menu" onClick={() => setOpen(!open)}>
+            <Icon n={open ? "close" : "menu"} />
+          </button>
+          <nav className={open ? "open" : ""}>
+            {nav.map(([p, t]) => (
+              <NavLink
+                key={p}
+                to={p}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                {t}
+              </NavLink>
+            ))}
+            <Link
+              className="navbook"
+              to="/booking"
+              onClick={() => setOpen(false)}
+            >
+              Book a Lesson <Icon n="arrow" s={15} />
+            </Link>
+          </nav>
+        </div>
+      </header>
+      <main>{children}</main>
+      <footer>
+        <div className="container footgrid">
+          <div>
+            <Brand />
+            <p>
+              Professional, safety-first driving education designed to build
+              capable and confident road users.
+            </p>
+          </div>
+          <div>
+            <h4>Explore</h4>
+            <Link to="/packages">Packages</Link>
+            <Link to="/lessons">Driving Lessons</Link>
+            <Link to="/portal">Learning Portal</Link>
+            <Link to="/faq">FAQ</Link>
+          </div>
+          <div>
+            <h4>Contact</h4>
+            <span>Dhaka, Bangladesh</span>
+            <span>+880 1XXX-XXXXXX</span>
+            <span>hello@bsda.example</span>
+          </div>
+          <div>
+            <h4>Follow</h4>
+            <span>Facebook · Instagram · YouTube</span>
+            <span className="muted">Social feed is shown on the homepage.</span>
+          </div>
+        </div>
+        <div className="container footbottom">
+          <span>© 2026 British Standard Driving Academy</span>
+          <span>
+            Demo — payment gateway and portal authentication are not live.
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}

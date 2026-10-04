@@ -1,1 +1,42 @@
-import{Link}from"react-router-dom";import{Icon}from"./Icon";type P={id:string;name:string;price:string;eyebrow:string;description:string;features:string[];popular?:boolean};export function PackageCard({p,full=false}:{p:P;full?:boolean}){return <article className={p.popular?"card featured":"card"}>{full&&p.popular&&<span className="ribbon">Most popular</span>}<span className="cardey">{p.eyebrow}</span><h3>{p.name}</h3><p>{p.description}</p><div className="price">{p.price}<small>/ package</small></div><ul>{(full?p.features:p.features.slice(0,3)).map(f=><li key={f}><Icon n="check" s={15}/>{f}</li>)}</ul>{full?<Link className="btn red full" to={"/booking?package="+p.id}>Select & continue <Icon n="arrow"/></Link>:<Link className="textlink" to={"/booking?package="+p.id}>Choose package <Icon n="arrow" s={15}/></Link>}</article>}
+import { Link } from "react-router-dom";
+import { Icon } from "./Icon";
+type P = {
+  id: string;
+  name: string;
+  price: string;
+  eyebrow: string;
+  description: string;
+  features: string[];
+  popular?: boolean;
+};
+export function PackageCard({ p, full = false }: { p: P; full?: boolean }) {
+  return (
+    <article className={p.popular ? "card featured" : "card"}>
+      {full && p.popular && <span className="ribbon">Most popular</span>}
+      <span className="cardey">{p.eyebrow}</span>
+      <h3>{p.name}</h3>
+      <p>{p.description}</p>
+      <div className="price">
+        {p.price}
+        <small>/ package</small>
+      </div>
+      <ul>
+        {(full ? p.features : p.features.slice(0, 3)).map((f) => (
+          <li key={f}>
+            <Icon n="check" s={15} />
+            {f}
+          </li>
+        ))}
+      </ul>
+      {full ? (
+        <Link className="btn red full" to={"/booking?package=" + p.id}>
+          Select & continue <Icon n="arrow" />
+        </Link>
+      ) : (
+        <Link className="textlink" to={"/booking?package=" + p.id}>
+          Choose package <Icon n="arrow" s={15} />
+        </Link>
+      )}
+    </article>
+  );
+}
