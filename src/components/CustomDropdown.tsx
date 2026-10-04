@@ -12,6 +12,7 @@ type CustomDropdownProps = {
   options: DropdownOption[];
   placeholder?: string;
   ariaLabel?: string;
+  disabled?: boolean;
 };
 
 export function CustomDropdown({
@@ -20,6 +21,7 @@ export function CustomDropdown({
   options,
   placeholder = "Select an option",
   ariaLabel = "Select an option",
+  disabled = false,
 }: CustomDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -49,14 +51,18 @@ export function CustomDropdown({
   }, []);
 
   return (
-    <div className={`customDropdown ${open ? "open" : ""}`} ref={ref}>
+    <div className={`customDropdown ${open ? "open" : ""} ${disabled ? "disabled" : ""}`} ref={ref}>
       <button
         type="button"
         className="customDropdownTrigger"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
-        onClick={() => setOpen((current) => !current)}
+        aria-disabled={disabled}
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current);
+        }}
       >
         <span className={selected ? "" : "placeholder"}>
           {selected?.label || placeholder}

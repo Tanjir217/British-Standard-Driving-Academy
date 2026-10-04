@@ -2592,3 +2592,17 @@ nav .navbook {
 .pagecards .card > .btn {
   margin-top: auto;
 }
+
+
+/* Disabled custom dropdown state */
+.customDropdown.disabled .customDropdownTrigger {
+  cursor: not-allowed;
+  opacity: .55;
+  background: #f3f1ec;
+  border-color: #ddd9d0;
+}
+
+.customDropdown.disabled .customDropdownTrigger:hover {
+  border-color: #ddd9d0;
+  background: #f3f1ec;
+}
