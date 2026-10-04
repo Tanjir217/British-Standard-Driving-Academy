@@ -68,7 +68,10 @@ export function Booking() {
               Choose package
               <CustomDropdown
                 value={selected}
-                onChange={setSelected}
+                onChange={(value) => {
+                  setSelected(value);
+                  if (!value) setSelectedService("");
+                }}
                 placeholder="I need help choosing"
                 ariaLabel="Choose package"
                 options={[
