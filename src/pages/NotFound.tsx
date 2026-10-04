@@ -1,1 +1,15 @@
-import{Link}from"react-router-dom";export function NotFound(){return <section className="page"><div className="container empty"><span className="ey">404</span><h1>Road not found.</h1><p>The page you requested does not exist.</p><Link className="btn red" to="/">Return home</Link></div></section>}
+import { Link } from "react-router-dom";
+export function NotFound() {
+  return (
+    <section className="page">
+      <div className="container empty">
+        <span className="ey">404</span>
+        <h1>Road not found.</h1>
+        <p>The page you requested does not exist.</p>
+        <Link className="btn red" to="/">
+          Return home
+        </Link>
+      </div>
+    </section>
+  );
+}

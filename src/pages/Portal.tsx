@@ -1,1 +1,119 @@
-import{FormEvent,useState}from"react";import{Icon}from"../components/Icon";export function Portal(){const[logged,setLogged]=useState(false);return <section className="page portal"><div className="container portalgrid">{!logged?<><div><span className="ey">Learning Portal</span><h1>Your learning hub, in one place.</h1><p>Registered students will use the portal for theory-test preparation, practical guidance, progress information and learning materials.</p><div className="portalpoints"><span><Icon n="book"/> Theory practice</span><span><Icon n="car"/> Practical preparation</span><span><Icon n="shield"/> Safety resources</span></div></div><form className="login" onSubmit={(e:FormEvent)=>{e.preventDefault();setLogged(true)}}><div className="lock"><Icon n="lock" s={26}/></div><h2>Student sign in</h2><p>Demo login — authentication will be integrated later.</p><label>Email<input required type="email" placeholder="student@example.com"/></label><label>Password<input required type="password" placeholder="••••••••"/></label><button className="btn red full">Sign in <Icon n="arrow"/></button><button type="button" className="textbutton">Forgot password?</button></form></>:<Dashboard logout={()=>setLogged(false)}/>}</div></section>};function Dashboard({logout}:{logout:()=>void}){return <div className="dashboard"><div className="dashhead"><div><span className="ey">Student dashboard</span><h1>Good to see you, learner.</h1></div><button className="btn light" onClick={logout}>Sign out</button></div><div className="dashgrid"><div className="dash darkdash"><span className="ey">Your progress</span><strong>62%</strong><p>Keep building consistency. Your next milestone is a mock practical.</p><div className="progress"><i/></div></div>{[["book","Theory Test","Practice questions, signs, hazards and test-day guidance."],["car","Practical Test","Mock-test checklist, common faults and preparation notes."],["calendar","Upcoming lesson","Saturday · 10:00 AM — Instructor: Demo Coach"]].map(x=><div className="dash" key={x[1]}><Icon n={x[0]} s={24}/><h3>{x[1]}</h3><p>{x[2]}</p><button className="textbutton">Open →</button></div>)}</div></div>}
+import { FormEvent, useState } from "react";
+import { Icon } from "../components/Icon";
+export function Portal() {
+  const [logged, setLogged] = useState(false);
+  return (
+    <section className="page portal">
+      <div className="container portalgrid">
+        {!logged ? (
+          <>
+            <div>
+              <span className="ey">Learning Portal</span>
+              <h1>Your learning hub, in one place.</h1>
+              <p>
+                Registered students will use the portal for theory-test
+                preparation, practical guidance, progress information and
+                learning materials.
+              </p>
+              <div className="portalpoints">
+                <span>
+                  <Icon n="book" /> Theory practice
+                </span>
+                <span>
+                  <Icon n="car" /> Practical preparation
+                </span>
+                <span>
+                  <Icon n="shield" /> Safety resources
+                </span>
+              </div>
+            </div>
+            <form
+              className="login"
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                setLogged(true);
+              }}
+            >
+              <div className="lock">
+                <Icon n="lock" s={26} />
+              </div>
+              <h2>Student sign in</h2>
+              <p>Demo login — authentication will be integrated later.</p>
+              <label>
+                Email
+                <input
+                  required
+                  type="email"
+                  placeholder="student@example.com"
+                />
+              </label>
+              <label>
+                Password
+                <input required type="password" placeholder="••••••••" />
+              </label>
+              <button className="btn red full">
+                Sign in <Icon n="arrow" />
+              </button>
+              <button type="button" className="textbutton">
+                Forgot password?
+              </button>
+            </form>
+          </>
+        ) : (
+          <Dashboard logout={() => setLogged(false)} />
+        )}
+      </div>
+    </section>
+  );
+}
+function Dashboard({ logout }: { logout: () => void }) {
+  return (
+    <div className="dashboard">
+      <div className="dashhead">
+        <div>
+          <span className="ey">Student dashboard</span>
+          <h1>Good to see you, learner.</h1>
+        </div>
+        <button className="btn light" onClick={logout}>
+          Sign out
+        </button>
+      </div>
+      <div className="dashgrid">
+        <div className="dash darkdash">
+          <span className="ey">Your progress</span>
+          <strong>62%</strong>
+          <p>
+            Keep building consistency. Your next milestone is a mock practical.
+          </p>
+          <div className="progress">
+            <i />
+          </div>
+        </div>
+        {[
+          [
+            "book",
+            "Theory Test",
+            "Practice questions, signs, hazards and test-day guidance.",
+          ],
+          [
+            "car",
+            "Practical Test",
+            "Mock-test checklist, common faults and preparation notes.",
+          ],
+          [
+            "calendar",
+            "Upcoming lesson",
+            "Saturday · 10:00 AM — Instructor: Demo Coach",
+          ],
+        ].map((x) => (
+          <div className="dash" key={x[1]}>
+            <Icon n={x[0]} s={24} />
+            <h3>{x[1]}</h3>
+            <p>{x[2]}</p>
+            <button className="textbutton">Open →</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
