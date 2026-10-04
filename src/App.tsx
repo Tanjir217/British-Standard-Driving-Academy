@@ -9,15 +9,21 @@ import { Lessons } from "./pages/Lessons";
 import { Portal } from "./pages/Portal";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
-// import "./styles.css";
+import "./styles.css";
+
 function Scroll() {
   const { pathname } = useLocation();
-  useEffect(
-    () => window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }),
-    [pathname],
-  );
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "instant" as ScrollBehavior,
+    });
+  }, [pathname]);
+
   return null;
 }
+
 function App() {
   return (
     <BrowserRouter>
@@ -36,6 +42,7 @@ function App() {
     </BrowserRouter>
   );
 }
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
