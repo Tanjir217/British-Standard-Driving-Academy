@@ -84,7 +84,13 @@ export function JourneySection() {
               <h1>MASTER THE ROAD.</h1>
               <h2>DRIVE WITH CONFIDENCE.</h2>
               <p>One scroll. One route. A complete driving journey built around real road confidence.</p>
-              <span className="journeyStartHint">↓ START YOUR JOURNEY</span>
+              <button
+                type="button"
+                className="journeyStartButton"
+                onClick={() => window.scrollBy({ top: window.innerHeight * 0.72, behavior: "smooth" })}
+              >
+                START YOUR JOURNEY <span>↓</span>
+              </button>
             </div>
 
             <div className="journeyPanel journeyPanelWhy" ref={whyRef}>
