@@ -85,6 +85,7 @@ export const Road = forwardRef<SVGSVGElement, RoadProps>(function Road(
           fill="none"
         />
         <path
+          ref={pathRef}
           d={DRIVING_PATH}
           className="roadCenter"
           stroke="#f4e8b4"
