@@ -109,6 +109,9 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
         0,
       );
 
+      // The headlights fade up as the journey begins, while the car remains scroll-controlled.
+      timeline.to(car.querySelectorAll(".carLight"), { opacity: 1, duration: 0.35 }, 0.15);
+
       // Hero exits during the opening part of the journey.
       timeline.to(hero, { opacity: 0, y: -28, duration: 1.25 }, 0.2);
 
