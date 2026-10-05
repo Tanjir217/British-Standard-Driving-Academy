@@ -170,14 +170,30 @@
   line-height: 1.65;
 }
 
-.journeyStartHint {
+.journeyStartButton {
+  pointer-events: auto;
   display: inline-flex;
-  padding: 10px 14px;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 15px;
   border: 1px solid rgba(21,26,33,.18);
-  background: rgba(255,255,255,.72);
+  background: rgba(255,255,255,.78);
+  color: var(--journey-ink);
   border-radius: 999px;
   font: 700 11px "Times New Roman", serif;
   letter-spacing: .12em;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.journeyStartButton:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  border-color: rgba(21,26,33,.32);
+}
+
+.journeyStartButton span {
+  color: var(--journey-red);
+  font-size: 16px;
 }
 
 .journeyPanelWhy {
@@ -557,4 +573,13 @@
   .environmentDot {
     display: none;
   }
+}
+
+
+.carLight {
+  opacity: .35;
+}
+
+.journeyTrafficLight {
+  filter: drop-shadow(0 6px 8px rgba(21,26,33,.12));
 }
