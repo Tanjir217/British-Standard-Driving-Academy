@@ -24,12 +24,16 @@ function Scroll() {
   return null;
 }
 
-function App() {
+function AppRoutes() {
+  const { pathname } = useLocation();
+
+  if (pathname === "/driving-journey") {
+    return <DrivingJourneyPrototype />;
+  }
+
   return (
-    <BrowserRouter>
-      <Scroll />
-      <SiteLayout>
-        <Routes>
+    <SiteLayout>
+      <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/packages" element={<Packages />} />
@@ -38,10 +42,17 @@ function App() {
           <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
           <Route path="/portal" element={<Portal />} />
           <Route path="/faq" element={<FAQ />} />
-          <Route path="/driving-journey" element={<DrivingJourneyPrototype />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </SiteLayout>
+    </SiteLayout>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Scroll />
+      <AppRoutes />
     </BrowserRouter>
   );
 }
