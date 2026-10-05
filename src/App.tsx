@@ -11,6 +11,7 @@ import { InstructorDetail } from "./pages/InstructorDetail";
 import { Portal } from "./pages/Portal";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
+import { DrivingJourneyPrototype } from "./pages/DrivingJourneyPrototype";
 import "./styles.css";
 
 function Scroll() {
@@ -37,6 +38,7 @@ function App() {
           <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
           <Route path="/portal" element={<Portal />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/driving-journey" element={<DrivingJourneyPrototype />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </SiteLayout>
