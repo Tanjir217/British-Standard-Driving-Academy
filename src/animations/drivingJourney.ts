@@ -1,6 +1,6 @@
-import gsap from "gsap";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap } from "gsap/dist/gsap";
+import { MotionPathPlugin } from "gsap/dist/MotionPathPlugin";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
@@ -18,6 +18,15 @@ export type DrivingJourneyRefs = {
   progress: HTMLElement;
   environment: HTMLElement[];
 };
+
+const motionPath = (path: SVGPathElement, end: number) => ({
+  path,
+  align: path,
+  alignOrigin: [0.5, 0.5] as [number, number],
+  autoRotate: true,
+  start: 0,
+  end,
+});
 
 export function setupDrivingJourney(refs: DrivingJourneyRefs) {
   const {
@@ -50,30 +59,29 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
         reduceMotion: boolean;
       };
 
-      const reduced = conditions.reduceMotion;
+      const reduced = Boolean(conditions.reduceMotion);
       const journeyEnd = conditions.mobile ? "+=500%" : "+=600%";
 
+      // Always establish a valid starting position. This prevents the SVG group
+      // from rendering at (0, 0) while ScrollTrigger is initializing.
       gsap.set(car, {
-        transformOrigin: "50% 50%",
         opacity: 1,
+        scale: 1,
+        transformOrigin: "50% 50%",
+        motionPath: motionPath(path, 0),
       });
 
+      gsap.set(progress, { scaleX: 0 });
+
       if (reduced) {
-        gsap.set(hero, { opacity: 0 });
-        gsap.set(panels, { opacity: 1, y: 0 });
+        gsap.set(hero, { opacity: 1, y: 0 });
+        gsap.set(panels, { opacity: 1, x: 0, y: 0 });
         gsap.set(trainingCards, { opacity: 1, y: 0 });
         gsap.set(processSteps, { opacity: 1, y: 0 });
         gsap.set(instructor, { opacity: 1, x: 0 });
         gsap.set(finalCta, { opacity: 1, y: 0 });
-        gsap.set(car, {
-          motionPath: {
-            path,
-            align: path,
-            alignOrigin: [0.5, 0.5],
-            autoRotate: true,
-            end: 1,
-          },
-        });
+        gsap.set(car, { motionPath: motionPath(path, 1) });
+        gsap.set(progress, { scaleX: 1 });
         return;
       }
 
@@ -86,36 +94,33 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           end: journeyEnd,
           scrub: 1,
           pin: viewport,
+          pinSpacing: false,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            gsap.set(progress, { scaleX: self.progress });
+          },
         },
       });
 
-      // The car uses ONE continuous SVG path as the source of truth.
-      // MotionPathPlugin handles position + automatic road-following rotation.
+      // ONE continuous SVG route controls the car's position and rotation.
       timeline.to(
         car,
         {
           duration: 10,
-          motionPath: {
-            path,
-            align: path,
-            alignOrigin: [0.5, 0.5],
-            autoRotate: true,
-            start: 0,
-            end: 1,
-          },
+          motionPath: motionPath(path, 1),
         },
         0,
       );
 
-      // The headlights fade up as the journey begins, while the car remains scroll-controlled.
-      timeline.to(car.querySelectorAll(".carLight"), { opacity: 1, duration: 0.35 }, 0.15);
+      timeline.to(
+        car.querySelectorAll(".carLight"),
+        { opacity: 1, duration: 0.35 },
+        0.15,
+      );
 
-      // Hero exits during the opening part of the journey.
       timeline.to(hero, { opacity: 0, y: -28, duration: 1.25 }, 0.2);
 
-      // Content stops are tied to the same scrubbed timeline.
       timeline
         .fromTo(
           panels[0],
@@ -123,16 +128,23 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           { opacity: 1, x: 0, duration: 1 },
           2.05,
         )
-        .to(panels[0], { opacity: 0, x: conditions.mobile ? 0 : -30, duration: 0.7 }, 3.15)
+        .to(
+          panels[0],
+          { opacity: 0, x: conditions.mobile ? 0 : -30, duration: 0.7 },
+          3.15,
+        )
         .fromTo(
           panels[1],
           { opacity: 0, x: conditions.mobile ? 0 : 55 },
           { opacity: 1, x: 0, duration: 1 },
           3.65,
         )
-        .to(panels[1], { opacity: 0, x: conditions.mobile ? 0 : 30, duration: 0.7 }, 5.35);
+        .to(
+          panels[1],
+          { opacity: 0, x: conditions.mobile ? 0 : 30, duration: 0.7 },
+          5.35,
+        );
 
-      // Training cards use a stagger while the car passes the training zone.
       timeline.fromTo(
         trainingCards,
         { opacity: 0, y: 35 },
@@ -145,7 +157,7 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           processSteps,
           { opacity: 0, y: 28 },
           { opacity: 1, y: 0, duration: 0.5, stagger: 0.18 },
-          6.0,
+          6,
         )
         .fromTo(
           instructor,
@@ -157,10 +169,10 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           finalCta,
           { opacity: 0, y: 35 },
           { opacity: 1, y: 0, duration: 0.9 },
-          10.0,
-        );
+          9.15,
+        )
+        .to(finalCta, { opacity: 1, y: 0, duration: 0.85 }, 10);
 
-      // Subtle environmental parallax is intentionally small so it never competes with the road.
       environment.forEach((element, index) => {
         timeline.to(
           element,
@@ -173,19 +185,12 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
         );
       });
 
-      // Progress is written directly to the DOM; React does not re-render on scroll.
-      ScrollTrigger.getById("bsda-driving-journey")?.animation?.eventCallback(
-        "onUpdate",
-        () => {
-          const current = ScrollTrigger.getById("bsda-driving-journey");
-          if (current) {
-            gsap.set(progress, { scaleX: current.progress });
-          }
-        },
-      );
-
-      // A tiny final settle keeps the vehicle visually stable once the path ends.
+      // Keep the vehicle parked at the end of the route.
       timeline.set(car, { scale: 1 }, 10);
+
+      // Refresh after the SVG is laid out so MotionPath alignment and pinning
+      // use the actual viewport dimensions.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     },
     root,
   );
