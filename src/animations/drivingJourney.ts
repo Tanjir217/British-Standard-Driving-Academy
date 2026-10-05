@@ -60,7 +60,6 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
       };
 
       const reduced = Boolean(conditions.reduceMotion);
-      const journeyEnd = conditions.mobile ? "+=500%" : "+=600%";
 
       // Always establish a valid starting position. This prevents the SVG group
       // from rendering at (0, 0) while ScrollTrigger is initializing.
@@ -91,7 +90,10 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           id: "bsda-driving-journey",
           trigger: root,
           start: "top top",
-          end: journeyEnd,
+          // The section itself is the scroll distance (600vh desktop / 500vh mobile).
+          // "bottom top" prevents an end distance that is accidentally calculated
+          // as 600% of an already 600vh-tall trigger.
+          end: "bottom top",
           scrub: 1,
           pin: viewport,
           pinSpacing: false,
