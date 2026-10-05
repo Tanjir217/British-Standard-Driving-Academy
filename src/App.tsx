@@ -11,6 +11,7 @@ import { InstructorDetail } from "./pages/InstructorDetail";
 import { Portal } from "./pages/Portal";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import "./styles.css";
 
 function Scroll() {
@@ -27,7 +28,7 @@ function App() {
   return (
     <BrowserRouter>
       <Scroll />
-      <SiteLayout>
+      {window.location.pathname.startsWith("/admin") ? <AdminDashboard /> : <SiteLayout>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/booking" element={<Booking />} />
@@ -39,7 +40,7 @@ function App() {
           <Route path="/faq" element={<FAQ />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </SiteLayout>
+      </SiteLayout>}
     </BrowserRouter>
   );
 }
