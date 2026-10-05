@@ -1,11 +1,11 @@
-import { forwardRef } from "react";
+import { forwardRef, type Ref } from "react";
 
 export const DRIVING_PATH =
   "M 150 690 C 210 690 270 650 315 595 C 365 535 350 445 410 390 C 470 335 585 345 665 385 C 755 430 805 505 760 555 C 715 605 600 610 545 555 C 490 500 510 410 585 335 C 660 260 785 225 900 250 C 1010 275 1080 350 1045 445 C 1015 525 945 585 930 645 C 922 678 945 700 990 700";
 
 type RoadProps = {
-  pathRef: React.Ref<SVGPathElement>;
-  carRef: React.Ref<SVGGElement>;
+  pathRef: Ref<SVGPathElement>;
+  carRef: Ref<SVGGElement>;
 };
 
 export const Road = forwardRef<SVGSVGElement, RoadProps>(function Road(
@@ -103,6 +103,14 @@ export const Road = forwardRef<SVGSVGElement, RoadProps>(function Road(
         />
       </g>
 
+      <g className="journeyTrafficLight" transform="translate(170 325)" aria-hidden="true">
+        <rect x="0" y="0" width="22" height="62" rx="8" fill="#25292f" />
+        <circle cx="11" cy="14" r="5" fill="#8f252c" />
+        <circle cx="11" cy="31" r="5" fill="#d2a72f" />
+        <circle cx="11" cy="48" r="5" fill="#657f69" />
+        <path d="M11 62V91" stroke="#626860" strokeWidth="4" />
+      </g>
+
       <g className="journeySigns" aria-hidden="true">
         <g transform="translate(260 245)">
           <rect x="0" y="0" width="54" height="38" rx="4" fill="#fff" stroke="#cfd2cc" />
@@ -144,8 +152,8 @@ export const Road = forwardRef<SVGSVGElement, RoadProps>(function Road(
         <rect x="17" y="-28" width="8" height="22" rx="4" fill="#15181d" />
         <rect x="-25" y="9" width="8" height="22" rx="4" fill="#15181d" />
         <rect x="17" y="9" width="8" height="22" rx="4" fill="#15181d" />
-        <rect x="-11" y="-39" width="8" height="4" rx="2" fill="#fff4ca" />
-        <rect x="3" y="-39" width="8" height="4" rx="2" fill="#fff4ca" />
+        <rect className="carLight" x="-11" y="-39" width="8" height="4" rx="2" fill="#fff4ca" />
+        <rect className="carLight" x="3" y="-39" width="8" height="4" rx="2" fill="#fff4ca" />
         <rect x="-11" y="35" width="8" height="4" rx="2" fill="#7d1018" />
         <rect x="3" y="35" width="8" height="4" rx="2" fill="#7d1018" />
         <path d="M0-31V31" stroke="#fff" strokeOpacity=".22" />
