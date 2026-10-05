@@ -154,7 +154,7 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           finalCta,
           { opacity: 0, y: 35 },
           { opacity: 1, y: 0, duration: 0.9 },
-          9.15,
+          10.0,
         );
 
       // Subtle environmental parallax is intentionally small so it never competes with the road.
