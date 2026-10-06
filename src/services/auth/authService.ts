@@ -47,40 +47,42 @@ export async function beginMemberLogin(
   );
 }
 
-function authFailureMessage(response: {
-  loginState?: string;
-  errorCode?: string;
-  error?: string;
-}) {
-  if (response.errorCode === "invalidEmail") {
-    return "Please enter a valid email address.";
+type DirectAuthResponse = Awaited<ReturnType<typeof loginWithEmail>>;
+
+function authFailureMessage(response: DirectAuthResponse) {
+  if ("errorCode" in response) {
+    if (response.errorCode === "invalidEmail") {
+      return "Please enter a valid email address.";
+    }
+    if (response.errorCode === "invalidPassword") {
+      return "The email or password is incorrect.";
+    }
+    if (response.errorCode === "emailAlreadyExists") {
+      return "An account with this email already exists. Please sign in instead.";
+    }
+    if (response.errorCode === "resetPassword") {
+      return "Please reset your password before signing in.";
+    }
   }
-  if (response.errorCode === "invalidPassword") {
-    return "The email or password is incorrect.";
+
+  if ("error" in response && response.error) {
+    return response.error;
   }
-  if (response.errorCode === "emailAlreadyExists") {
-    return "An account with this email already exists. Please sign in instead.";
-  }
-  if (response.errorCode === "resetPassword") {
-    return "Please reset your password before signing in.";
-  }
-  return response.error || "We could not complete that request. Please try again.";
+
+  return "We could not complete that request. Please try again.";
 }
 
-async function finishDirectAuthentication(response: {
-  loginState?: string;
-  data?: { sessionToken?: string };
-}) {
-  if (response.loginState === "SUCCESS" && response.data?.sessionToken) {
+async function finishDirectAuthentication(response: DirectAuthResponse) {
+  if ("data" in response && "sessionToken" in response.data) {
     await exchangeDirectLoginSession(response.data.sessionToken);
     return { state: "SUCCESS" as const };
   }
 
-  if (response.loginState === "EMAIL_VERIFICATION_REQUIRED") {
+  if (String(response.loginState) === "EMAIL_VERIFICATION_REQUIRED") {
     return { state: "EMAIL_VERIFICATION_REQUIRED" as const };
   }
 
-  if (response.loginState === "OWNER_APPROVAL_REQUIRED") {
+  if (String(response.loginState) === "OWNER_APPROVAL_REQUIRED") {
     return { state: "OWNER_APPROVAL_REQUIRED" as const };
   }
 
