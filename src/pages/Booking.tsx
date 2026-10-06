@@ -38,12 +38,13 @@ export function Booking() {
       .then(([packagesResult, servicesResult]) => {
         if (!active) return;
 
-        if (!packagesResult.ok || !servicesResult.ok) {
-          setCatalogError(
-            !packagesResult.ok
-              ? packagesResult.error.message
-              : servicesResult.error.message,
-          );
+        if (!packagesResult.ok) {
+          setCatalogError(packagesResult.error.message);
+          return;
+        }
+
+        if (!servicesResult.ok) {
+          setCatalogError(servicesResult.error.message);
           return;
         }
 
