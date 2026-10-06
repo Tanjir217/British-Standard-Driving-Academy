@@ -9,6 +9,8 @@ import { Lessons } from "./pages/Lessons";
 import { Instructors } from "./pages/Instructors";
 import { InstructorDetail } from "./pages/InstructorDetail";
 import { Portal } from "./pages/Portal";
+import { Login } from "./pages/Login";
+import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
 import "./styles.css";
@@ -36,6 +38,8 @@ function App() {
           <Route path="/instructors" element={<Instructors />} />
           <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
           <Route path="/portal" element={<Portal />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
