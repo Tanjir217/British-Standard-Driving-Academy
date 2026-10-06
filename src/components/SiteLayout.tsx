@@ -40,7 +40,17 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <Link to="/" onClick={() => setOpen(false)} aria-label="BSDA home">
             <Brand />
           </Link>
-          <nav className="desktopnav">
+          <button
+            className="menu"
+            type="button"
+            aria-label={open ? "Close navigation" : "Open navigation"}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
+            <Icon n={open ? "close" : "menu"} />
+          </button>
+
+          <nav className={open ? "traditionalnav open" : "traditionalnav"}>
             {nav.map(([p, t]) => (
               <NavLink
                 key={p}
