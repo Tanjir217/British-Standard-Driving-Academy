@@ -1,5 +1,6 @@
 export * from "./api/types";
 export * from "./domain/types";
+export * from "./wix";
 export * from "./bookings/bookingService";
 export * from "./instructors/instructorService";
 export * from "./lessons/lessonService";
