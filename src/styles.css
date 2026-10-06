@@ -4906,3 +4906,28 @@ nav .navbook {
     display: none;
   }
 }
+
+
+/* Fine-tune the arc spacing so the first label has the same breathing room
+   from the left side of the curve that Learning Portal has on the right. */
+@media (min-width: 981px) {
+  .floatingMenuLinks a:nth-child(1) {
+    left: 202px;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    left: 239px;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    left: 270px;
+  }
+
+  .floatingMenuBook {
+    left: 296px;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    left: 323px;
+  }
+}
