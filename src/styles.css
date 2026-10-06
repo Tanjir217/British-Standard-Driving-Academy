@@ -5042,3 +5042,124 @@ nav .navbook {
 .offerin > .btn {
   margin-bottom: 20px;
 }
+
+
+/* Header navigation: six primary destinations, including the booking entry. */
+.traditionalnav {
+  flex-wrap: nowrap;
+  gap: 1px;
+}
+
+.traditionalnav > a {
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+/* Quick-action rail: replaces the old bottom hamburger on every device. */
+.floatingQuickActions {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+.site.scrolled .floatingQuickActions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.floatingQuickAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+  width: 46px;
+  height: 46px;
+  padding: 0 13px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, .2);
+  transition: width .2s ease, background .2s ease, color .2s ease, gap .2s ease;
+}
+
+.floatingQuickAction span {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 800;
+  transition: max-width .2s ease, opacity .16s ease;
+}
+
+.floatingQuickAction:hover,
+.floatingQuickAction:focus-visible {
+  width: 132px;
+  gap: 9px;
+  background: var(--red);
+  color: #fff;
+}
+
+.floatingQuickAction:hover span,
+.floatingQuickAction:focus-visible span {
+  max-width: 90px;
+  opacity: 1;
+}
+
+.floatingQuickAction:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 980px) {
+  .traditionalnav > a {
+    font-size: 18px;
+  }
+
+  .floatingQuickActions {
+    right: 16px;
+    bottom: 16px;
+    gap: 8px;
+  }
+
+  .floatingQuickAction {
+    width: 44px;
+    height: 44px;
+    padding-inline: 12px;
+  }
+
+  .floatingQuickAction:hover,
+  .floatingQuickAction:focus-visible {
+    width: 124px;
+  }
+}
+
+@media (max-width: 560px) {
+  .floatingQuickActions {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .floatingQuickAction {
+    width: 42px;
+    height: 42px;
+    padding-inline: 11px;
+  }
+
+  .floatingQuickAction:hover,
+  .floatingQuickAction:focus-visible {
+    width: 116px;
+  }
+}
