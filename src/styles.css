@@ -5086,7 +5086,12 @@ nav .navbook {
   background: var(--navy);
   color: #fff;
   box-shadow: 0 12px 28px rgba(17, 24, 39, .2);
-  transition: width .2s ease, background .2s ease, color .2s ease, gap .2s ease;
+  transition:
+    width .32s cubic-bezier(.22, 1, .36, 1),
+    background .22s ease,
+    color .22s ease,
+    gap .32s cubic-bezier(.22, 1, .36, 1),
+    box-shadow .22s ease;
 }
 
 .floatingQuickAction span {
@@ -5097,7 +5102,9 @@ nav .navbook {
   white-space: nowrap;
   font-size: 14px;
   font-weight: 800;
-  transition: max-width .2s ease, opacity .16s ease;
+  transition:
+    max-width .32s cubic-bezier(.22, 1, .36, 1),
+    opacity .2s ease;
 }
 
 .floatingQuickAction:hover,
