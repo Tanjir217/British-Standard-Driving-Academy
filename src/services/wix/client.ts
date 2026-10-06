@@ -140,7 +140,11 @@ export async function registerWithEmail(
     phones?: string[];
   },
 ) {
-  return wixClient.auth.register(email, password, profile);
+  return wixClient.auth.register({
+    email,
+    password,
+    profile,
+  });
 }
 
 export async function verifyMemberEmail(verificationCode: string) {
@@ -190,7 +194,7 @@ export async function completeWixLoginFromUrl(): Promise<{
 
   return {
     success: true,
-    originalUrl: oauthData.originalUrl,
+    originalUrl: oauthData.originalUri,
   };
 }
 
