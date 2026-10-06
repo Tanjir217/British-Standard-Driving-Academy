@@ -172,8 +172,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         <div className="container footbottom">
           <span>© 2026 British Standard Driving Academy</span>
           <span>
-            Demo UI — final Wix CMS, bookings, payments and portal
-            integrations are planned next.
+            Wix packages and booking availability are connected. Payments and
+            protected student data are the next backend layer.
           </span>
         </div>
       </footer>
