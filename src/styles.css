@@ -4854,29 +4854,29 @@ nav .navbook {
     transform: none;
   }
 
-  /* These five points sit directly on the user's red arc:
-     Packages → Lessons → Instructors → Book a lesson → Learning Portal. */
+  /* Follow the user's quarter-circle track, with equal breathing room
+     from the bottom and right edges of the flyout. */
   .floatingMenuLinks a:nth-child(1) {
     left: 190px;
-    top: 304px;
+    top: 298px;
     bottom: auto;
   }
 
   .floatingMenuLinks a:nth-child(2) {
-    left: 205px;
-    top: 238px;
+    left: 210px;
+    top: 235px;
     bottom: auto;
   }
 
   .floatingMenuLinks a:nth-child(3) {
-    left: 238px;
+    left: 242px;
     top: 172px;
     bottom: auto;
   }
 
   .floatingMenuBook {
-    left: 274px;
-    top: 116px;
+    left: 278px;
+    top: 112px;
     right: auto;
     bottom: auto;
     color: var(--red);
@@ -4884,8 +4884,8 @@ nav .navbook {
   }
 
   .floatingMenuLinks a:nth-child(4) {
-    left: 312px;
-    top: 62px;
+    left: 316px;
+    top: 58px;
     right: auto;
     bottom: auto;
   }
