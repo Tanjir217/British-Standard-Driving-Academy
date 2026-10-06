@@ -97,21 +97,16 @@ function toBooking(booking: any): Booking {
 export const bookingService: BookingService = {
   async listServices() {
     try {
-      const response = await wixClient.services.queryServices(
-        {
-          filter: {
-            type: { $eq: "APPOINTMENT" },
-            hidden: { $eq: false },
-          },
-          paging: {
-            limit: 100,
-            offset: 0,
-          },
+      const response = await wixClient.services.queryServices({
+        filter: {
+          type: { $eq: "APPOINTMENT" },
+          hidden: { $eq: false },
         },
-        {
-          fields: ["name", "type", "description", "payment"],
+        paging: {
+          limit: 100,
+          offset: 0,
         },
-      );
+      });
 
       const serviceItems = response.items ?? [];
 
