@@ -5121,8 +5121,6 @@ nav .navbook {
 .floatingQuickActions.home-intro .floatingQuickAction:hover,
 .floatingQuickActions.home-intro .floatingQuickAction:focus-visible {
   animation: none;
-  width: 132px;
-  gap: 9px;
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction:hover span,
