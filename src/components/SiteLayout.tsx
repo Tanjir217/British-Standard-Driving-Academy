@@ -32,7 +32,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       <div className="topbar">
         <div className="container topbarin">
           <span>British-standard training. Built around the learner.</span>
-          <div><span>Mon–Sat · 8:00–20:00</span><span>Dhaka, Bangladesh</span></div>
+          <div><span>Mon–Sat · 8:00–20:00 UK Time</span><span>37 Dunfield Rd, London, SE6 3RW</span></div>
         </div>
       </div>
       <header>
@@ -87,8 +87,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <h4>Academy</h4>
             <Link to="/faq">FAQ</Link>
             <Link to="/booking">Booking & Inquiry</Link>
-            <span>Dhaka, Bangladesh</span>
-            <span>+880 1XXX-XXXXXX</span>
+            <span>37 Dunfield Rd, London, SE6 3RW</span>
+            <span>+44 7908 807741</span>
           </div>
           <div>
             <h4>Follow</h4>
