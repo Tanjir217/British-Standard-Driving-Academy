@@ -65,7 +65,6 @@ function toPackageCard(plan: Package) {
 
 export function Home() {
   const [packages, setPackages] = useState<Package[]>([]);
-  const [homeQuickVisible, setHomeQuickVisible] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -81,44 +80,10 @@ export function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setHomeQuickVisible(window.scrollY <= 110);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const packageCards = packages.map(toPackageCard);
 
   return (
     <>
-      <div
-        className={homeQuickVisible ? "homeQuickActions" : "homeQuickActions hidden"}
-        aria-label="Quick actions"
-      >
-        <Link className="homeQuickAction" to="/booking" aria-label="Booking">
-          <Icon n="calendar" s={20} />
-          <span>Booking</span>
-        </Link>
-        <a
-          className="homeQuickAction"
-          href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27d%20like%20to%20make%20an%20enquiry."
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Enquiry"
-        >
-          <Icon n="message" s={20} />
-          <span>Enquiry</span>
-        </a>
-        <Link className="homeQuickAction" to="/faq" aria-label="FAQ">
-          <Icon n="help" s={20} />
-          <span>FAQ</span>
-        </Link>
-      </div>
-
       <section className="hero">
         <div className="container herogrid">
           <div className="heroCopy">
