@@ -4891,8 +4891,20 @@ nav .navbook {
   }
 
   .floatingMenuLinks a:hover,
-  .floatingMenuLinks a.active,
-  .floatingMenuBook:hover {
+  .floatingMenuLinks a.active {
+    color: var(--red);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    transform: translateX(3px);
+  }
+
+  .floatingMenuBook {
+    color: var(--navy);
+  }
+
+  .floatingMenuBook:hover,
+  .floatingMenuBook.active {
     color: var(--red);
     background: transparent;
     border: 0;
