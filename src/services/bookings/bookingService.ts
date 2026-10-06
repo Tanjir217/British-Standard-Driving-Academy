@@ -110,10 +110,11 @@ export const bookingService: BookingService = {
         fields: ["name", "type", "description", "payment"],
       });
 
+      const serviceResponse = response as any;
       const serviceItems =
-        response.services ??
-        response.items ??
-        response._items ??
+        serviceResponse.services ??
+        serviceResponse.items ??
+        serviceResponse._items ??
         [];
 
       return {
