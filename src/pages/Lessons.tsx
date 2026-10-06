@@ -43,7 +43,7 @@ export function Lessons() {
             <span className="ey">Not sure where to start?</span>
             <h2>Let us recommend your first lesson.</h2>
           </div>
-          <Link className="btn red" to="/booking">
+          <Link className="btn red" to="/packages">
             Ask an instructor <span>→</span>
           </Link>
         </div>
