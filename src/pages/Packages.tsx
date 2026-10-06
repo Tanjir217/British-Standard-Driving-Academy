@@ -87,7 +87,7 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
         <h3>{service.name}</h3>
         <p>{service.description || "Driving service available through BSDA."}</p>
       </div>
-      <Link className="textlink" to={`/booking?service=${service.id}`}>
+      <Link className="textlink" to="/packages">
         Enquire <span>→</span>
       </Link>
     </article>
