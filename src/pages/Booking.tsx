@@ -19,10 +19,17 @@ function formatMoney(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
+type CatalogOption = {
+  key: string;
+  kind: "package" | "service";
+  id: string;
+  label: string;
+};
+
 export function Booking() {
   const [sp] = useSearchParams();
-  const [selected, setSelected] = useState(sp.get("package") || "");
-  const [selectedService, setSelectedService] = useState(sp.get("service") || "");
+  const [selectedCatalogKey, setSelectedCatalogKey] = useState("");
+  const [selectedAdditionalKey, setSelectedAdditionalKey] = useState("");
   const [packages, setPackages] = useState<Package[]>([]);
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [catalogError, setCatalogError] = useState("");
@@ -50,6 +57,18 @@ export function Booking() {
 
         setPackages(packagesResult.data);
         setServices(servicesResult.data);
+
+        const packageId = sp.get("package");
+        const serviceId = sp.get("service");
+
+        if (packageId && packagesResult.data.some((item) => item.id === packageId)) {
+          setSelectedCatalogKey(`package:${packageId}`);
+        } else if (
+          serviceId &&
+          servicesResult.data.some((item) => item.id === serviceId)
+        ) {
+          setSelectedCatalogKey(`service:${serviceId}`);
+        }
       })
       .finally(() => {
         if (active) setCatalogLoading(false);
@@ -58,22 +77,54 @@ export function Booking() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [sp]);
+
+  const catalogOptions: CatalogOption[] = [
+    ...packages.map((item) => ({
+      key: `package:${item.id}`,
+      kind: "package" as const,
+      id: item.id,
+      label: `${item.name} — ${formatMoney(item.priceMinor, item.currency)}`,
+    })),
+    ...services.map((item) => ({
+      key: `service:${item.id}`,
+      kind: "service" as const,
+      id: item.id,
+      label: `${item.name} — ${formatMoney(item.priceMinor, item.currency)}`,
+    })),
+  ];
+
+  const selectedOption = catalogOptions.find(
+    (option) => option.key === selectedCatalogKey,
+  );
+
+  const additionalOptions = catalogOptions.filter(
+    (option) => option.key !== selectedCatalogKey,
+  );
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
+
     const f = new FormData(e.currentTarget);
+    const additionalOption = catalogOptions.find(
+      (option) => option.key === selectedAdditionalKey,
+    );
+
     const r = await submitBooking({
       name: String(f.get("name") || ""),
       phone: String(f.get("phone") || ""),
       email: String(f.get("email") || ""),
       date: String(f.get("date") || ""),
-      packageId: selected,
-      additionalService: selectedService,
+      packageId: selectedOption?.kind === "package" ? selectedOption.id : "",
+      additionalService:
+        selectedOption?.kind === "service"
+          ? selectedOption.id
+          : additionalOption?.id || "",
       notes: String(f.get("notes") || ""),
       paymentMethod: pay,
     });
+
     setBusy(false);
     setDone(r.ok);
   };
@@ -85,9 +136,10 @@ export function Booking() {
           center
           ey="Booking & Inquiry"
           title="Tell us what you need. We'll guide the next step."
-          text="Choose a package if you're ready, or send an inquiry if you want advice first."
+          text="Choose a package or lesson if you're ready, or send an inquiry if you want advice first."
         />
-        <div className="booking">
+
+        <div className="booking booking--spaced">
           <form className="form" onSubmit={submit}>
             <div className="twocol">
               <label>
@@ -99,6 +151,7 @@ export function Booking() {
                 <input name="phone" required placeholder="+44 7XXX XXXXXX" />
               </label>
             </div>
+
             <div className="twocol">
               <label>
                 Email
@@ -132,42 +185,42 @@ export function Booking() {
             ) : (
               <>
                 <label>
-                  Choose package
+                  Choose package or lesson
                   <CustomDropdown
-                    value={selected}
+                    value={selectedCatalogKey}
                     onChange={(value) => {
-                      setSelected(value);
-                      if (!value) setSelectedService("");
+                      setSelectedCatalogKey(value);
+                      setSelectedAdditionalKey("");
                     }}
                     placeholder="I need help choosing"
-                    ariaLabel="Choose package"
+                    ariaLabel="Choose package or lesson"
                     options={[
                       { value: "", label: "I need help choosing" },
-                      ...packages.map((p) => ({
-                        value: p.id,
-                        label: `${p.name} — ${formatMoney(p.priceMinor, p.currency)}`,
+                      ...catalogOptions.map((option) => ({
+                        value: option.key,
+                        label: option.label,
                       })),
                     ]}
                   />
                 </label>
 
                 <label>
-                  Additional service
+                  Additional service or package
                   <CustomDropdown
-                    value={selectedService}
-                    onChange={setSelectedService}
+                    value={selectedAdditionalKey}
+                    onChange={setSelectedAdditionalKey}
                     placeholder={
-                      selected
-                        ? "No additional service"
-                        : "Select a package first"
+                      selectedCatalogKey
+                        ? "No additional option"
+                        : "Select a package or lesson first"
                     }
-                    ariaLabel="Choose an additional service"
-                    disabled={!selected}
+                    ariaLabel="Choose an additional service or package"
+                    disabled={!selectedCatalogKey}
                     options={[
-                      { value: "", label: "No additional service" },
-                      ...services.map((service) => ({
-                        value: service.id,
-                        label: `${service.name} — ${formatMoney(service.priceMinor, service.currency)}`,
+                      { value: "", label: "No additional option" },
+                      ...additionalOptions.map((option) => ({
+                        value: option.key,
+                        label: option.label,
                       })),
                     ]}
                   />
@@ -184,7 +237,7 @@ export function Booking() {
               />
             </label>
 
-            {selected && (
+            {selectedCatalogKey && (
               <div className="payment">
                 <span className="ey">Payment gateway — demo</span>
                 <h3>Choose your payment method</h3>
@@ -196,7 +249,9 @@ export function Booking() {
                   />{" "}
                   Bank Transfer <small>Manual verification</small>
                 </label>
-                <label className={pay === "paybank" ? "radio active" : "radio"}>
+                <label
+                  className={pay === "paybank" ? "radio active" : "radio"}
+                >
                   <input
                     type="radio"
                     checked={pay === "paybank"}
@@ -208,12 +263,14 @@ export function Booking() {
             )}
 
             <button
-              disabled={busy || catalogLoading || Boolean(catalogError)}
+              disabled={
+                busy || catalogLoading || Boolean(catalogError)
+              }
               className="btn red full"
             >
               {busy
                 ? "Submitting..."
-                : selected
+                : selectedCatalogKey
                   ? "Continue to payment"
                   : "Send inquiry"}{" "}
               <Icon n="arrow" />
