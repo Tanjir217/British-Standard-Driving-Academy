@@ -5,6 +5,7 @@ import { plansV3, orders as pricingPlanOrders } from "@wix/pricing-plans";
 import {
   availabilityTimeSlots,
   bookings,
+  extendedBookings,
   services,
   staffMembers,
 } from "@wix/bookings";
@@ -31,6 +32,7 @@ export const wixClient = createClient({
     plansV3,
     pricingPlanOrders,
     bookings,
+    extendedBookings,
     services,
     availabilityTimeSlots,
     staffMembers,
@@ -48,7 +50,9 @@ export function isWixMemberLoggedIn(): boolean {
   return wixClient.auth.loggedIn();
 }
 
-export function setWixTokens(tokens: Parameters<typeof wixClient.auth.setTokens>[0]): void {
+export function setWixTokens(
+  tokens: Parameters<typeof wixClient.auth.setTokens>[0],
+): void {
   wixClient.auth.setTokens(tokens);
 }
 
@@ -62,7 +66,10 @@ export function getWixTokens(): ReturnType<typeof wixClient.auth.getTokens> {
  * OAuth state/PKCE data is intentionally kept in the caller's flow rather
  * than persisting refresh tokens in localStorage.
  */
-export async function getWixLoginUrl(redirectUri: string, originalUri?: string): Promise<string> {
+export async function getWixLoginUrl(
+  redirectUri: string,
+  originalUri?: string,
+): Promise<string> {
   const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
   const key = "bsda.wix.oauth";
   if (typeof sessionStorage !== "undefined") {
@@ -96,6 +103,9 @@ export async function completeWixLoginFromUrl(): Promise<boolean> {
   return true;
 }
 
-export function getWixLogoutUrl(originalUrl = window.location.href): string {
-  return wixClient.auth.logout(originalUrl);
+export async function getWixLogoutUrl(
+  originalUrl = window.location.href,
+): Promise<string> {
+  const { logoutUrl } = await wixClient.auth.logout(originalUrl);
+  return logoutUrl;
 }
