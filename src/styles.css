@@ -5658,3 +5658,178 @@ nav .navbook {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Homepage proof strip — a factual, BSDA-specific alternative to generic vanity metrics. */
+.bsdaProof {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 35%, rgba(213, 31, 42, 0.16), transparent 32%),
+    linear-gradient(112deg, #101827 0%, #182238 58%, #24304a 100%);
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bsdaProof:before {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 220px;
+  right: -120px;
+  top: -110px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  transform: rotate(-9deg);
+}
+
+.bsdaProofGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.bsdaProofItem {
+  min-height: 184px;
+  padding: 32px 25px 29px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bsdaProofItem:last-child {
+  border-right: 0;
+}
+
+.bsdaProofItem strong {
+  font: 700 clamp(42px, 4vw, 58px)/0.95 "Times New Roman", Times, serif;
+  color: #ef6a71;
+  letter-spacing: -2px;
+  margin-bottom: 10px;
+}
+
+.bsdaProofItem span {
+  font-size: 18px !important;
+  font-weight: 700;
+  color: #fff;
+}
+
+.bsdaProofItem small {
+  margin-top: 6px;
+  font-size: 15px !important;
+  line-height: 1.45;
+  color: #b9c1cf;
+  max-width: 230px;
+}
+
+.bsdaProofItem:hover strong {
+  color: #ff9a9f;
+}
+
+.hero {
+  padding-top: 82px;
+}
+
+.heroCopy p {
+  max-width: 620px;
+  font-size: 18px !important;
+  line-height: 1.72;
+}
+
+.heroTrust {
+  gap: 20px;
+}
+
+.section,
+.page {
+  padding-top: 108px;
+  padding-bottom: 108px;
+}
+
+.heading p {
+  font-size: 16px !important;
+  line-height: 1.75;
+}
+
+.card > p,
+.servicecard p,
+.journeycard p,
+.featureRows small,
+.instructorbody > p,
+.timeline p,
+.panel p,
+.matchpanel p,
+.paystrip p,
+.contact-form-note {
+  line-height: 1.65;
+}
+
+.card,
+.servicecard,
+.instructorcard,
+.form,
+.aside,
+.login {
+  box-shadow: 0 12px 38px rgba(17, 24, 39, 0.055);
+}
+
+.card:hover,
+.servicecard:hover,
+.instructorcard:hover {
+  box-shadow: 0 22px 55px rgba(17, 24, 39, 0.12);
+}
+
+@media (max-width: 980px) {
+  .bsdaProofGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bsdaProofItem:nth-child(2) {
+    border-right: 0;
+  }
+
+  .bsdaProofItem:nth-child(-n + 2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding-top: 48px;
+  }
+
+  .section,
+  .page {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .bsdaProofGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bsdaProofItem {
+    min-height: auto;
+    padding: 25px 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .bsdaProofItem:last-child {
+    border-bottom: 0;
+  }
+
+  .bsdaProofItem strong {
+    font-size: 48px;
+  }
+
+  .bsdaProofItem span {
+    font-size: 17px !important;
+  }
+
+  .bsdaProofItem small {
+    font-size: 15px !important;
+  }
+}
