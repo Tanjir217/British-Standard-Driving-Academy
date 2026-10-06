@@ -4660,3 +4660,45 @@ nav .navbook {
     bottom: auto;
   }
 }
+
+
+/* Desktop flyout final geometry: tighten the item spacing, increase the
+   arc radius, and bring the whole navigation closer to the X trigger. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 390px;
+    height: 390px;
+    right: 4px;
+    bottom: 4px;
+  }
+
+  .floatingMenuLinks a:nth-child(1) {
+    /* Lessons */
+    left: 14px;
+    bottom: 30px;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    /* Instructors */
+    left: 70px;
+    bottom: 136px;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    /* Packages */
+    left: 138px;
+    bottom: 224px;
+  }
+
+  .floatingMenuBook {
+    /* Book a lesson — sits on the same curve, but closer to the trigger. */
+    right: 34px;
+    top: 126px;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    /* Learning Portal */
+    right: 4px;
+    top: 22px;
+  }
+}
