@@ -4128,3 +4128,237 @@ nav .navbook {
     right: 12px;
   }
 }
+
+
+/* Scroll-aware floating navigation refinement. The floating trigger only
+   appears after the top navigation has left the viewport. */
+.floatingMenuButton {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px) scale(.92);
+  transition:
+    opacity .22s ease,
+    transform .22s ease,
+    background .2s ease,
+    box-shadow .2s ease;
+}
+
+.site.scrolled .floatingMenuButton {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.floatingMenuButton.open {
+  transform: rotate(0) scale(1);
+}
+
+.floatingMenuButton.open:hover {
+  transform: translateY(-2px) scale(1);
+}
+
+/* Desktop: a radial/circular flyout grows from the bottom-right trigger. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 390px;
+    height: 390px;
+    right: 24px;
+    bottom: 24px;
+    padding: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 48%, #fffdfa 0 38%, #f6f2eb 39% 100%);
+    border: 1px solid #ddd7cd;
+    box-shadow: 0 30px 90px rgba(17, 24, 39, .24);
+    animation: radialMenuIn .28s cubic-bezier(.22,.8,.24,1) both;
+    overflow: visible;
+  }
+
+  .floatingMenuPanel:after {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px dashed rgba(17, 24, 39, .12);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .floatingMenuHead {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 145px;
+    transform: translate(-50%, -50%);
+    display: grid;
+    gap: 5px;
+    text-align: center;
+    border: 0;
+    padding: 0;
+    z-index: 2;
+  }
+
+  .floatingMenuHead .ey {
+    justify-content: center;
+    font-size: 8px !important;
+    letter-spacing: 1.8px;
+  }
+
+  .floatingMenuHead strong {
+    font-size: 18px;
+    line-height: 1.05;
+  }
+
+  .floatingMenuLinks {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+    z-index: 3;
+  }
+
+  .floatingMenuLinks a {
+    position: absolute;
+    width: 108px;
+    min-height: 52px;
+    padding: 9px 10px;
+    border: 1px solid #ddd7cd;
+    border-radius: 999px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 9px 25px rgba(17,24,39,.09);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--navy);
+    font-size: 15px !important;
+    text-align: center;
+    transition: transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+
+  .floatingMenuLinks a:nth-child(1) {
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    top: 50%;
+    left: 28px;
+    transform: translateY(-50%);
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    bottom: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .floatingMenuLinks a:hover,
+  .floatingMenuLinks a.active {
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 13px 30px rgba(17,24,39,.18);
+  }
+
+  .floatingMenuLinks a:nth-child(1):hover,
+  .floatingMenuLinks a:nth-child(1).active,
+  .floatingMenuLinks a:nth-child(4):hover,
+  .floatingMenuLinks a:nth-child(4).active {
+    transform: translateX(-50%) translateY(-3px);
+  }
+
+  .floatingMenuLinks a:nth-child(2):hover,
+  .floatingMenuLinks a:nth-child(2).active,
+  .floatingMenuLinks a:nth-child(3):hover,
+  .floatingMenuLinks a:nth-child(3).active {
+    transform: translateY(-50%) translateX(3px);
+  }
+
+  .floatingMenuLinks a svg {
+    color: var(--red);
+  }
+
+  .floatingMenuLinks a:hover svg,
+  .floatingMenuLinks a.active svg {
+    color: #fff;
+  }
+
+  .floatingMenuBook {
+    position: absolute;
+    left: 50%;
+    bottom: 93px;
+    width: 130px;
+    min-height: 42px;
+    padding: 8px 11px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    font-size: 14px !important;
+    z-index: 4;
+    box-shadow: 0 10px 26px rgba(213,31,42,.2);
+  }
+
+  .floatingMenuBook:hover {
+    transform: translateX(-50%) translateY(-2px);
+  }
+
+  @keyframes radialMenuIn {
+    from {
+      opacity: 0;
+      transform: scale(.68) translate(15px, 15px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translate(0, 0);
+    }
+  }
+}
+
+/* Mobile/tablet: keep the same bottom-right trigger and X state, but use a
+   conventional panel because a full radial menu is less usable on small screens. */
+@media (max-width: 980px) {
+  .floatingMenuPanel {
+    bottom: 82px;
+    right: 16px;
+    width: min(360px, calc(100vw - 32px));
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    border-radius: 18px;
+    animation: floatingMenuMobileIn .22s ease both;
+  }
+
+  .floatingMenuButton {
+    width: 56px;
+    height: 56px;
+  }
+
+  @keyframes floatingMenuMobileIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .floatingMenuButton {
+    right: 16px;
+    bottom: 16px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .floatingMenuPanel {
+    right: 12px;
+    bottom: 82px;
+    width: calc(100vw - 24px);
+  }
+}
