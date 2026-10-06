@@ -27,9 +27,8 @@ export const instructorService: InstructorService = {
         filter: {
           serviceProvider: true,
         },
-        paging: {
+        cursorPaging: {
           limit: 100,
-          offset: 0,
         },
       });
       const staffItems = response.staffMembers ?? [];
