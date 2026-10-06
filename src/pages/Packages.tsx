@@ -42,7 +42,7 @@ const packageCopy: Record<string, { eyebrow: string; description: string; featur
 function getPackageCopy(plan: Package) {
   const copy = packageCopy[plan.name.trim().toLowerCase()];
   return {
-    eyebrow: copy?.eyebrow ?? (${plan.lessonHours} Hours),
+    eyebrow: copy?.eyebrow ?? `${plan.lessonHours} Hours`,
     description:
       copy?.description ??
       "A structured BSDA driving programme managed through our booking and pricing system.",
