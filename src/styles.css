@@ -5024,3 +5024,21 @@ nav .navbook {
     bottom: auto;
   }
 }
+
+
+/* Responsive CTA fixes: keep the footer action compact on tablet widths and
+   leave breathing room below package card buttons. */
+@media (max-width: 980px) {
+  .footlead .btn {
+    flex: 0 0 auto;
+    min-width: 190px;
+    white-space: nowrap;
+    padding: 13px 18px;
+    font-size: 22px;
+  }
+}
+
+.package-home-grid .card .btn,
+.pagecards .card > .btn {
+  margin-bottom: 10px;
+}
