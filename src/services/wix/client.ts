@@ -1,7 +1,13 @@
 import { createClient, OAuthStrategy } from "@wix/sdk";
 import { items } from "@wix/data";
 import { members } from "@wix/members";
-import { availabilityTimeSlots, services } from "@wix/bookings";
+import { plansV3, orders as pricingPlanOrders } from "@wix/pricing-plans";
+import {
+  availabilityTimeSlots,
+  bookings,
+  services,
+  staffMembers,
+} from "@wix/bookings";
 import wixConfig from "../../../wix.config.json";
 
 const WIX_CLIENT_ID = wixConfig.appId;
@@ -11,74 +17,85 @@ if (!WIX_CLIENT_ID) {
 }
 
 /**
- * Shared browser-side Wix client for visitor/member operations.
+ * Public/member Wix client.
  *
- * The Client ID is intentionally public and comes from wix.config.json.
- * Never place a Wix client secret, API key, or other admin credential here.
- *
- * The client is kept behind src/services/wix so React pages/components do
- * not need to know about Wix SDK modules or authentication implementation.
+ * This client is deliberately limited to visitor/member-context operations.
+ * Privileged CMS operations must not be moved into the browser. Student
+ * Profiles and Lesson Records are Admin-only in Wix CMS and therefore require
+ * a protected backend boundary before those records can be read or written.
  */
 export const wixClient = createClient({
   modules: {
     items,
     members,
+    plansV3,
+    pricingPlanOrders,
+    bookings,
     services,
     availabilityTimeSlots,
+    staffMembers,
   },
   auth: OAuthStrategy({
     clientId: WIX_CLIENT_ID,
-    tokens: loadStoredTokens(),
   }),
 });
 
-function loadStoredTokens() {
-  if (typeof window === "undefined") {
-    return undefined;
-  }
+export function getWixClientId(): string {
+  return WIX_CLIENT_ID;
+}
 
-  const stored = window.localStorage.getItem("wixSession");
+export function isWixMemberLoggedIn(): boolean {
+  return wixClient.auth.loggedIn();
+}
 
-  if (!stored) {
-    return undefined;
-  }
+export function setWixTokens(tokens: Parameters<typeof wixClient.auth.setTokens>[0]): void {
+  wixClient.auth.setTokens(tokens);
+}
 
-  try {
-    return JSON.parse(stored);
-  } catch {
-    window.localStorage.removeItem("wixSession");
-    return undefined;
-  }
+export function getWixTokens(): ReturnType<typeof wixClient.auth.getTokens> {
+  return wixClient.auth.getTokens();
 }
 
 /**
- * Persist the current Wix visitor/member token set.
+ * Starts the Wix-hosted member login flow.
  *
- * Call this after generating visitor tokens or completing a member
- * authentication flow.
+ * OAuth state/PKCE data is intentionally kept in the caller's flow rather
+ * than persisting refresh tokens in localStorage.
  */
-export function persistWixSession(): void {
-  if (typeof window === "undefined") {
-    return;
+export async function getWixLoginUrl(redirectUri: string, originalUri?: string): Promise<string> {
+  const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
+  const key = "bsda.wix.oauth";
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem(key, JSON.stringify(oauthData));
   }
 
-  const tokens = wixClient.auth.getTokens();
-
-  if (tokens) {
-    window.localStorage.setItem("wixSession", JSON.stringify(tokens));
-  }
+  const { authUrl } = await wixClient.auth.getAuthUrl(oauthData);
+  return authUrl;
 }
 
-/**
- * Clear the locally persisted Wix session.
- *
- * This does not perform a Wix logout flow by itself; it only removes the
- * browser-side token storage.
- */
-export function clearWixSession(): void {
-  if (typeof window === "undefined") {
-    return;
+export async function completeWixLoginFromUrl(): Promise<boolean> {
+  if (typeof sessionStorage === "undefined") {
+    return false;
   }
 
-  window.localStorage.removeItem("wixSession");
+  const raw = sessionStorage.getItem("bsda.wix.oauth");
+  if (!raw) {
+    return false;
+  }
+
+  const oauthData = JSON.parse(raw);
+  const { code, state, error } = wixClient.auth.parseFromUrl();
+
+  if (error || !code || !state) {
+    return false;
+  }
+
+  const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
+  wixClient.auth.setTokens(tokens);
+  sessionStorage.removeItem("bsda.wix.oauth");
+  return true;
+}
+
+export function getWixLogoutUrl(originalUrl = window.location.href): string {
+  return wixClient.auth.logout(originalUrl);
 }
