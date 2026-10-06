@@ -47,9 +47,10 @@ export const packageService: PackageService = {
         .limit(100)
         .find();
 
-      const packages = response._items
+      const plans = response.items ?? [];
+      const packages = plans
         .map(toPackage)
-        .filter((plan) => plan.id && plan.status === "active");
+        .filter((plan: Package) => plan.id && plan.status === "active");
 
       return { ok: true, data: packages };
     } catch (error) {
