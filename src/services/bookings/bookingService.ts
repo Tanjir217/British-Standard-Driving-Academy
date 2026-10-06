@@ -107,12 +107,18 @@ export const bookingService: BookingService = {
             limit: 100,
           },
         },
-        fields: ["name", "type", "description"],
+        fields: ["name", "type", "description", "payment"],
       });
+
+      const serviceItems =
+        response.services ??
+        response.items ??
+        response._items ??
+        [];
 
       return {
         ok: true,
-        data: response.services
+        data: serviceItems
           .map((service: any) => {
             const priceValue = service?.payment?.fixed?.price?.value;
             const price = Number(priceValue ?? 0);
@@ -139,7 +145,7 @@ export const bookingService: BookingService = {
         },
       };
     }
-  },
+  }
 
   async getAvailability(query) {
     try {
