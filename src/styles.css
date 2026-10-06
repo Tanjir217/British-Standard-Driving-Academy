@@ -4940,3 +4940,27 @@ nav .navbook {
     mix-blend-mode: normal;
   }
 }
+
+
+/* The flyout samples the section beneath each label. Keep the normal navy
+   treatment on light sections and switch only the labels over dark sections. */
+@media (min-width: 981px) {
+  .floatingMenuLinks a,
+  .floatingMenuBook {
+    color: var(--navy);
+    mix-blend-mode: normal;
+  }
+
+  .floatingMenuLinks a.dark:not(.active),
+  .floatingMenuBook.dark:not(.active) {
+    color: #fff;
+  }
+
+  .floatingMenuLinks a.active,
+  .floatingMenuBook.active,
+  .floatingMenuLinks a:hover,
+  .floatingMenuBook:hover {
+    color: var(--red);
+    mix-blend-mode: normal;
+  }
+}
