@@ -98,10 +98,6 @@ export const bookingService: BookingService = {
   async listServices() {
     try {
       const response = await wixClient.services.queryServices({
-        filter: {
-          type: { $eq: "APPOINTMENT" },
-          hidden: { $eq: false },
-        },
         paging: {
           limit: 100,
           offset: 0,
@@ -132,9 +128,13 @@ export const bookingService: BookingService = {
               description: service?.description,
               priceMinor: Number.isFinite(price) ? Math.round(price * 100) : 0,
               currency: service?.payment?.fixed?.price?.currency ?? "GBP",
+              hidden: service?.hidden,
             };
           })
-          .filter((service: BookingServiceCatalogItem) => service.id),
+          .filter(
+            (service: BookingServiceCatalogItem & { hidden?: boolean }) =>
+              service.id && service.hidden !== true,
+          ),
       };
     } catch (error) {
       return {
