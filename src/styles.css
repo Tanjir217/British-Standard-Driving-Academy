@@ -4714,3 +4714,110 @@ nav .navbook {
     bottom: auto;
   }
 }
+
+
+/* Desktop flyout: text-only diagonal navigation. The links no longer use
+   circular buttons; they sit on one clean rising line toward the X trigger. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 420px;
+    height: 360px;
+    right: 6px;
+    bottom: 6px;
+  }
+
+  .floatingMenuLinks {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+  }
+
+  .floatingMenuLinks a,
+  .floatingMenuBook {
+    width: auto;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    display: block;
+    color: var(--navy);
+    font-size: 17px !important;
+    line-height: 1.1;
+    font-weight: 800;
+    white-space: nowrap;
+    text-align: left;
+    transition: color .18s ease, transform .18s ease;
+  }
+
+  /* One continuous lower-left → upper-right diagonal. */
+  .floatingMenuLinks a:nth-child(1) {
+    left: 8px;
+    bottom: 34px;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    left: 92px;
+    bottom: 100px;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    left: 176px;
+    bottom: 166px;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    left: 260px;
+    bottom: 232px;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .floatingMenuBook {
+    left: 190px;
+    top: 68px;
+    right: auto;
+    bottom: auto;
+    color: var(--red);
+    z-index: 4;
+  }
+
+  .floatingMenuLinks a:hover,
+  .floatingMenuLinks a.active {
+    background: transparent;
+    border: 0;
+    color: var(--red);
+    box-shadow: none;
+    transform: translateX(4px);
+  }
+
+  .floatingMenuBook:hover {
+    background: transparent;
+    border: 0;
+    color: var(--red2);
+    box-shadow: none;
+    transform: translateX(4px);
+  }
+
+  .floatingMenuLinks a svg,
+  .floatingMenuBook svg {
+    display: none;
+  }
+
+  .floatingMenuHead {
+    display: none;
+  }
+}
