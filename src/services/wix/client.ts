@@ -109,6 +109,7 @@ export function clearWixTokens(): void {
 export async function getWixLoginUrl(
   redirectUri: string,
   originalUri?: string,
+  idp?: "google" | "facebook",
 ): Promise<string> {
   const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
   const key = "bsda.wix.oauth";
@@ -116,8 +117,45 @@ export async function getWixLoginUrl(
     sessionStorage.setItem(key, JSON.stringify(oauthData));
   }
 
-  const { authUrl } = await wixClient.auth.getAuthUrl(oauthData);
+  const { authUrl } = await wixClient.auth.getAuthUrl(
+    oauthData,
+    idp ? { idp } : undefined,
+  );
   return authUrl;
+}
+
+export async function loginWithEmail(email: string, password: string) {
+  return wixClient.auth.login(email, password);
+}
+
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  profile: {
+    firstName?: string;
+    lastName?: string;
+    phones?: string[];
+  },
+) {
+  return wixClient.auth.register(email, password, profile);
+}
+
+export async function verifyMemberEmail(verificationCode: string) {
+  return wixClient.auth.processVerification({ verificationCode });
+}
+
+export async function exchangeDirectLoginSession(sessionToken: string): Promise<WixTokens> {
+  const tokens = await wixClient.auth.getMemberTokensForDirectLogin(sessionToken);
+  wixClient.auth.setTokens(tokens);
+  persistWixTokens(tokens);
+  return tokens;
+}
+
+export async function sendWixPasswordResetEmail(
+  email: string,
+  redirectUri: string,
+): Promise<void> {
+  await wixClient.auth.sendPasswordResetEmail(email, redirectUri);
 }
 
 export async function completeWixLoginFromUrl(): Promise<{
