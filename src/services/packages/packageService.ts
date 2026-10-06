@@ -14,18 +14,26 @@ function inferLessonHours(name: string): number {
 
 function toPackage(plan: any): Package {
   const amount = plan?.pricingVariants?.[0]?.pricingStrategies?.[0]?.flatRate?.amount;
-  const status: RecordStatus = plan?.archived ? "archived" : "active";
+  const perks = Array.isArray(plan?.perks)
+    ? plan.perks
+        .map((perk: { description?: unknown }) =>
+          typeof perk?.description === "string" ? perk.description.trim() : "",
+        )
+        .filter(Boolean)
+    : [];
+
+  const price = Number(amount ?? 0);
 
   return {
-    id: plan?._id,
+    id: plan?._id ?? plan?.id ?? "",
     name: plan?.name ?? "Untitled plan",
-    description: plan?.description ?? "",
-    priceMinor: Number(amount ?? 0) * 100,
+    description: "",
+    priceMinor: Number.isFinite(price) ? Math.round(price * 100) : 0,
     currency: plan?.currency ?? "GBP",
     lessonHours: inferLessonHours(plan?.name ?? ""),
     transmission: "either" as Transmission,
-    features: Array.isArray(plan?.perks) ? plan.perks : [],
-    status,
+    features: perks,
+    status: (plan?.archived ? "archived" : "active") as RecordStatus,
   };
 }
 
@@ -39,13 +47,20 @@ export const packageService: PackageService = {
         .limit(100)
         .find();
 
-      return { ok: true, data: response._items.map(toPackage) };
+      const packages = response._items
+        .map(toPackage)
+        .filter((plan) => plan.id && plan.status === "active");
+
+      return { ok: true, data: packages };
     } catch (error) {
       return {
         ok: false,
         error: {
           code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Unable to load pricing plans.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load pricing plans.",
         },
       };
     }
@@ -54,13 +69,25 @@ export const packageService: PackageService = {
   async getById(id) {
     try {
       const plan = await wixClient.plansV3.getPlan(id);
-      return { ok: true, data: toPackage(plan) };
+      const data = toPackage(plan);
+
+      if (!data.id) {
+        return {
+          ok: false,
+          error: { code: "NOT_FOUND", message: "Pricing plan not found." },
+        };
+      }
+
+      return { ok: true, data };
     } catch (error) {
       return {
         ok: false,
         error: {
           code: "NOT_FOUND",
-          message: error instanceof Error ? error.message : "Pricing plan not found.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Pricing plan not found.",
         },
       };
     }
