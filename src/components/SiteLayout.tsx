@@ -5,10 +5,8 @@ import { Icon } from "./Icon";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [headerOpen, setHeaderOpen] = useState(false);
-  const [floatingOpen, setFloatingOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [darkFlyoutItems, setDarkFlyoutItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const onScroll = () => {
@@ -28,86 +26,13 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    if (!floatingOpen || !scrolled) return;
-
-    const sampleFlyoutBackgrounds = () => {
-      const panel = document.querySelector<HTMLElement>(".floatingMenuPanel");
-      const overlay = document.querySelector<HTMLElement>(".floatingMenuOverlay");
-      if (!panel) return;
-
-      const previousPanelPointerEvents = panel.style.pointerEvents;
-      const previousOverlayPointerEvents = overlay?.style.pointerEvents;
-
-      panel.style.pointerEvents = "none";
-      if (overlay) overlay.style.pointerEvents = "none";
-
-      const items = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          ".floatingMenuLinks a, .floatingMenuBook",
-        ),
-      );
-
-      const next: Record<string, boolean> = {};
-
-      items.forEach((item, index) => {
-        const rect = item.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        const element = document.elementFromPoint(x, y);
-
-        let node: HTMLElement | null =
-          element instanceof HTMLElement ? element : null;
-        let dark = false;
-
-        while (node && node !== document.body) {
-          const background = window.getComputedStyle(node).backgroundColor;
-          const match = background.match(
-            /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/,
-          );
-
-          if (match && (match[4] === undefined || Number(match[4]) > 0.35)) {
-            const [, red, green, blue] = match;
-            const luminance =
-              (Number(red) * 299 +
-                Number(green) * 587 +
-                Number(blue) * 114) /
-              1000;
-
-            dark = luminance < 105;
-            break;
-          }
-
-          node = node.parentElement;
-        }
-
-        next[String(index)] = dark;
-      });
-
-      panel.style.pointerEvents = previousPanelPointerEvents;
-      if (overlay) {
-        overlay.style.pointerEvents = previousOverlayPointerEvents ?? "";
-      }
-
-      setDarkFlyoutItems(next);
-    };
-
-    const frame = window.requestAnimationFrame(sampleFlyoutBackgrounds);
-    window.addEventListener("resize", sampleFlyoutBackgrounds);
-    window.addEventListener("scroll", sampleFlyoutBackgrounds, { passive: true });
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", sampleFlyoutBackgrounds);
-      window.removeEventListener("scroll", sampleFlyoutBackgrounds);
-    };
-  }, [floatingOpen, scrolled]);
 
   const nav = [
     ["/packages", "Packages"],
     ["/lessons", "Lessons"],
-    ["/instructors", "Instructors"],
     ["/portal", "Learning Portal"],
+    ["/instructors", "Instructors"],
+    ["/booking", "Booking and Inquiry"],
     ["/faq", "FAQ"],
   ];
 
@@ -161,57 +86,26 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <button
-        className={
-          floatingOpen
-            ? "floatingMenuButton open"
-            : "floatingMenuButton"
-        }
-        type="button"
-        aria-label={floatingOpen ? "Close navigation" : "Open navigation"}
-        aria-expanded={floatingOpen}
-        onClick={() => setFloatingOpen(!floatingOpen)}
-      >
-        <Icon n={floatingOpen ? "close" : "menu"} />
-      </button>
-
-      {floatingOpen && (
-        <>
-          <button
-            className="floatingMenuOverlay"
-            type="button"
-            aria-label="Close navigation"
-            onClick={() => setFloatingOpen(false)}
-          />
-
-          <aside className="floatingMenuPanel" aria-label="Site navigation">
-            <div className="floatingMenuHead">
-              <span className="ey">Navigation</span>
-              <strong>Where would you like to go?</strong>
-            </div>
-
-            <div className="floatingMenuLinks">
-              {nav.map(([p, t], index) => (
-                <NavLink
-                  key={p}
-                  to={p}
-                  onClick={() => setFloatingOpen(false)}
-                  className={({ isActive }) =>
-                    [isActive ? "active" : "", darkFlyoutItems[String(index)] ? "dark" : ""]
-                      .filter(Boolean)
-                      .join(" ")
-                  }
-                >
-                  <span>{t}</span>
-                  <Icon n="arrow" s={16} />
-                </NavLink>
-              ))}
-            </div>
-
-          </aside>
-        </>
-      )}
-
+      <div className="floatingQuickActions" aria-label="Quick actions">
+        <Link className="floatingQuickAction" to="/booking" aria-label="Booking">
+          <Icon n="calendar" s={20} />
+          <span>Booking</span>
+        </Link>
+        <a
+          className="floatingQuickAction"
+          href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27d%20like%20to%20make%20an%20enquiry."
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Enquiry"
+        >
+          <Icon n="message" s={20} />
+          <span>Enquiry</span>
+        </a>
+        <Link className="floatingQuickAction" to="/faq" aria-label="FAQ">
+          <Icon n="help" s={20} />
+          <span>FAQ</span>
+        </Link>
+      </div>
       <main>{children}</main>
 
       <footer>
