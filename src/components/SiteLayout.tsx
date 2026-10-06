@@ -4,16 +4,24 @@ import { Brand } from "./Brand";
 import { Icon } from "./Icon";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [headerOpen, setHeaderOpen] = useState(false);
+  const [floatingOpen, setFloatingOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      setScrolled(window.scrollY > 16);
+      const isScrolled = window.scrollY > 16;
+
+      setScrolled(isScrolled);
       setProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
+
+      if (!isScrolled) {
+        setFloatingOpen(false);
+      }
     };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -29,39 +37,54 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className={scrolled ? "site scrolled" : "site"}>
       <div className="scrollbar" style={{ width: `${progress}%` }} />
+
       <div className="topbar">
         <div className="container topbarin">
           <span>British-standard training. Built around the learner.</span>
-          <div><span>Mon–Sat · 8:00–20:00 UK Time</span><span>37 Dunfield Rd, London, SE6 3RW</span></div>
+          <div>
+            <span>Mon–Sat · 8:00–20:00 UK Time</span>
+            <span>37 Dunfield Rd, London, SE6 3RW</span>
+          </div>
         </div>
       </div>
+
       <header>
         <div className="container nav">
-          <Link to="/" onClick={() => setOpen(false)} aria-label="BSDA home">
+          <Link
+            to="/"
+            onClick={() => setHeaderOpen(false)}
+            aria-label="BSDA home"
+          >
             <Brand />
           </Link>
+
           <button
             className="menu"
             type="button"
-            aria-label={open ? "Close navigation" : "Open navigation"}
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
+            aria-label={headerOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={headerOpen}
+            onClick={() => setHeaderOpen(!headerOpen)}
           >
-            <Icon n={open ? "close" : "menu"} />
+            <Icon n={headerOpen ? "close" : "menu"} />
           </button>
 
-          <nav className={open ? "traditionalnav open" : "traditionalnav"}>
+          <nav className={headerOpen ? "traditionalnav open" : "traditionalnav"}>
             {nav.map(([p, t]) => (
               <NavLink
                 key={p}
                 to={p}
-                onClick={() => setOpen(false)}
+                onClick={() => setHeaderOpen(false)}
                 className={({ isActive }) => (isActive ? "active" : "")}
               >
                 {t}
               </NavLink>
             ))}
-            <Link className="navbook" to="/packages" onClick={() => setOpen(false)}>
+
+            <Link
+              className="navbook"
+              to="/packages"
+              onClick={() => setHeaderOpen(false)}
+            >
               Book a lesson <Icon n="arrow" s={15} />
             </Link>
           </nav>
@@ -69,37 +92,32 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       </header>
 
       <button
-        className={open ? "floatingMenuButton open" : "floatingMenuButton"}
+        className={
+          floatingOpen
+            ? "floatingMenuButton open"
+            : "floatingMenuButton"
+        }
         type="button"
-        aria-label={open ? "Close navigation" : "Open navigation"}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        aria-label={floatingOpen ? "Close navigation" : "Open navigation"}
+        aria-expanded={floatingOpen}
+        onClick={() => setFloatingOpen(!floatingOpen)}
       >
-        <Icon n={open ? "close" : "menu"} />
+        <Icon n={floatingOpen ? "close" : "menu"} />
       </button>
 
-      {open && (
+      {floatingOpen && (
         <>
           <button
             className="floatingMenuOverlay"
             type="button"
             aria-label="Close navigation"
-            onClick={() => setOpen(false)}
+            onClick={() => setFloatingOpen(false)}
           />
+
           <aside className="floatingMenuPanel" aria-label="Site navigation">
             <div className="floatingMenuHead">
-              <div>
-                <span className="ey">Navigation</span>
-                <strong>Where would you like to go?</strong>
-              </div>
-              <button
-                type="button"
-                className="floatingMenuClose"
-                aria-label="Close navigation"
-                onClick={() => setOpen(false)}
-              >
-                <Icon n="close" />
-              </button>
+              <span className="ey">Navigation</span>
+              <strong>Where would you like to go?</strong>
             </div>
 
             <div className="floatingMenuLinks">
@@ -107,7 +125,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 <NavLink
                   key={p}
                   to={p}
-                  onClick={() => setOpen(false)}
+                  onClick={() => setFloatingOpen(false)}
                   className={({ isActive }) => (isActive ? "active" : "")}
                 >
                   <span>{t}</span>
@@ -116,7 +134,11 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               ))}
             </div>
 
-            <Link className="floatingMenuBook" to="/packages" onClick={() => setOpen(false)}>
+            <Link
+              className="floatingMenuBook"
+              to="/packages"
+              onClick={() => setFloatingOpen(false)}
+            >
               Book a lesson <Icon n="arrow" s={17} />
             </Link>
           </aside>
@@ -131,13 +153,20 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <span className="ey">Ready when you are</span>
             <h2>Your next mile starts with the right lesson.</h2>
           </div>
-          <Link className="btn white" to="/packages">Book a lesson <Icon n="arrow" /></Link>
+          <Link className="btn white" to="/packages">
+            Book a lesson <Icon n="arrow" />
+          </Link>
         </div>
+
         <div className="container footgrid">
           <div>
             <Brand />
-            <p>Professional, safety-first driving education designed to build capable and confident road users.</p>
+            <p>
+              Professional, safety-first driving education designed to build
+              capable and confident road users.
+            </p>
           </div>
+
           <div>
             <h4>Explore</h4>
             <Link to="/packages">Packages</Link>
@@ -145,6 +174,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <Link to="/instructors">Instructors</Link>
             <Link to="/portal">Learning Portal</Link>
           </div>
+
           <div>
             <h4>Academy</h4>
             <Link to="/faq">FAQ</Link>
@@ -152,15 +182,22 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <span>37 Dunfield Rd, London, SE6 3RW</span>
             <span>+44 7908 807741</span>
           </div>
+
           <div>
             <h4>Follow</h4>
             <span>Facebook · Instagram · YouTube</span>
-            <span className="muted">Social feed and learner updates will connect here.</span>
+            <span className="muted">
+              Social feed and learner updates will connect here.
+            </span>
           </div>
         </div>
+
         <div className="container footbottom">
           <span>© 2026 British Standard Driving Academy</span>
-          <span>Demo UI — final Wix CMS, bookings, payments and portal integrations are planned next.</span>
+          <span>
+            Demo UI — final Wix CMS, bookings, payments and portal
+            integrations are planned next.
+          </span>
         </div>
       </footer>
     </div>
