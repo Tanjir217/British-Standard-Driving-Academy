@@ -108,7 +108,16 @@ export const bookingService: BookingService = {
         },
       });
 
-      const serviceItems = response.items ?? [];
+      const serviceItems =
+        (response as typeof response & {
+          services?: unknown[];
+          items?: unknown[];
+        }).services ??
+        (response as typeof response & {
+          services?: unknown[];
+          items?: unknown[];
+        }).items ??
+        [];
 
       return {
         ok: true,
