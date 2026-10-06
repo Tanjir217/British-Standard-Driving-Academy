@@ -6,12 +6,18 @@ export interface LessonService {
   getByBookingId(bookingId: string): Promise<ServiceResult<LessonRecord | null>>;
 }
 
+const protectedBackendError = {
+  code: "SERVER_ERROR" as const,
+  message:
+    "Lesson Records are Admin-only in Wix CMS. The service contract is ready, but a protected backend adapter is required before student lesson data can be exposed.",
+};
+
 export const lessonService: LessonService = {
   async listForCurrentStudent() {
-    throw new Error("Lesson service backend adapter is not configured.");
+    return { ok: false, error: protectedBackendError };
   },
 
-  async getByBookingId(_bookingId) {
-    throw new Error("Lesson service backend adapter is not configured.");
+  async getByBookingId() {
+    return { ok: false, error: protectedBackendError };
   },
 };
