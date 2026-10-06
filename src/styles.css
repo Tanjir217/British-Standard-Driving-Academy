@@ -2084,6 +2084,14 @@ footer {
     grid-template-columns: 1fr;
     gap: 30px;
   }
+  .authgrid {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .authcard {
+    justify-self: stretch;
+    max-width: none;
+  }
   .dashgrid {
     grid-template-columns: 1fr 1fr;
   }
@@ -2147,6 +2155,28 @@ footer {
 
   .container {
     width: calc(100% - 28px);
+  }
+
+  .authcopy h1 {
+    letter-spacing: -2px;
+  }
+
+  .authpage {
+    align-items: start;
+  }
+
+  .authgrid {
+    padding: 30px 0;
+  }
+
+  .dashhead {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .dashboardpanel {
+    align-items: flex-start;
   }
   .topbar {
     display: none;
