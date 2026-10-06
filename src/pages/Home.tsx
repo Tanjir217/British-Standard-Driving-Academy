@@ -131,6 +131,33 @@ export function Home() {
         </div>
       </section>
 
+      <section className="bsdaProof" aria-label="BSDA approach at a glance">
+        <div className="container">
+          <div className="bsdaProofGrid">
+            <div className="bsdaProofItem">
+              <strong>4</strong>
+              <span>Focused lesson paths</span>
+              <small>Beginner · City · Highway · Test preparation</small>
+            </div>
+            <div className="bsdaProofItem">
+              <strong>4</strong>
+              <span>Core learner values</span>
+              <small>Safety · Clarity · Progress · Confidence</small>
+            </div>
+            <div className="bsdaProofItem">
+              <strong>3</strong>
+              <span>Simple booking steps</span>
+              <small>Service · Date · Your details</small>
+            </div>
+            <div className="bsdaProofItem">
+              <strong>1</strong>
+              <span>Clear goal</span>
+              <small>Capable, calm and confident road users</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="journey section">
         <div className="container">
           <div className="sectionIntro">
