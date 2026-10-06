@@ -4702,3 +4702,15 @@ nav .navbook {
     top: 22px;
   }
 }
+
+
+/* Put the red booking action directly onto the same rising diagonal as the
+   navigation destinations — between Instructors and Learning Portal. */
+@media (min-width: 981px) {
+  .floatingMenuBook {
+    left: 184px;
+    right: auto;
+    top: 76px;
+    bottom: auto;
+  }
+}
