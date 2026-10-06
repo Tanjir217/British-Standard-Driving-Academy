@@ -3350,6 +3350,7 @@ nav .navbook {
 /* Login page refinement: keep the authentication form compact while retaining
    the public BSDA header/footer supplied by SiteLayout. */
 .authscreen {
+  min-height: 100vh;
   padding: 22px 24px;
 }
 
