@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@wix/bookings": "^1.0.1699",
+    "@wix/data": "^1.0.525",
+    "@wix/members": "^1.0.525",
+    "@wix/sdk": "^1.21.16",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4"
