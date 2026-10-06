@@ -4543,3 +4543,74 @@ nav .navbook {
     display: none;
   }
 }
+
+
+/* Desktop flyout spacing: keep every circular destination separated on a
+   clear diagonal arc, matching the reference composition. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 430px;
+    height: 430px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .floatingMenuLinks a {
+    width: 92px;
+    height: 92px;
+    min-height: 92px;
+  }
+
+  /* Lower-left → upper-right arc. Each item has its own lane so circles
+     never touch or collide with the red action. */
+  .floatingMenuLinks a:nth-child(1) {
+    left: 0;
+    bottom: 28px;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    left: 58px;
+    bottom: 146px;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    left: 150px;
+    top: 70px;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    right: 42px;
+    top: 18px;
+    left: auto;
+    transform: none;
+  }
+
+  .floatingMenuBook {
+    width: 104px;
+    height: 104px;
+    min-height: 104px;
+    right: 42px;
+    top: 140px;
+    left: auto;
+    bottom: auto;
+    transform: none;
+  }
+
+  .floatingMenuLinks a:nth-child(1):hover,
+  .floatingMenuLinks a:nth-child(1).active,
+  .floatingMenuLinks a:nth-child(2):hover,
+  .floatingMenuLinks a:nth-child(2).active,
+  .floatingMenuLinks a:nth-child(3):hover,
+  .floatingMenuLinks a:nth-child(3).active,
+  .floatingMenuLinks a:nth-child(4):hover,
+  .floatingMenuLinks a:nth-child(4).active {
+    transform: translateY(-4px);
+  }
+
+  .floatingMenuBook:hover {
+    transform: translateY(-4px);
+  }
+}
