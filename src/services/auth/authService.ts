@@ -37,6 +37,7 @@ function safeReturnPath(value?: string) {
 export async function beginMemberLogin(
   returnTo = "/portal",
   provider?: "google" | "facebook",
+  sessionToken?: string,
 ) {
   const callbackUrl = getCallbackUrl();
 
@@ -44,6 +45,7 @@ export async function beginMemberLogin(
     callbackUrl,
     new URL(safeReturnPath(returnTo), window.location.origin).toString(),
     provider,
+    sessionToken,
   );
 }
 
@@ -72,10 +74,20 @@ function authFailureMessage(response: DirectAuthResponse) {
   return "We could not complete that request. Please try again.";
 }
 
-async function finishDirectAuthentication(response: DirectAuthResponse) {
+async function finishDirectAuthentication(
+  response: DirectAuthResponse,
+  returnTo = "/portal",
+) {
   if ("data" in response && "sessionToken" in response.data) {
-    await exchangeDirectLoginSession(response.data.sessionToken);
-    return { state: "SUCCESS" as const };
+    // Use Wix's full-page OAuth handoff instead of the hidden-iframe
+    // direct-login token exchange. This avoids indefinite "Please wait..."
+    // states when the browser blocks third-party iframe cookies.
+    const authUrl = await beginMemberLogin(
+      returnTo,
+      undefined,
+      response.data.sessionToken,
+    );
+    return { state: "REDIRECT" as const, authUrl };
   }
 
   if (String(response.loginState) === "EMAIL_VERIFICATION_REQUIRED") {
@@ -89,8 +101,15 @@ async function finishDirectAuthentication(response: DirectAuthResponse) {
   throw new Error(authFailureMessage(response));
 }
 
-export async function signInWithEmail(email: string, password: string) {
-  return finishDirectAuthentication(await loginWithEmail(email, password));
+export async function signInWithEmail(
+  email: string,
+  password: string,
+  returnTo = "/portal",
+) {
+  return finishDirectAuthentication(
+    await loginWithEmail(email, password),
+    returnTo,
+  );
 }
 
 export async function createMemberAccount(
@@ -100,12 +119,14 @@ export async function createMemberAccount(
 ) {
   return finishDirectAuthentication(
     await registerWithEmail(email, password, profile),
+    "/portal",
   );
 }
 
 export async function completeMemberVerification(verificationCode: string) {
   return finishDirectAuthentication(
     await verifyMemberEmail(verificationCode),
+    "/portal",
   );
 }
 
