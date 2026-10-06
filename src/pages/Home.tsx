@@ -187,7 +187,7 @@ export function Home() {
       <section className="offerstrip">
         <div className="container offerin">
           <div><span className="ey">New learner offer</span><h2>Choose your pace. Keep your progress.</h2></div>
-          <div><strong>3 / 8 / 15</strong><span>lesson paths</span></div>
+          <div><strong>Flexible · Block · Intensive</strong><span>training routes</span></div>
           <Link className="btn white" to="/packages">See packages <Icon n="arrow" /></Link>
         </div>
       </section>
@@ -263,12 +263,12 @@ export function Home() {
       <section className="testimonials">
         <div className="container testimonialgrid">
           <div>
-            <span className="ey">Learner feedback</span>
-            <h2>“The goal is not just passing. It is knowing what to do when the road changes.”</h2>
+            <span className="ey">What good coaching should create</span>
+            <h2>Leave every lesson with more control, more clarity and a clear next step.</h2>
           </div>
           <div className="quoteCards">
-            <article><b>“</b><p>My lessons finally felt structured. I knew what I had improved and what I needed to practise next.</p><span>— Demo learner · Beginner</span></article>
-            <article><b>“</b><p>The calm coaching made a huge difference. I became much more comfortable in busy traffic.</p><span>— Demo learner · Refresher</span></article>
+            <article><b>01</b><p>Know what improved, what needs practice and what your next target should be.</p><span>Clear progress after every lesson</span></article>
+            <article><b>02</b><p>Turn busy roads, unfamiliar situations and test pressure into repeatable decisions.</p><span>Confidence that carries onto the road</span></article>
           </div>
         </div>
       </section>
