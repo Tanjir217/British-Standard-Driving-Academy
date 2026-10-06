@@ -5038,7 +5038,7 @@ nav .navbook {
   }
 }
 
-.package-home-grid .card .btn,
-.pagecards .card > .btn {
+/* Keep the offer-strip CTA lifted slightly from the section edge. */
+.offerin > .btn {
   margin-bottom: 20px;
 }
