@@ -40,8 +40,8 @@ export function Portal() {
           loginEmail: currentMember.loginEmail,
           contact: currentMember.contact
             ? {
-                firstName: currentMember.contact.firstName,
-                lastName: currentMember.contact.lastName,
+                firstName: currentMember.contact.firstName ?? undefined,
+                lastName: currentMember.contact.lastName ?? undefined,
               }
             : undefined,
         });
