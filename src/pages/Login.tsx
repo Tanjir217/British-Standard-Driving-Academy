@@ -139,11 +139,10 @@ export function Login() {
         return;
       }
 
-      if (result.state === "SUCCESS") {
-        navigate(returnTo);
-        return;
-      }
-
+      // completeMemberVerification either returns REDIRECT or throws
+      // for an unsuccessful verification state. Keep this branch exhaustive
+      // against the service return type instead of checking for a non-existent
+      // SUCCESS state.
       setError("That verification code could not be accepted.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "We could not verify your email.");
