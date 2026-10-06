@@ -15,7 +15,7 @@ export function Instructors() {
             <h1>Find an instructor who fits the way you learn.</h1>
             <p>Calm coaching, structured feedback and practical road experience. Choose a teaching style that makes you feel supported from lesson one.</p>
             <div className="actions">
-              <Link className="btn red" to="/booking">Find my best match <Icon n="arrow" /></Link>
+              <Link className="btn red" to="/packages">Find my best match <Icon n="arrow" /></Link>
               <a className="btn light" href="#instructor-grid">Meet the team</a>
             </div>
           </div>
@@ -51,7 +51,7 @@ export function Instructors() {
             <h2>We can match you with the right instructor.</h2>
             <p>Share your location, lesson type, experience and preferred schedule. The academy can then recommend the best available fit.</p>
           </div>
-          <Link className="btn red" to="/booking">Request a match <Icon n="arrow" /></Link>
+          <Link className="btn red" to="/packages">Request a match <Icon n="arrow" /></Link>
         </div>
       </div>
     </section>

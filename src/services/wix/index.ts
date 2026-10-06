@@ -1,0 +1,18 @@
+export {
+  wixClient,
+  getWixClientId,
+  isWixMemberLoggedIn,
+  setWixTokens,
+  getWixTokens,
+  persistWixTokens,
+  restoreWixTokens,
+  clearWixTokens,
+  getWixLoginUrl,
+  loginWithEmail,
+  registerWithEmail,
+  verifyMemberEmail,
+  exchangeDirectLoginSession,
+  sendWixPasswordResetEmail,
+  completeWixLoginFromUrl,
+  getWixLogoutUrl,
+} from "./client";

@@ -40,7 +40,7 @@ export function InstructorDetail() {
               <div><b>Languages</b><span>{instructor.languages}</span></div>
               <div><b>Teaching style</b><span>Calm · structured · practical</span></div>
             </div>
-            <Link className="btn red" to="/booking">Request this instructor <Icon n="arrow" /></Link>
+            <Link className="btn red" to="/packages">Request this instructor <Icon n="arrow" /></Link>
           </div>
         </div>
 
