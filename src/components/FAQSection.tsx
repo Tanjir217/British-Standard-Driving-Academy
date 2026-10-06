@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 import { Heading } from "./Heading";
 import { faqs } from "../data/site";
@@ -38,7 +37,7 @@ export function FAQSection({ compact = false }: { compact?: boolean }) {
             <span className="ey">Still deciding?</span>
             <h3>Talk to the academy before you book.</h3>
             <p>Tell us your experience level, preferred lesson type or target date. We can point you towards the right starting point.</p>
-            <Link className="btn white" to="/booking">Ask about lessons <Icon n="arrow" s={16} /></Link>
+            <a className="btn white" href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27d%20like%20to%20ask%20about%20driving%20lessons." target="_blank" rel="noreferrer">Ask about lessons <Icon n="arrow" s={16} /></a>
           </aside>
         </div>
       </div>
