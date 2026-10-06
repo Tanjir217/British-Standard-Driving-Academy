@@ -9,7 +9,7 @@ export interface InstructorService {
 
 function toInstructor(staff: any): Instructor {
   return {
-    id: staff?._id,
+    id: staff?._id ?? staff?.id ?? "",
     name: staff?.name ?? "BSDA Instructor",
     role: "Driving Instructor",
     bio: staff?.description,
@@ -24,9 +24,16 @@ export const instructorService: InstructorService = {
   async list() {
     try {
       const response = await wixClient.staffMembers.queryStaffMembers({
-        query: {},
+        filter: {
+          serviceProvider: true,
+        },
+        paging: {
+          limit: 100,
+          offset: 0,
+        },
       });
-      return { ok: true, data: response.staffMembers.map(toInstructor) };
+      const staffItems = response.staffMembers ?? [];
+      return { ok: true, data: staffItems.map(toInstructor).filter((staff) => staff.id) };
     } catch (error) {
       return {
         ok: false,
