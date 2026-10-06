@@ -3819,3 +3819,37 @@ nav .navbook {
     padding-top: 5px;
   }
 }
+
+
+@media (min-width: 981px) {
+  /* Give the eyebrow and heading their own breathing room. */
+  .authformhead {
+    padding-top: 6px;
+  }
+
+  .authformhead .authmobileey {
+    display: block;
+    margin-bottom: 7px;
+    line-height: 1.15;
+  }
+
+  .authformhead h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+  }
+
+  .authformhead p {
+    margin-top: 0;
+    margin-bottom: 7px;
+  }
+
+  /* Password + confirmation share one row on registration. */
+  .authpasswordfields {
+    margin-top: 1px;
+  }
+
+  /* Keep the primary CTA comfortably inside the viewport. */
+  .authsubmit {
+    margin-top: -1px;
+  }
+}
