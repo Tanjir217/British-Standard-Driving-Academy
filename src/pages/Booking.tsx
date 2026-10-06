@@ -1,17 +1,64 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CustomDropdown } from "../components/CustomDropdown";
 import { Heading } from "../components/Heading";
-import { packages, services } from "../data/site";
+import { packageService } from "../services/packages/packageService";
+import {
+  bookingService,
+  type BookingServiceCatalogItem,
+} from "../services/bookings/bookingService";
+import type { Package } from "../services/domain/types";
 import { submitBooking } from "../services/bookingService";
+
+function formatMoney(amountMinor: number, currency: string) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100);
+}
+
 export function Booking() {
   const [sp] = useSearchParams();
   const [selected, setSelected] = useState(sp.get("package") || "");
-  const [selectedService, setSelectedService] = useState("");
+  const [selectedService, setSelectedService] = useState(sp.get("service") || "");
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [pay, setPay] = useState("bank");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    Promise.all([packageService.list(), bookingService.listServices()])
+      .then(([packagesResult, servicesResult]) => {
+        if (!active) return;
+
+        if (!packagesResult.ok || !servicesResult.ok) {
+          setCatalogError(
+            !packagesResult.ok
+              ? packagesResult.error.message
+              : servicesResult.error.message,
+          );
+          return;
+        }
+
+        setPackages(packagesResult.data);
+        setServices(servicesResult.data);
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
@@ -29,6 +76,7 @@ export function Booking() {
     setBusy(false);
     setDone(r.ok);
   };
+
   return (
     <section className="page">
       <div className="container">
@@ -47,7 +95,7 @@ export function Booking() {
               </label>
               <label>
                 Phone number
-                <input name="phone" required placeholder="+880 1XXX-XXXXXX" />
+                <input name="phone" required placeholder="+44 7XXX XXXXXX" />
               </label>
             </div>
             <div className="twocol">
@@ -64,42 +112,68 @@ export function Booking() {
                 <input name="date" type="date" />
               </label>
             </div>
-            <label>
-              Choose package
-              <CustomDropdown
-                value={selected}
-                onChange={(value) => {
-                  setSelected(value);
-                  if (!value) setSelectedService("");
-                }}
-                placeholder="I need help choosing"
-                ariaLabel="Choose package"
-                options={[
-                  { value: "", label: "I need help choosing" },
-                  ...packages.map((p) => ({
-                    value: p.id,
-                    label: `${p.name} — ${p.price}`,
-                  })),
-                ]}
-              />
-            </label>
-            <label>
-              Additional service
-              <CustomDropdown
-                value={selectedService}
-                onChange={setSelectedService}
-                placeholder={selected ? "No additional service" : "Select a package first"}
-                ariaLabel="Choose an additional service"
-                disabled={!selected}
-                options={[
-                  { value: "", label: "No additional service" },
-                  ...services.map((service) => ({
-                    value: service.name,
-                    label: `${service.name} — ${service.price}`,
-                  })),
-                ]}
-              />
-            </label>
+
+            {catalogLoading ? (
+              <div className="paystrip">
+                <div>
+                  <span className="ey">Loading live pricing</span>
+                  <h3>Fetching the latest BSDA packages and services.</h3>
+                </div>
+              </div>
+            ) : catalogError ? (
+              <div className="paystrip">
+                <div>
+                  <span className="ey">Pricing unavailable</span>
+                  <h3>We couldn't load the current booking options.</h3>
+                  <p>{catalogError}</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <label>
+                  Choose package
+                  <CustomDropdown
+                    value={selected}
+                    onChange={(value) => {
+                      setSelected(value);
+                      if (!value) setSelectedService("");
+                    }}
+                    placeholder="I need help choosing"
+                    ariaLabel="Choose package"
+                    options={[
+                      { value: "", label: "I need help choosing" },
+                      ...packages.map((p) => ({
+                        value: p.id,
+                        label: \`\${p.name} — \${formatMoney(p.priceMinor, p.currency)}\`,
+                      })),
+                    ]}
+                  />
+                </label>
+
+                <label>
+                  Additional service
+                  <CustomDropdown
+                    value={selectedService}
+                    onChange={setSelectedService}
+                    placeholder={
+                      selected
+                        ? "No additional service"
+                        : "Select a package first"
+                    }
+                    ariaLabel="Choose an additional service"
+                    disabled={!selected}
+                    options={[
+                      { value: "", label: "No additional service" },
+                      ...services.map((service) => ({
+                        value: service.id,
+                        label: \`\${service.name} — \${formatMoney(service.priceMinor, service.currency)}\`,
+                      })),
+                    ]}
+                  />
+                </label>
+              </>
+            )}
+
             <label>
               Inquiry / notes
               <textarea
@@ -108,6 +182,7 @@ export function Booking() {
                 placeholder="Tell us your current experience, preferred time or questions..."
               />
             </label>
+
             {selected && (
               <div className="payment">
                 <span className="ey">Payment gateway — demo</span>
@@ -130,7 +205,11 @@ export function Booking() {
                 </label>
               </div>
             )}
-            <button disabled={busy} className="btn red full">
+
+            <button
+              disabled={busy || catalogLoading || Boolean(catalogError)}
+              className="btn red full"
+            >
               {busy
                 ? "Submitting..."
                 : selected
@@ -138,13 +217,15 @@ export function Booking() {
                   : "Send inquiry"}{" "}
               <Icon n="arrow" />
             </button>
+
             {done && (
               <div className="success">
-                <Icon n="check" /> Demo submitted. Production payment/CRM
-                integration can be connected next.
+                <Icon n="check" /> Demo submitted. Production payment/booking
+                integration is not connected yet.
               </div>
             )}
           </form>
+
           <aside className="aside">
             <Icon n="calendar" s={27} />
             <h3>What happens next?</h3>
