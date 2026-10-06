@@ -51,7 +51,7 @@ export function Instructors() {
             <h2>We can match you with the right instructor.</h2>
             <p>Share your location, lesson type, experience and preferred schedule. The academy can then recommend the best available fit.</p>
           </div>
-          <Link className="btn red" to="/booking">Request a match <Icon n="arrow" /></Link>
+          <Link className="btn red" to="/packages">Request a match <Icon n="arrow" /></Link>
         </div>
       </div>
     </section>
