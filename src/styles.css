@@ -4614,3 +4614,49 @@ nav .navbook {
     transform: translateY(-4px);
   }
 }
+
+
+/* Final desktop flyout alignment: all five destinations now follow one
+   continuous rising diagonal track, with the red booking action integrated
+   into the same path. */
+@media (min-width: 981px) {
+  .floatingMenuLinks a:nth-child(1) {
+    /* Lessons */
+    left: 8px;
+    bottom: 34px;
+    top: auto;
+    right: auto;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    /* Instructors */
+    left: 100px;
+    bottom: 150px;
+    top: auto;
+    right: auto;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    /* Packages */
+    left: 190px;
+    bottom: 244px;
+    top: auto;
+    right: auto;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    /* Learning Portal */
+    right: 10px;
+    top: 28px;
+    left: auto;
+    bottom: auto;
+  }
+
+  .floatingMenuBook {
+    /* Book a lesson — between Packages and Learning Portal on the same track. */
+    right: 98px;
+    top: 82px;
+    left: auto;
+    bottom: auto;
+  }
+}
