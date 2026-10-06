@@ -25,28 +25,44 @@ function Scroll() {
   return null;
 }
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Scroll />
+function AppRoutes() {
+  const { pathname } = useLocation();
+  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+
+  if (isAuthRoute) {
+    return (
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
+    );
+  }
 
-      <SiteLayout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/packages" element={<Packages />} />
-          <Route path="/lessons" element={<Lessons />} />
-          <Route path="/instructors" element={<Instructors />} />
-          <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
-          <Route path="/portal" element={<Portal />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </SiteLayout>
+  return (
+    <SiteLayout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/packages" element={<Packages />} />
+        <Route path="/lessons" element={<Lessons />} />
+        <Route path="/instructors" element={<Instructors />} />
+        <Route
+          path="/instructors/:instructorId"
+          element={<InstructorDetail />}
+        />
+        <Route path="/portal" element={<Portal />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </SiteLayout>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Scroll />
+      <AppRoutes />
     </BrowserRouter>
   );
 }
