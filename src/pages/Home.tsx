@@ -91,7 +91,7 @@ export function Home() {
             <h1>Learn to drive.<br /><em>Learn to live.</em></h1>
             <p>Confident drivers are built through patient coaching, purposeful practice and a learning path that makes every lesson count.</p>
             <div className="actions">
-              <Link className="btn red" to="/booking">Book your first lesson <Icon n="arrow" /></Link>
+              <Link className="btn red" to="/packages">Book your first lesson <Icon n="arrow" /></Link>
               <Link className="btn light" to="/instructors">Meet our instructors</Link>
             </div>
             <div className="heroTrust">
