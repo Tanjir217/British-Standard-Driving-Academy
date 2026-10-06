@@ -5200,16 +5200,16 @@ nav .navbook {
   background: var(--navy);
   color: #fff;
   box-shadow: 0 12px 28px rgba(17, 24, 39, .2);
-  animation: homeQuickReveal 1.8s cubic-bezier(.22, .8, .24, 1) both;
+  animation: homeQuickReveal 1.2s cubic-bezier(.22, .8, .24, 1) both;
   transition: width .2s ease, background .2s ease, color .2s ease, gap .2s ease;
 }
 
 .homeQuickAction:nth-child(2) {
-  animation-delay: .58s;
+  animation-delay: .65s;
 }
 
 .homeQuickAction:nth-child(3) {
-  animation-delay: 1.16s;
+  animation-delay: 1.3s;
 }
 
 .homeQuickAction span {
@@ -5219,7 +5219,7 @@ nav .navbook {
   white-space: nowrap;
   font-size: 14px;
   font-weight: 800;
-  animation: homeQuickLabelReveal 1.8s cubic-bezier(.22, .8, .24, 1) both;
+  animation: homeQuickLabelReveal 1.2s cubic-bezier(.22, .8, .24, 1) both;
 }
 
 .homeQuickAction:nth-child(2) span {
@@ -5250,30 +5250,30 @@ nav .navbook {
 }
 
 @keyframes homeQuickReveal {
-  0%, 25% {
+  0%, 20% {
     width: 46px;
     gap: 0;
   }
-  42%, 64% {
+  35%, 65% {
     width: 132px;
     gap: 9px;
   }
-  82%, 100% {
+  85%, 100% {
     width: 46px;
     gap: 0;
   }
 }
 
 @keyframes homeQuickLabelReveal {
-  0%, 25% {
+  0%, 20% {
     max-width: 0;
     opacity: 0;
   }
-  42%, 64% {
+  35%, 65% {
     max-width: 90px;
     opacity: 1;
   }
-  82%, 100% {
+  85%, 100% {
     max-width: 0;
     opacity: 0;
   }
