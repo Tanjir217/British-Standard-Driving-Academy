@@ -4821,3 +4821,88 @@ nav .navbook {
     display: none;
   }
 }
+
+
+/* Desktop flyout: align the text labels directly along the custom
+   quarter-circle track defined by the flyout curve. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 420px;
+    height: 360px;
+    right: 6px;
+    bottom: 6px;
+  }
+
+  .floatingMenuLinks a,
+  .floatingMenuBook {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    width: max-content;
+    height: auto;
+    min-height: 0;
+    white-space: nowrap;
+    display: block;
+    font-size: 16px !important;
+    line-height: 1.1;
+    font-weight: 800;
+    text-align: left;
+    transform: none;
+  }
+
+  /* These five points sit directly on the user's red arc:
+     Packages → Lessons → Instructors → Book a lesson → Learning Portal. */
+  .floatingMenuLinks a:nth-child(1) {
+    left: 190px;
+    top: 304px;
+    bottom: auto;
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    left: 205px;
+    top: 238px;
+    bottom: auto;
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    left: 238px;
+    top: 172px;
+    bottom: auto;
+  }
+
+  .floatingMenuBook {
+    left: 274px;
+    top: 116px;
+    right: auto;
+    bottom: auto;
+    color: var(--red);
+    z-index: 4;
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    left: 312px;
+    top: 62px;
+    right: auto;
+    bottom: auto;
+  }
+
+  .floatingMenuLinks a:hover,
+  .floatingMenuLinks a.active,
+  .floatingMenuBook:hover {
+    color: var(--red);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    transform: translateX(3px);
+  }
+
+  .floatingMenuLinks a svg,
+  .floatingMenuBook svg,
+  .floatingMenuHead {
+    display: none;
+  }
+}
