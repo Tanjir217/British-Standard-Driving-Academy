@@ -1399,6 +1399,11 @@ textarea:focus {
   flex-direction: column;
 }
 
+/* Keep the package descriptions on one shared baseline. */
+.package-home-grid .card h3 {
+  min-height: 108px;
+}
+
 .package-home-grid .card .textlink {
   margin-top: auto;
 }
