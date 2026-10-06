@@ -120,28 +120,35 @@ export async function getWixLoginUrl(
   return authUrl;
 }
 
-export async function completeWixLoginFromUrl(): Promise<boolean> {
+export async function completeWixLoginFromUrl(): Promise<{
+  success: boolean;
+  originalUrl?: string;
+}> {
   if (typeof sessionStorage === "undefined") {
-    return false;
+    return { success: false };
   }
 
   const raw = sessionStorage.getItem("bsda.wix.oauth");
   if (!raw) {
-    return false;
+    return { success: false };
   }
 
-  const oauthData = JSON.parse(raw);
+  const oauthData = JSON.parse(raw) as { originalUrl?: string };
   const { code, state, error } = wixClient.auth.parseFromUrl();
 
   if (error || !code || !state) {
-    return false;
+    return { success: false };
   }
 
   const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
   wixClient.auth.setTokens(tokens);
   persistWixTokens(tokens);
   sessionStorage.removeItem("bsda.wix.oauth");
-  return true;
+
+  return {
+    success: true,
+    originalUrl: oauthData.originalUrl,
+  };
 }
 
 export async function getWixLogoutUrl(
