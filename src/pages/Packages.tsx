@@ -95,11 +95,15 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
 }
 
 function isCarHireService(service: BookingServiceCatalogItem) {
-  return /car hire|test-day car hire/i.test(service.name);
+  return /car hire|test[- ]day car hire|test[- ]day|exam car hire/i.test(
+    service.name,
+  );
 }
 
 function isTestPreparationService(service: BookingServiceCatalogItem) {
-  return /test preparation|test prep/i.test(service.name);
+  return /test preparation|test prep|practical test|driving test/i.test(
+    service.name,
+  );
 }
 
 export function Packages() {
