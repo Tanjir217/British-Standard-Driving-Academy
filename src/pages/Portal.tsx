@@ -7,7 +7,7 @@ import {
 } from "../services/auth/authService";
 
 type MemberSummary = {
-  loginEmail?: string;
+  loginEmail?: string | null;
   profile?: {
     firstName?: string;
     lastName?: string;
