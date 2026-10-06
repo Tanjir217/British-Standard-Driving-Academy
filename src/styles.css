@@ -1362,6 +1362,10 @@ textarea:focus {
   margin: 48px auto 0;
 }
 
+.pagecards .card h3 {
+  min-height: 108px;
+}
+
 .pagecards .card > p {
   min-height: 92px;
   margin: 12px 0 0;
