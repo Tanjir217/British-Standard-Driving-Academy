@@ -3853,3 +3853,21 @@ nav .navbook {
     margin-top: -1px;
   }
 }
+
+
+/* Student portal spacing: keep the dashboard comfortably inset from every edge. */
+.portal > .container {
+  padding: 32px;
+}
+
+@media (max-width: 980px) {
+  .portal > .container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .portal > .container {
+    padding: 18px;
+  }
+}
