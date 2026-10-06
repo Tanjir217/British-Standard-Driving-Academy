@@ -2920,7 +2920,7 @@ nav .navbook {
   height: 82px;
   object-fit: contain;
   object-position: left center;
-  filter: brightness(0) invert(1);
+  background: #fff;
 }
 
 .authvisualtop button {
@@ -3350,11 +3350,16 @@ nav .navbook {
 /* Login page refinement: keep the authentication form compact while retaining
    the public BSDA header/footer supplied by SiteLayout. */
 .authscreen {
+  width: 100%;
+  height: 100vh;
   min-height: 100vh;
-  padding: 22px 24px;
+  padding: 20px 24px;
+  overflow: hidden;
 }
 
 .authshell {
+  width: min(1320px, 100%);
+  height: 100%;
   min-height: 0;
 }
 
@@ -3487,5 +3492,119 @@ nav .navbook {
 
   .authformhead h2 {
     font-size: 38px;
+  }
+}
+
+
+/* Keep the desktop authentication screen entirely within one viewport. */
+@media (min-width: 981px) and (max-height: 720px) {
+  .authscreen {
+    padding: 12px 18px;
+  }
+
+  .authvisual {
+    padding: 20px 36px;
+  }
+
+  .authvisualbody {
+    padding: 18px 0 10px;
+  }
+
+  .authvisualbody h1 {
+    font-size: clamp(40px, 4.2vw, 60px);
+    margin: 8px 0 10px;
+  }
+
+  .authvisualbody > p {
+    font-size: 15px !important;
+    line-height: 1.45;
+  }
+
+  .authroad {
+    height: 62px;
+    margin: 14px 0 10px;
+  }
+
+  .authroad:before {
+    top: 23px;
+    height: 28px;
+  }
+
+  .authroadline {
+    top: 29px;
+    height: 18px;
+    box-shadow: 0 27px 0 #eee7da;
+  }
+
+  .authroadcar {
+    top: 25px;
+  }
+
+  .authbenefits {
+    gap: 7px;
+  }
+
+  .authbenefits span {
+    padding: 6px 8px;
+    font-size: 12px !important;
+  }
+
+  .authformarea {
+    padding: 22px 40px;
+  }
+
+  .authformcard {
+    width: min(420px, 100%);
+  }
+
+  .authformhead h2 {
+    font-size: 38px;
+    margin: 2px 0 5px;
+  }
+
+  .authformhead p {
+    margin-bottom: 11px;
+    font-size: 13px !important;
+    line-height: 1.35;
+  }
+
+  .authmode {
+    margin-bottom: 11px;
+  }
+
+  .authmode button {
+    padding: 8px 5px;
+  }
+
+  .authform {
+    gap: 7px;
+  }
+
+  .authform label {
+    gap: 3px;
+    font-size: 13px !important;
+  }
+
+  .authform input {
+    height: 38px;
+  }
+
+  .authsubmit {
+    min-height: 40px;
+    margin-top: 2px;
+  }
+
+  .authdivider {
+    margin: 10px 0 8px;
+  }
+
+  .authprovider {
+    height: 40px;
+  }
+
+  .authsecure {
+    margin-top: 10px;
+    padding-top: 8px;
+    font-size: 11px !important;
   }
 }
