@@ -15,27 +15,50 @@ function formatMoney(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
-const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
+const packageCopy: Record<
+  string,
+  { eyebrow: string; description: string; features: string[]; popular?: boolean }
+> = {
   "10-hour block booking": {
     eyebrow: "10 Hours",
-    description: "A discounted block booking for learners who want consistent progress over a structured period.",
-    features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
+    description:
+      "A discounted block booking for learners who want consistent progress over a structured period.",
+    features: [
+      "10 driving lessons",
+      "Complete within 1 month",
+      "Progress-focused tuition",
+    ],
     popular: true,
   },
   "20-hour block booking": {
     eyebrow: "20 Hours",
-    description: "A larger discounted block for learners who want more practice and continuity.",
-    features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
+    description:
+      "A larger discounted block for learners who want more practice and continuity.",
+    features: [
+      "20 driving lessons",
+      "Complete within 1 month",
+      "Progress-focused tuition",
+    ],
   },
   "10-hour intensive programme": {
     eyebrow: "10 Hours · Intensive",
-    description: "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
+    description:
+      "A focused programme designed to complete 10 hours of training within a two-week period.",
+    features: [
+      "10 driving lessons",
+      "Complete within 2 weeks",
+      "Intensive training structure",
+    ],
   },
   "20-hour intensive programme": {
     eyebrow: "20 Hours · Intensive",
-    description: "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
+    description:
+      "A focused programme designed to complete 20 hours of training within a three-week period.",
+    features: [
+      "20 driving lessons",
+      "Complete within 3 weeks",
+      "Intensive training structure",
+    ],
   },
 };
 
@@ -83,32 +106,33 @@ export function Packages() {
   const [packageData, setPackageData] = useState<Package[]>([]);
   const [serviceData, setServiceData] = useState<BookingServiceCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [packageError, setPackageError] = useState("");
+  const [serviceError, setServiceError] = useState("");
 
   useEffect(() => {
     let active = true;
 
-    Promise.all([packageService.list(), bookingService.listServices()]).then(
-      ([packagesResult, servicesResult]) => {
+    Promise.all([packageService.list(), bookingService.listServices()])
+      .then(([packagesResult, servicesResult]) => {
         if (!active) return;
 
         if (packagesResult.ok) {
           setPackageData(packagesResult.data);
+          setPackageError("");
         } else {
-          setError(packagesResult.error.message);
+          setPackageError(packagesResult.error.message);
         }
 
         if (servicesResult.ok) {
           setServiceData(servicesResult.data);
-        } else if (!packagesResult.ok) {
-          setError(
-            `${packagesResult.error.message} Additional services could not be loaded: ${servicesResult.error.message}`,
-          );
+          setServiceError("");
+        } else {
+          setServiceError(servicesResult.error.message);
         }
-      },
-    ).finally(() => {
-      if (active) setLoading(false);
-    });
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
     return () => {
       active = false;
@@ -127,6 +151,16 @@ export function Packages() {
     };
   });
 
+  const standardServices = serviceData.filter(
+    (service) =>
+      !isCarHireService(service) && !isTestPreparationService(service),
+  );
+
+  const testSupportServices = serviceData.filter(
+    (service) =>
+      isCarHireService(service) || isTestPreparationService(service),
+  );
+
   return (
     <section className="page">
       <div className="container">
@@ -142,22 +176,24 @@ export function Packages() {
             <div>
               <span className="ey">Loading live pricing</span>
               <h3>Fetching the latest BSDA prices.</h3>
-              <p>Please wait while the site loads the current pricing from Wix.</p>
+              <p>
+                Please wait while the site loads the current pricing from Wix.
+              </p>
             </div>
           </div>
         )}
 
-        {!loading && error && (
+        {!loading && packageError && (
           <div className="paystrip">
             <div>
-              <span className="ey">Pricing unavailable</span>
-              <h3>We couldn't load the current prices.</h3>
-              <p>{error}</p>
+              <span className="ey">Packages unavailable</span>
+              <h3>We couldn't load the current pricing plans.</h3>
+              <p>{packageError}</p>
             </div>
           </div>
         )}
 
-        {!loading && !error && packageCards.length === 0 && (
+        {!loading && !packageError && packageCards.length === 0 && (
           <div className="paystrip">
             <div>
               <span className="ey">No packages available</span>
@@ -167,7 +203,7 @@ export function Packages() {
           </div>
         )}
 
-        {!loading && !error && packageCards.length > 0 && (
+        {!loading && !packageError && packageCards.length > 0 && (
           <div className="cards pagecards">
             {packageCards.map((p) => (
               <PackageCard key={p.id} p={p} full />
@@ -184,60 +220,51 @@ export function Packages() {
             />
           </div>
 
-          {!loading && !error && serviceData.length === 0 && (
+          {!loading && serviceError && (
             <div className="paystrip">
               <div>
-                <span className="ey">No services available</span>
-                <h3>There are currently no public appointment services.</h3>
+                <span className="ey">Services unavailable</span>
+                <h3>We couldn't load the current appointment services.</h3>
+                <p>{serviceError}</p>
               </div>
             </div>
           )}
 
-          {!loading && !error && serviceData.length > 0 && (
-            <>
-              {serviceData.some(
-                (service) =>
-                  !isCarHireService(service) &&
-                  !isTestPreparationService(service),
-              ) && (
-                <div className="servicegrid">
-                  {serviceData
-                    .filter(
-                      (service) =>
-                        !isCarHireService(service) &&
-                        !isTestPreparationService(service),
-                    )
-                    .map((service) => (
-                      <ServiceCard key={service.id} service={service} />
-                    ))}
-                </div>
-              )}
+          {!loading && !serviceError && serviceData.length === 0 && (
+            <div className="paystrip">
+              <div>
+                <span className="ey">No services available</span>
+                <h3>
+                  There are currently no public appointment services.
+                </h3>
+              </div>
+            </div>
+          )}
 
-              {(serviceData.some(isCarHireService) ||
-                serviceData.some(isTestPreparationService)) && (
-                <div className="servicepricing servicepricing--highlight">
-                  <div className="sectionIntro">
-                    <Heading
-                      ey="Test support"
-                      title="Test preparation and test-day car hire."
-                      text="These services are managed as live Wix Bookings services and use their configured prices."
-                    />
-                  </div>
+          {!loading && !serviceError && standardServices.length > 0 && (
+            <div className="servicegrid">
+              {standardServices.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          )}
 
-                  <div className="servicegrid">
-                    {serviceData
-                      .filter(
-                        (service) =>
-                          isCarHireService(service) ||
-                          isTestPreparationService(service),
-                      )
-                      .map((service) => (
-                        <ServiceCard key={service.id} service={service} />
-                      ))}
-                  </div>
-                </div>
-              )}
-            </>
+          {!loading && !serviceError && testSupportServices.length > 0 && (
+            <div className="servicepricing servicepricing--highlight">
+              <div className="sectionIntro">
+                <Heading
+                  ey="Test support"
+                  title="Test preparation and test-day car hire."
+                  text="These services are managed as live Wix Bookings services and use their configured prices."
+                />
+              </div>
+
+              <div className="servicegrid">
+                {testSupportServices.map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -246,8 +273,8 @@ export function Packages() {
             <span className="ey">UK test costs</span>
             <h3>Theory and practical test fees are separate.</h3>
             <p>
-              GOV.UK currently lists the car theory test at £23 and the car practical
-              test at £62–£75, depending on when it is taken.
+              GOV.UK currently lists the car theory test at £23 and the car
+              practical test at £62–£75, depending on when it is taken.
             </p>
           </div>
           <div className="paychips">
