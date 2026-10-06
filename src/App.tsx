@@ -27,19 +27,12 @@ function Scroll() {
 
 function AppRoutes() {
   const { pathname } = useLocation();
-  if (pathname === "/login") {
-    return (
-      <SiteLayout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </SiteLayout>
-    );
-  }
+  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
 
-  if (pathname === "/auth/callback") {
+  if (isAuthRoute) {
     return (
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     );
