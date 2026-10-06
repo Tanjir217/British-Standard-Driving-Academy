@@ -71,6 +71,14 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
   );
 }
 
+function isCarHireService(service: BookingServiceCatalogItem) {
+  return /car hire|test-day car hire/i.test(service.name);
+}
+
+function isTestPreparationService(service: BookingServiceCatalogItem) {
+  return /test preparation|test prep/i.test(service.name);
+}
+
 export function Packages() {
   const [packageData, setPackageData] = useState<Package[]>([]);
   const [serviceData, setServiceData] = useState<BookingServiceCatalogItem[]>([]);
@@ -186,11 +194,38 @@ export function Packages() {
           )}
 
           {!loading && !error && serviceData.length > 0 && (
-            <div className="servicegrid">
-              {serviceData.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
+            <>
+              <div className="servicegrid">
+                {serviceData.map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+
+              {(serviceData.some(isCarHireService) ||
+                serviceData.some(isTestPreparationService)) && (
+                <div className="servicepricing servicepricing--highlight">
+                  <div className="sectionIntro">
+                    <Heading
+                      ey="Test support"
+                      title="Test preparation and test-day car hire."
+                      text="These services are managed as live Wix Bookings services and use their configured prices."
+                    />
+                  </div>
+
+                  <div className="servicegrid">
+                    {serviceData
+                      .filter(
+                        (service) =>
+                          isCarHireService(service) ||
+                          isTestPreparationService(service),
+                      )
+                      .map((service) => (
+                        <ServiceCard key={service.id} service={service} />
+                      ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
