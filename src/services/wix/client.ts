@@ -50,14 +50,54 @@ export function isWixMemberLoggedIn(): boolean {
   return wixClient.auth.loggedIn();
 }
 
-export function setWixTokens(
-  tokens: Parameters<typeof wixClient.auth.setTokens>[0],
-): void {
+type WixTokens = Parameters<typeof wixClient.auth.setTokens>[0];
+
+const WIX_TOKEN_STORAGE_KEY = "bsda.wix.member.tokens";
+
+export function setWixTokens(tokens: WixTokens): void {
   wixClient.auth.setTokens(tokens);
 }
 
 export function getWixTokens(): ReturnType<typeof wixClient.auth.getTokens> {
   return wixClient.auth.getTokens();
+}
+
+/**
+ * Temporary browser-session persistence for the current Vite frontend.
+ *
+ * We intentionally use sessionStorage rather than localStorage while the
+ * protected application API/session layer is being built. Production should
+ * move refresh-token handling to the server-side session boundary.
+ */
+export function persistWixTokens(tokens: WixTokens): void {
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem(WIX_TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+  }
+}
+
+export function restoreWixTokens(): boolean {
+  if (typeof sessionStorage === "undefined") {
+    return false;
+  }
+
+  const raw = sessionStorage.getItem(WIX_TOKEN_STORAGE_KEY);
+  if (!raw) {
+    return false;
+  }
+
+  try {
+    setWixTokens(JSON.parse(raw) as WixTokens);
+    return true;
+  } catch {
+    sessionStorage.removeItem(WIX_TOKEN_STORAGE_KEY);
+    return false;
+  }
+}
+
+export function clearWixTokens(): void {
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(WIX_TOKEN_STORAGE_KEY);
+  }
 }
 
 /**
@@ -99,6 +139,7 @@ export async function completeWixLoginFromUrl(): Promise<boolean> {
 
   const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
   wixClient.auth.setTokens(tokens);
+  persistWixTokens(tokens);
   sessionStorage.removeItem("bsda.wix.oauth");
   return true;
 }
