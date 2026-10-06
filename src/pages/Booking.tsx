@@ -144,7 +144,7 @@ export function Booking() {
                       { value: "", label: "I need help choosing" },
                       ...packages.map((p) => ({
                         value: p.id,
-                        label: \`\${p.name} — \${formatMoney(p.priceMinor, p.currency)}\`,
+                        label: `${p.name} — ${formatMoney(p.priceMinor, p.currency)}`,
                       })),
                     ]}
                   />
@@ -166,7 +166,7 @@ export function Booking() {
                       { value: "", label: "No additional service" },
                       ...services.map((service) => ({
                         value: service.id,
-                        label: \`\${service.name} — \${formatMoney(service.priceMinor, service.currency)}\`,
+                        label: `${service.name} — ${formatMoney(service.priceMinor, service.currency)}`,
                       })),
                     ]}
                   />
