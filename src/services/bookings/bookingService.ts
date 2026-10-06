@@ -23,6 +23,14 @@ export interface BookingSlot {
   bookable: boolean;
 }
 
+export interface BookingServiceCatalogItem {
+  id: string;
+  name: string;
+  description?: string;
+  priceMinor: number;
+  currency: string;
+}
+
 export interface CreateBookingInput {
   slot: BookingSlot;
   firstName: string;
@@ -33,7 +41,7 @@ export interface CreateBookingInput {
 }
 
 export interface BookingService {
-  listServices(): Promise<ServiceResult<Array<{ id: string; name: string; description?: string }>>>;
+  listServices(): Promise<ServiceResult<BookingServiceCatalogItem[]>>;
   getAvailability(query: BookingAvailabilityQuery): Promise<ServiceResult<BookingSlot[]>>;
   create(input: CreateBookingInput): Promise<ServiceResult<Booking>>;
   getById(id: string): Promise<ServiceResult<Booking>>;
@@ -74,12 +82,12 @@ function normalizePaymentStatus(status: string | undefined): PaymentStatus {
 
 function toBooking(booking: any): Booking {
   return {
-    id: booking?._id,
+    id: booking?._id ?? booking?.id ?? "",
     studentId: booking?.contactDetails?.contactId ?? "",
     instructorId: booking?.bookedEntity?.slot?.resource?._id,
     lessonType: booking?.bookedEntity?.slot?.serviceId ?? "",
-    startAt: booking?.startDate ?? booking?.bookedEntity?.slot?.startDate,
-    endAt: booking?.endDate ?? booking?.bookedEntity?.slot?.endDate,
+    startAt: booking?.startDate ?? booking?.bookedEntity?.slot?.startDate ?? "",
+    endAt: booking?.endDate ?? booking?.bookedEntity?.slot?.endDate ?? "",
     status: normalizeBookingStatus(booking?.status),
     paymentStatus: normalizePaymentStatus(booking?.paymentStatus),
     notes: booking?.formSubmissionId,
@@ -92,25 +100,42 @@ export const bookingService: BookingService = {
       const response = await wixClient.services.queryServices({
         query: {
           filter: {
-            type: "APPOINTMENT",
+            type: { $eq: "APPOINTMENT" },
+            hidden: { $eq: false },
+          },
+          paging: {
+            limit: 100,
           },
         },
+        fields: ["name", "type", "description"],
       });
 
       return {
         ok: true,
-        data: response.items.map((service: any) => ({
-          id: service._id,
-          name: service.name,
-          description: service.description,
-        })),
+        data: response.services
+          .map((service: any) => {
+            const priceValue = service?.payment?.fixed?.price?.value;
+            const price = Number(priceValue ?? 0);
+
+            return {
+              id: service?._id ?? service?.id ?? "",
+              name: service?.name ?? "Untitled service",
+              description: service?.description,
+              priceMinor: Number.isFinite(price) ? Math.round(price * 100) : 0,
+              currency: service?.payment?.fixed?.price?.currency ?? "GBP",
+            };
+          })
+          .filter((service: BookingServiceCatalogItem) => service.id),
       };
     } catch (error) {
       return {
         ok: false,
         error: {
           code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Unable to load booking services.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load booking services.",
         },
       };
     }
@@ -118,14 +143,15 @@ export const bookingService: BookingService = {
 
   async getAvailability(query) {
     try {
-      const response = await wixClient.availabilityTimeSlots.listAvailabilityTimeSlots({
-        serviceId: query.serviceId,
-        fromLocalDate: query.fromLocalDate,
-        toLocalDate: query.toLocalDate,
-        timeZone: query.timeZone,
-        bookable: true,
-        ...(query.resourceIds ? { resourceIds: query.resourceIds } : {}),
-      });
+      const response =
+        await wixClient.availabilityTimeSlots.listAvailabilityTimeSlots({
+          serviceId: query.serviceId,
+          fromLocalDate: query.fromLocalDate,
+          toLocalDate: query.toLocalDate,
+          timeZone: query.timeZone,
+          bookable: true,
+          ...(query.resourceIds ? { resourceIds: query.resourceIds } : {}),
+        });
 
       return {
         ok: true,
@@ -147,7 +173,10 @@ export const bookingService: BookingService = {
         ok: false,
         error: {
           code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Unable to load booking availability.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load booking availability.",
         },
       };
     }
@@ -182,7 +211,10 @@ export const bookingService: BookingService = {
         ok: false,
         error: {
           code: "CONFLICT",
-          message: error instanceof Error ? error.message : "Unable to create the booking.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to create the booking.",
         },
       };
     }
@@ -206,13 +238,19 @@ export const bookingService: BookingService = {
         };
       }
 
-      return { ok: true, data: toBooking(booking.booking ?? booking) };
+      return {
+        ok: true,
+        data: toBooking(booking.booking ?? booking),
+      };
     } catch (error) {
       return {
         ok: false,
         error: {
           code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Unable to retrieve booking.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to retrieve booking.",
         },
       };
     }
