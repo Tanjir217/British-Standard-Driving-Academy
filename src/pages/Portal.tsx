@@ -8,7 +8,7 @@ import {
 
 type MemberSummary = {
   loginEmail?: string | null;
-  profile?: {
+  contact?: {
     firstName?: string;
     lastName?: string;
   };
@@ -36,7 +36,15 @@ export function Portal() {
           return;
         }
 
-        setMember(currentMember);
+        setMember({
+          loginEmail: currentMember.loginEmail,
+          contact: currentMember.contact
+            ? {
+                firstName: currentMember.contact.firstName,
+                lastName: currentMember.contact.lastName,
+              }
+            : undefined,
+        });
       })
       .catch((err) => {
         if (!active) return;
@@ -82,7 +90,7 @@ export function Portal() {
     );
   }
 
-  const firstName = member?.profile?.firstName?.trim();
+  const firstName = member?.contact?.firstName?.trim();
   const displayName = firstName || "learner";
 
   return (
