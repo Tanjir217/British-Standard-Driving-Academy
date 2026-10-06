@@ -4362,3 +4362,171 @@ nav .navbook {
     width: calc(100vw - 24px);
   }
 }
+
+
+/* Desktop radial flyout: use labeled circular destinations, matching the
+   reference interaction rather than icon-based menu items. */
+@media (min-width: 981px) {
+  .floatingMenuPanel {
+    width: 430px;
+    height: 430px;
+    right: 10px;
+    bottom: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    animation: radialMenuIn .28s cubic-bezier(.22,.8,.24,1) both;
+  }
+
+  .floatingMenuPanel:after {
+    display: none;
+  }
+
+  .floatingMenuHead {
+    position: absolute;
+    width: 118px;
+    height: 118px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(17, 24, 39, .12);
+    border-radius: 50%;
+    padding: 15px;
+    background: rgba(255, 253, 250, .96);
+    box-shadow: 0 18px 45px rgba(17, 24, 39, .12);
+    display: grid;
+    place-content: center;
+    gap: 3px;
+    text-align: center;
+    z-index: 1;
+  }
+
+  .floatingMenuHead .ey {
+    justify-content: center;
+    font-size: 7px !important;
+    letter-spacing: 1.5px;
+  }
+
+  .floatingMenuHead strong {
+    font-size: 15px;
+    line-height: 1.05;
+  }
+
+  .floatingMenuLinks {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0;
+    z-index: 3;
+  }
+
+  .floatingMenuLinks a {
+    position: absolute;
+    width: 92px;
+    height: 92px;
+    min-height: 92px;
+    padding: 12px;
+    border: 2px solid var(--navy);
+    border-radius: 50%;
+    background: rgba(255, 253, 250, .97);
+    box-shadow: 0 12px 30px rgba(17, 24, 39, .12);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--navy);
+    font-size: 13px !important;
+    line-height: 1.08;
+    font-weight: 800;
+    transition:
+      transform .2s ease,
+      background .2s ease,
+      color .2s ease,
+      border-color .2s ease,
+      box-shadow .2s ease;
+  }
+
+  /* Five destinations travel around an arc toward the bottom-right X. */
+  .floatingMenuLinks a:nth-child(1) {
+    left: 24px;
+    bottom: 48px;
+    transform: translateY(0);
+  }
+
+  .floatingMenuLinks a:nth-child(2) {
+    left: 42px;
+    bottom: 166px;
+    transform: translateY(0);
+  }
+
+  .floatingMenuLinks a:nth-child(3) {
+    left: 132px;
+    top: 118px;
+    transform: translateY(0);
+  }
+
+  .floatingMenuLinks a:nth-child(4) {
+    left: 244px;
+    top: 43px;
+    transform: translateY(0);
+  }
+
+  .floatingMenuLinks a:hover,
+  .floatingMenuLinks a.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+    box-shadow: 0 17px 36px rgba(17, 24, 39, .2);
+  }
+
+  .floatingMenuLinks a:nth-child(1):hover,
+  .floatingMenuLinks a:nth-child(1).active {
+    transform: translateY(-4px);
+  }
+
+  .floatingMenuLinks a:nth-child(2):hover,
+  .floatingMenuLinks a:nth-child(2).active {
+    transform: translateY(-4px);
+  }
+
+  .floatingMenuLinks a:nth-child(3):hover,
+  .floatingMenuLinks a:nth-child(3).active {
+    transform: translateY(-4px);
+  }
+
+  .floatingMenuLinks a:nth-child(4):hover,
+  .floatingMenuLinks a:nth-child(4).active {
+    transform: translateY(-4px);
+  }
+
+  .floatingMenuBook {
+    position: absolute;
+    width: 104px;
+    height: 104px;
+    min-height: 104px;
+    right: 6px;
+    top: 72px;
+    padding: 14px;
+    transform: none;
+    border: 2px solid var(--red);
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 13px !important;
+    line-height: 1.08;
+    font-weight: 800;
+    z-index: 4;
+    box-shadow: 0 15px 34px rgba(213, 31, 42, .22);
+  }
+
+  .floatingMenuBook:hover {
+    background: var(--red2);
+    border-color: var(--red2);
+    transform: translateY(-4px);
+  }
+}
