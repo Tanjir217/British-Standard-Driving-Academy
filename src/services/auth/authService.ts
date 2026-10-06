@@ -162,23 +162,47 @@ export async function getCurrentMember() {
   return response.member ?? null;
 }
 
+function clearLocalMemberSession() {
+  clearWixTokens();
+
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem("bsda.wix.oauth");
+  }
+}
+
+function isLocalDevelopmentHost() {
+  return (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "::1"
+  );
+}
+
 export async function signOutMember() {
+  /*
+   * IMPORTANT:
+   * Wix's logout() returns a URL. The actual logout happens only after the
+   * browser navigates to that URL. Therefore a try/catch cannot catch Wix's
+   * "not a valid redirect domain" page after navigation.
+   *
+   * localhost is not an approved Wix redirect domain in this project, so
+   * local development must perform the local token logout directly. In
+   * production, Wix logout is used and redirects to /login.
+   */
+  if (isLocalDevelopmentHost()) {
+    clearLocalMemberSession();
+    window.location.replace("/login");
+    return;
+  }
+
   try {
-    // Wix requires the post-logout URL to be an approved redirect domain.
-    // During local Vite development, localhost may not be allowlisted, so
-    // fall back to a local application logout instead of leaving the user
-    // stuck on Wix's "not a valid redirect domain" page.
-    const logoutUrl = await getWixLogoutUrl(window.location.href);
-    clearWixTokens();
-    if (typeof sessionStorage !== "undefined") {
-      sessionStorage.removeItem("bsda.wix.oauth");
-    }
+    const postLogoutUrl = new URL("/login", window.location.origin).toString();
+    const logoutUrl = await getWixLogoutUrl(postLogoutUrl);
+
+    clearLocalMemberSession();
     window.location.assign(logoutUrl);
   } catch {
-    clearWixTokens();
-    if (typeof sessionStorage !== "undefined") {
-      sessionStorage.removeItem("bsda.wix.oauth");
-    }
+    clearLocalMemberSession();
     window.location.replace("/login");
   }
 }
