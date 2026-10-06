@@ -42,7 +42,7 @@ const packageCopy: Record<string, { eyebrow: string; description: string; featur
 function getPackageCopy(plan: Package) {
   const copy = packageCopy[plan.name.trim().toLowerCase()];
   return {
-    eyebrow: copy?.eyebrow ?? (\${plan.lessonHours} Hours),
+    eyebrow: copy?.eyebrow ?? (${plan.lessonHours} Hours),
     description:
       copy?.description ??
       "A structured BSDA driving programme managed through our booking and pricing system.",
@@ -64,7 +64,7 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
         <h3>{service.name}</h3>
         <p>{service.description || "Driving service available through BSDA."}</p>
       </div>
-      <Link className="textlink" to={\`/booking?service=\${service.id}\`}>
+      <Link className="textlink" to={`/booking?service=${service.id}`}>
         Enquire <span>→</span>
       </Link>
     </article>
