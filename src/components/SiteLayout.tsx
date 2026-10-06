@@ -8,6 +8,18 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showQuickIntro, setShowQuickIntro] = useState(pathname === "/");
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      setShowQuickIntro(false);
+      return;
+    }
+
+    setShowQuickIntro(true);
+    const timer = window.setTimeout(() => setShowQuickIntro(false), 2700);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -84,7 +96,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       </header>
 
       <div
-        className={pathname === "/" ? "floatingQuickActions home-intro" : "floatingQuickActions"}
+        className={showQuickIntro ? "floatingQuickActions home-intro" : "floatingQuickActions"}
         aria-label="Quick actions"
       >
         <Link className="floatingQuickAction" to="/booking" aria-label="Booking">
