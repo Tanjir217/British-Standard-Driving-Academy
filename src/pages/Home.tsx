@@ -171,7 +171,7 @@ export function Home() {
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
             <span className="sectionNumber">02</span>
           </div>
-          <div className="cards">
+          <div className="cards package-home-grid">
             {packageCards.map((p, i) => (
               <Reveal key={p.id} delay={i * 90}><PackageCard p={p} /></Reveal>
             ))}
