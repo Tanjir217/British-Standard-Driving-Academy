@@ -29,6 +29,11 @@ function App() {
   return (
     <BrowserRouter>
       <Scroll />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+      </Routes>
+
       <SiteLayout>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -38,8 +43,6 @@ function App() {
           <Route path="/instructors" element={<Instructors />} />
           <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
           <Route path="/portal" element={<Portal />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
