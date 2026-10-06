@@ -156,13 +156,13 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
 
-            <Link
-              className="navbook"
-              to="/packages"
+            <NavLink
+              to="/faq"
               onClick={() => setHeaderOpen(false)}
+              className={({ isActive }) => (isActive ? "active" : "")}
             >
-              Book a lesson <Icon n="arrow" s={15} />
-            </Link>
+              FAQ
+            </NavLink>
           </nav>
         </div>
       </header>
