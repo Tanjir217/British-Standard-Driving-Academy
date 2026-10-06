@@ -1,119 +1,172 @@
-import { FormEvent, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import {
+  getCurrentMember,
+  signOutMember,
+} from "../services/auth/authService";
+
+type MemberSummary = {
+  loginEmail?: string;
+  profile?: {
+    firstName?: string;
+    lastName?: string;
+  };
+};
+
 export function Portal() {
-  const [logged, setLogged] = useState(false);
+  const navigate = useNavigate();
+  const [member, setMember] = useState<MemberSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    getCurrentMember()
+      .then((currentMember) => {
+        if (!active) return;
+
+        if (!currentMember) {
+          navigate(
+            "/login?returnTo=" +
+              encodeURIComponent("/portal"),
+            { replace: true },
+          );
+          return;
+        }
+
+        setMember(currentMember);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "We couldn't load your account.",
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <section className="page portal">
+        <div className="container authloading">
+          <span className="ey">Student portal</span>
+          <h1>Loading your account...</h1>
+          <p>Please wait while we securely restore your session.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="page portal">
+        <div className="container authloading">
+          <span className="ey">Student portal</span>
+          <h1>We couldn't load your account.</h1>
+          <p>{error}</p>
+          <button className="btn red" onClick={() => navigate("/login")}>
+            Sign in again <Icon n="arrow" />
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const firstName = member?.profile?.firstName?.trim();
+  const displayName = firstName || "learner";
+
   return (
     <section className="page portal">
-      <div className="container portalgrid">
-        {!logged ? (
-          <>
-            <div>
-              <span className="ey">Learning Portal</span>
-              <h1>Your learning hub, in one place.</h1>
-              <p>
-                Registered students will use the portal for theory-test
-                preparation, practical guidance, progress information and
-                learning materials.
-              </p>
-              <div className="portalpoints">
-                <span>
-                  <Icon n="book" /> Theory practice
-                </span>
-                <span>
-                  <Icon n="car" /> Practical preparation
-                </span>
-                <span>
-                  <Icon n="shield" /> Safety resources
-                </span>
-              </div>
-            </div>
-            <form
-              className="login"
-              onSubmit={(e: FormEvent) => {
-                e.preventDefault();
-                setLogged(true);
-              }}
-            >
-              <div className="lock">
-                <Icon n="lock" s={26} />
-              </div>
-              <h2>Student sign in</h2>
-              <p>Demo login — authentication will be integrated later.</p>
-              <label>
-                Email
-                <input
-                  required
-                  type="email"
-                  placeholder="student@example.com"
-                />
-              </label>
-              <label>
-                Password
-                <input required type="password" placeholder="••••••••" />
-              </label>
-              <button className="btn red full">
-                Sign in <Icon n="arrow" />
-              </button>
-              <button type="button" className="textbutton">
-                Forgot password?
-              </button>
-            </form>
-          </>
-        ) : (
-          <Dashboard logout={() => setLogged(false)} />
-        )}
+      <div className="container dashboard">
+        <div className="dashhead">
+          <div>
+            <span className="ey">Student dashboard</span>
+            <h1>Good to see you, {displayName}.</h1>
+            <p className="dashboardemail">
+              {member?.loginEmail || "Your BSDA member account"}
+            </p>
+          </div>
+          <button
+            className="btn light"
+            onClick={() => void signOutMember()}
+          >
+            Sign out
+          </button>
+        </div>
+
+        <div className="dashgrid">
+          <div className="dash darkdash">
+            <span className="ey">Account status</span>
+            <strong>Active</strong>
+            <p>
+              Your BSDA member account is connected. Student training data will
+              appear here once your learner profile is linked.
+            </p>
+          </div>
+
+          <PortalCard
+            icon="calendar"
+            title="Lessons & bookings"
+            text="Your upcoming and completed lessons will be connected to the BSDA booking system here."
+          />
+
+          <PortalCard
+            icon="car"
+            title="Learning progress"
+            text="Your instructor progress, completed lessons and next learning targets will appear here."
+          />
+
+          <PortalCard
+            icon="book"
+            title="Learning materials"
+            text="Theory practice, preparation resources and training videos will be available here."
+          />
+        </div>
+
+        <div className="panel dashboardpanel">
+          <div>
+            <span className="ey">Next stage</span>
+            <h2>Your account foundation is ready.</h2>
+            <p>
+              The next backend layer will connect your Wix member account to
+              your Student Profile, bookings, lesson records, progress and
+              learning resources.
+            </p>
+          </div>
+          <button className="btn red" onClick={() => navigate("/booking")}>
+            Book a lesson <Icon n="arrow" />
+          </button>
+        </div>
       </div>
     </section>
   );
 }
-function Dashboard({ logout }: { logout: () => void }) {
+
+function PortalCard({
+  icon,
+  title,
+  text,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+}) {
   return (
-    <div className="dashboard">
-      <div className="dashhead">
-        <div>
-          <span className="ey">Student dashboard</span>
-          <h1>Good to see you, learner.</h1>
-        </div>
-        <button className="btn light" onClick={logout}>
-          Sign out
-        </button>
-      </div>
-      <div className="dashgrid">
-        <div className="dash darkdash">
-          <span className="ey">Your progress</span>
-          <strong>62%</strong>
-          <p>
-            Keep building consistency. Your next milestone is a mock practical.
-          </p>
-          <div className="progress">
-            <i />
-          </div>
-        </div>
-        {[
-          [
-            "book",
-            "Theory Test",
-            "Practice questions, signs, hazards and test-day guidance.",
-          ],
-          [
-            "car",
-            "Practical Test",
-            "Mock-test checklist, common faults and preparation notes.",
-          ],
-          [
-            "calendar",
-            "Upcoming lesson",
-            "Saturday · 10:00 AM — Instructor: Demo Coach",
-          ],
-        ].map((x) => (
-          <div className="dash" key={x[1]}>
-            <Icon n={x[0]} s={24} />
-            <h3>{x[1]}</h3>
-            <p>{x[2]}</p>
-            <button className="textbutton">Open →</button>
-          </div>
-        ))}
-      </div>
+    <div className="dash">
+      <Icon n={icon} s={24} />
+      <h3>{title}</h3>
+      <p>{text}</p>
+      <span className="portalstatus">Coming with your learner profile</span>
     </div>
   );
 }
