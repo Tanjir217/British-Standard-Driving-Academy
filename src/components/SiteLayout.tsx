@@ -54,7 +54,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 {t}
               </NavLink>
             ))}
-            <Link className="navbook" to="/booking" onClick={() => setOpen(false)}>
+            <Link className="navbook" to="/packages" onClick={() => setOpen(false)}>
               Book a lesson <Icon n="arrow" s={15} />
             </Link>
           </nav>
@@ -69,7 +69,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <span className="ey">Ready when you are</span>
             <h2>Your next mile starts with the right lesson.</h2>
           </div>
-          <Link className="btn white" to="/booking">Book a lesson <Icon n="arrow" /></Link>
+          <Link className="btn white" to="/packages">Book a lesson <Icon n="arrow" /></Link>
         </div>
         <div className="container footgrid">
           <div>
@@ -86,7 +86,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <div>
             <h4>Academy</h4>
             <Link to="/faq">FAQ</Link>
-            <Link to="/booking">Booking & Inquiry</Link>
+            <Link to="/packages">Book a lesson</Link>
             <span>37 Dunfield Rd, London, SE6 3RW</span>
             <span>+44 7908 807741</span>
           </div>
