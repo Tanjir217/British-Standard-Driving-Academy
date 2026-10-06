@@ -286,29 +286,41 @@ export function Login() {
                   )}
 
                   {mode !== "reset" && (
-                    <label>
-                      Password
-                      <input
-                        type="password"
-                        value={form.password}
-                        onChange={(e) => update("password", e.target.value)}
-                        autoComplete={mode === "register" ? "new-password" : "current-password"}
-                        required
-                      />
-                    </label>
-                  )}
-
-                  {mode === "register" && (
-                    <label>
-                      Confirm password
-                      <input
-                        type="password"
-                        value={form.confirmPassword}
-                        onChange={(e) => update("confirmPassword", e.target.value)}
-                        autoComplete="new-password"
-                        required
-                      />
-                    </label>
+                    mode === "register" ? (
+                      <div className="authfields two authpasswordfields">
+                        <label>
+                          Password
+                          <input
+                            type="password"
+                            value={form.password}
+                            onChange={(e) => update("password", e.target.value)}
+                            autoComplete="new-password"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Confirm password
+                          <input
+                            type="password"
+                            value={form.confirmPassword}
+                            onChange={(e) => update("confirmPassword", e.target.value)}
+                            autoComplete="new-password"
+                            required
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <label>
+                        Password
+                        <input
+                          type="password"
+                          value={form.password}
+                          onChange={(e) => update("password", e.target.value)}
+                          autoComplete="current-password"
+                          required
+                        />
+                      </label>
+                    )
                   )}
 
                   {mode === "signin" && (
