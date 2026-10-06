@@ -5067,13 +5067,6 @@ nav .navbook {
   flex-direction: column;
   align-items: flex-end;
   gap: 9px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(14px);
-  transition: opacity .22s ease, transform .22s ease;
-}
-
-.site.scrolled .floatingQuickActions {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -5084,8 +5077,8 @@ nav .navbook {
   align-items: center;
   justify-content: flex-end;
   gap: 0;
-  width: var(--home-quick-size);
-  height: var(--home-quick-size);
+  width: 46px;
+  height: 46px;
   padding: 0 13px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
@@ -5144,7 +5137,7 @@ nav .navbook {
 
   .floatingQuickAction:hover,
   .floatingQuickAction:focus-visible {
-    width: var(--home-quick-open);
+    width: 124px;
   }
 }
 
@@ -5167,166 +5160,72 @@ nav .navbook {
 }
 
 
-/* Home page quick-action intro: reveal each action once, then collapse back
-   to the compact icon rail. The rail hands off to the global scrolled rail. */
-.homeQuickActions {
-  --home-quick-size: 46px;
-  --home-quick-open: 132px;
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 119;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 9px;
-  pointer-events: auto;
-  transition: opacity .2s ease, transform .2s ease;
-}
-
-.homeQuickActions.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(14px);
-}
-
-.homeQuickAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0;
-  width: var(--home-quick-size);
-  height: var(--home-quick-size);
-  padding: 0 13px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: 999px;
-  background: var(--navy);
-  color: #fff;
-  box-shadow: 0 12px 28px rgba(17, 24, 39, .2);
+/* Home page intro: the global rail remains sticky; on the home page each
+   action briefly expands in sequence when the page first mounts. */
+.floatingQuickActions.home-intro .floatingQuickAction {
   animation: homeQuickReveal 1.2s cubic-bezier(.22, .8, .24, 1) both;
-  transition: width .2s ease, background .2s ease, color .2s ease, gap .2s ease;
 }
 
-.homeQuickAction:nth-child(2) {
+.floatingQuickActions.home-intro .floatingQuickAction:nth-child(2) {
   animation-delay: .65s;
 }
 
-.homeQuickAction:nth-child(3) {
+.floatingQuickActions.home-intro .floatingQuickAction:nth-child(3) {
   animation-delay: 1.3s;
 }
 
-.homeQuickAction span {
-  max-width: 0;
-  opacity: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 800;
+.floatingQuickActions.home-intro .floatingQuickAction span {
   animation: homeQuickLabelReveal 1.2s cubic-bezier(.22, .8, .24, 1) both;
 }
 
-.homeQuickAction:nth-child(2) span {
+.floatingQuickActions.home-intro .floatingQuickAction:nth-child(2) span {
   animation-delay: .65s;
 }
 
-.homeQuickAction:nth-child(3) span {
+.floatingQuickActions.home-intro .floatingQuickAction:nth-child(3) span {
   animation-delay: 1.3s;
 }
 
-.homeQuickAction:hover,
-.homeQuickAction:focus-visible {
-  width: var(--home-quick-open);
-  gap: 9px;
-  background: var(--red);
-  color: #fff;
-}
-
-.homeQuickAction:hover span,
-.homeQuickAction:focus-visible span {
-  max-width: 90px;
-  opacity: 1;
-}
-
-.homeQuickAction:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
-}
-
 @keyframes homeQuickReveal {
-  0%, 20% {
-    width: var(--home-quick-size);
-    gap: 0;
-  }
-  35%, 65% {
-    width: var(--home-quick-open);
-    gap: 9px;
-  }
-  85%, 100% {
-    width: 46px;
-    gap: 0;
-  }
+  0%, 20% { width: 46px; gap: 0; }
+  35%, 65% { width: 132px; gap: 9px; }
+  85%, 100% { width: 46px; gap: 0; }
 }
 
 @keyframes homeQuickLabelReveal {
-  0%, 20% {
-    max-width: 0;
-    opacity: 0;
-  }
-  35%, 65% {
-    max-width: 90px;
-    opacity: 1;
-  }
-  85%, 100% {
-    max-width: 0;
-    opacity: 0;
-  }
+  0%, 20% { max-width: 0; opacity: 0; }
+  35%, 65% { max-width: 90px; opacity: 1; }
+  85%, 100% { max-width: 0; opacity: 0; }
 }
 
 @media (max-width: 980px) {
-  .homeQuickActions {
-    --home-quick-size: 44px;
-    --home-quick-open: 124px;
-    right: 16px;
-    bottom: 16px;
-    gap: 8px;
+  .floatingQuickActions.home-intro .floatingQuickAction {
+    animation-name: homeQuickRevealTablet;
   }
+}
 
-  .homeQuickAction {
-    width: var(--home-quick-size);
-    height: var(--home-quick-size);
-    padding-inline: 12px;
-  }
-
-  .homeQuickAction:hover,
-  .homeQuickAction:focus-visible {
-    width: var(--home-quick-open);
-  }
+@keyframes homeQuickRevealTablet {
+  0%, 20% { width: 44px; gap: 0; }
+  35%, 65% { width: 124px; gap: 9px; }
+  85%, 100% { width: 44px; gap: 0; }
 }
 
 @media (max-width: 560px) {
-  .homeQuickActions {
-    --home-quick-size: 42px;
-    --home-quick-open: 116px;
-    right: 14px;
-    bottom: 14px;
-  }
-
-  .homeQuickAction {
-    width: var(--home-quick-size);
-    height: var(--home-quick-size);
-    padding-inline: 11px;
-  }
-
-  .homeQuickAction:hover,
-  .homeQuickAction:focus-visible {
-    width: var(--home-quick-open);
+  .floatingQuickActions.home-intro .floatingQuickAction {
+    animation-name: homeQuickRevealMobile;
   }
 }
 
+@keyframes homeQuickRevealMobile {
+  0%, 20% { width: 42px; gap: 0; }
+  35%, 65% { width: 116px; gap: 9px; }
+  85%, 100% { width: 42px; gap: 0; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
-  .homeQuickAction,
-  .homeQuickAction span {
+  .floatingQuickActions.home-intro .floatingQuickAction,
+  .floatingQuickActions.home-intro .floatingQuickAction span {
     animation: none;
   }
 }
