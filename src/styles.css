@@ -4920,3 +4920,23 @@ nav .navbook {
 }
 
 
+
+
+/* Contrast-aware desktop flyout text. Inactive labels use difference blending
+   so they automatically read dark over light sections and light over navy/dark
+   sections. Active links keep the existing red treatment. */
+@media (min-width: 981px) {
+  .floatingMenuLinks a,
+  .floatingMenuBook {
+    color: #fff;
+    mix-blend-mode: difference;
+  }
+
+  .floatingMenuLinks a:hover,
+  .floatingMenuLinks a.active,
+  .floatingMenuBook:hover,
+  .floatingMenuBook.active {
+    color: var(--red);
+    mix-blend-mode: normal;
+  }
+}
