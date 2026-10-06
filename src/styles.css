@@ -3877,3 +3877,186 @@ nav .navbook {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* Floating navigation — persistent access on desktop and mobile. */
+.desktopnav {
+  display: none;
+}
+
+.floatingMenuButton {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  z-index: 120;
+  box-shadow: 0 14px 35px rgba(17, 24, 39, 0.24);
+  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.floatingMenuButton:hover {
+  transform: translateY(-2px);
+  background: var(--red);
+  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.28);
+}
+
+.floatingMenuButton.open {
+  background: var(--red);
+}
+
+.floatingMenuButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+.floatingMenuOverlay {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(17, 24, 39, 0.24);
+  backdrop-filter: blur(2px);
+  z-index: 108;
+}
+
+.floatingMenuPanel {
+  position: fixed;
+  right: 24px;
+  bottom: 94px;
+  width: min(360px, calc(100vw - 48px));
+  padding: 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.22);
+  z-index: 115;
+  animation: floatingMenuIn .2s ease both;
+}
+
+.floatingMenuHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.floatingMenuHead .ey {
+  display: block;
+  font-size: 9px !important;
+  margin-bottom: 4px;
+}
+
+.floatingMenuHead strong {
+  display: block;
+  color: var(--navy);
+  font: 700 22px/1.1 "Times New Roman", Times, serif;
+}
+
+.floatingMenuClose {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--navy);
+  display: grid;
+  place-items: center;
+}
+
+.floatingMenuLinks {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+}
+
+.floatingMenuLinks a {
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #4e5869;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 18px !important;
+  font-weight: 700;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.floatingMenuLinks a:hover,
+.floatingMenuLinks a.active {
+  background: #efebe4;
+  color: var(--navy);
+  transform: translateX(2px);
+}
+
+.floatingMenuLinks a svg {
+  color: var(--red);
+}
+
+.floatingMenuBook {
+  min-height: 50px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--red);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 18px !important;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(213, 31, 42, 0.18);
+  transition: background .18s ease, transform .18s ease;
+}
+
+.floatingMenuBook:hover {
+  background: var(--red2);
+  transform: translateY(-1px);
+}
+
+@keyframes floatingMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .floatingMenuButton {
+    right: 16px;
+    bottom: 16px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .floatingMenuPanel {
+    right: 12px;
+    bottom: 82px;
+    width: calc(100vw - 24px);
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .floatingMenuHead strong {
+    font-size: 20px;
+  }
+
+  .floatingMenuLinks a,
+  .floatingMenuBook {
+    font-size: 18px !important;
+  }
+}
