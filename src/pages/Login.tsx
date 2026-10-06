@@ -84,12 +84,24 @@ export function Login() {
     try {
       const result =
         mode === "signin"
-          ? await signInWithEmail(form.email.trim(), form.password)
+          ? await signInWithEmail(form.email.trim(), form.password, returnTo)
           : await createMemberAccount(form.email.trim(), form.password, {
               firstName: form.firstName.trim(),
               lastName: form.lastName.trim(),
               phones: form.phone.trim() ? [form.phone.trim()] : undefined,
             });
+
+      if (result.state === "REDIRECT") {
+        setNotice(
+          mode === "register"
+            ? "Account created successfully. Taking you to your student portal..."
+            : "Sign in successful. Taking you to your student portal...",
+        );
+        window.setTimeout(() => {
+          window.location.assign(result.authUrl);
+        }, 350);
+        return;
+      }
 
       if (result.state === "EMAIL_VERIFICATION_REQUIRED") {
         setVerificationRequired(true);
@@ -118,6 +130,14 @@ export function Login() {
 
     try {
       const result = await completeMemberVerification(verificationCode.trim());
+
+      if (result.state === "REDIRECT") {
+        setNotice("Email verified successfully. Taking you to your student portal...");
+        window.setTimeout(() => {
+          window.location.assign(result.authUrl);
+        }, 350);
+        return;
+      }
 
       if (result.state === "SUCCESS") {
         navigate(returnTo);
