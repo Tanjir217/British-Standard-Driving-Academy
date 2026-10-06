@@ -157,13 +157,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
 
-            <NavLink
-              to="/faq"
-              onClick={() => setHeaderOpen(false)}
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              FAQ
-            </NavLink>
           </nav>
         </div>
       </header>
