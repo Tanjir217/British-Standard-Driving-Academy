@@ -8,6 +8,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const [floatingOpen, setFloatingOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [darkFlyoutItems, setDarkFlyoutItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const onScroll = () => {
@@ -26,6 +27,81 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!floatingOpen || !scrolled) return;
+
+    const sampleFlyoutBackgrounds = () => {
+      const panel = document.querySelector<HTMLElement>(".floatingMenuPanel");
+      const overlay = document.querySelector<HTMLElement>(".floatingMenuOverlay");
+      if (!panel) return;
+
+      const previousPanelPointerEvents = panel.style.pointerEvents;
+      const previousOverlayPointerEvents = overlay?.style.pointerEvents;
+
+      panel.style.pointerEvents = "none";
+      if (overlay) overlay.style.pointerEvents = "none";
+
+      const items = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          ".floatingMenuLinks a, .floatingMenuBook",
+        ),
+      );
+
+      const next: Record<string, boolean> = {};
+
+      items.forEach((item, index) => {
+        const rect = item.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const element = document.elementFromPoint(x, y);
+
+        let node: HTMLElement | null =
+          element instanceof HTMLElement ? element : null;
+        let dark = false;
+
+        while (node && node !== document.body) {
+          const background = window.getComputedStyle(node).backgroundColor;
+          const match = background.match(
+            /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/,
+          );
+
+          if (match && (match[4] === undefined || Number(match[4]) > 0.35)) {
+            const [, red, green, blue] = match;
+            const luminance =
+              (Number(red) * 299 +
+                Number(green) * 587 +
+                Number(blue) * 114) /
+              1000;
+
+            dark = luminance < 105;
+            break;
+          }
+
+          node = node.parentElement;
+        }
+
+        next[String(index)] = dark;
+      });
+
+      panel.style.pointerEvents = previousPanelPointerEvents;
+      if (overlay) {
+        overlay.style.pointerEvents = previousOverlayPointerEvents ?? "";
+      }
+
+      setDarkFlyoutItems(next);
+    };
+
+    const frame = window.requestAnimationFrame(sampleFlyoutBackgrounds);
+    window.addEventListener("resize", sampleFlyoutBackgrounds);
+    window.addEventListener("scroll", sampleFlyoutBackgrounds, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", sampleFlyoutBackgrounds);
+      window.removeEventListener("scroll", sampleFlyoutBackgrounds);
+    };
+  }, [floatingOpen, scrolled]);
 
   const nav = [
     ["/packages", "Packages"],
@@ -121,12 +197,16 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="floatingMenuLinks">
-              {nav.map(([p, t]) => (
+              {nav.map(([p, t], index) => (
                 <NavLink
                   key={p}
                   to={p}
                   onClick={() => setFloatingOpen(false)}
-                  className={({ isActive }) => (isActive ? "active" : "")}
+                  className={({ isActive }) =>
+                    [isActive ? "active" : "", darkFlyoutItems[String(index)] ? "dark" : ""]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
                 >
                   <span>{t}</span>
                   <Icon n="arrow" s={16} />
@@ -135,7 +215,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             </div>
 
             <Link
-              className="floatingMenuBook"
+              className={
+                darkFlyoutItems["4"] ? "floatingMenuBook dark" : "floatingMenuBook"
+              }
               to="/packages"
               onClick={() => setFloatingOpen(false)}
             >
