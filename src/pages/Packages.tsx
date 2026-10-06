@@ -80,25 +80,27 @@ export function Packages() {
   useEffect(() => {
     let active = true;
 
-    Promise.all([packageService.list(), bookingService.listServices()])
-      .then(([packagesResult, servicesResult]) => {
+    Promise.all([packageService.list(), bookingService.listServices()]).then(
+      ([packagesResult, servicesResult]) => {
         if (!active) return;
 
-        if (!packagesResult.ok || !servicesResult.ok) {
-          setError(
-            !packagesResult.ok
-              ? packagesResult.error.message
-              : servicesResult.error.message,
-          );
-          return;
+        if (packagesResult.ok) {
+          setPackageData(packagesResult.data);
+        } else {
+          setError(packagesResult.error.message);
         }
 
-        setPackageData(packagesResult.data);
-        setServiceData(servicesResult.data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+        if (servicesResult.ok) {
+          setServiceData(servicesResult.data);
+        } else if (!packagesResult.ok) {
+          setError(
+            `${packagesResult.error.message} Additional services could not be loaded: ${servicesResult.error.message}`,
+          );
+        }
+      },
+    ).finally(() => {
+      if (active) setLoading(false);
+    });
 
     return () => {
       active = false;
