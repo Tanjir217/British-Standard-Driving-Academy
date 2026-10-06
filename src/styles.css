@@ -4530,3 +4530,16 @@ nav .navbook {
     transform: translateY(-4px);
   }
 }
+
+
+@media (min-width: 981px) {
+  /* The desktop flyout is label-first: no iconography inside the destinations. */
+  .floatingMenuHead {
+    display: none;
+  }
+
+  .floatingMenuLinks a svg,
+  .floatingMenuBook svg {
+    display: none;
+  }
+}
