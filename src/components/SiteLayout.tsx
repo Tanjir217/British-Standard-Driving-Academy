@@ -1,10 +1,11 @@
 import { ReactNode, useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { Brand } from "./Brand";
 import { Icon } from "./Icon";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [headerOpen, setHeaderOpen] = useState(false);
+  const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -82,7 +83,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="floatingQuickActions" aria-label="Quick actions">
+      <div
+        className={pathname === "/" ? "floatingQuickActions home-intro" : "floatingQuickActions"}
+        aria-label="Quick actions"
+      >
         <Link className="floatingQuickAction" to="/booking" aria-label="Booking">
           <Icon n="calendar" s={20} />
           <span>Booking</span>
