@@ -8,6 +8,11 @@ export {
   restoreWixTokens,
   clearWixTokens,
   getWixLoginUrl,
+  loginWithEmail,
+  registerWithEmail,
+  verifyMemberEmail,
+  exchangeDirectLoginSession,
+  sendWixPasswordResetEmail,
   completeWixLoginFromUrl,
   getWixLogoutUrl,
 } from "./client";
