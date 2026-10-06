@@ -1,5 +1,10 @@
 export {
   wixClient,
-  persistWixSession,
-  clearWixSession,
+  getWixClientId,
+  isWixMemberLoggedIn,
+  setWixTokens,
+  getWixTokens,
+  getWixLoginUrl,
+  completeWixLoginFromUrl,
+  getWixLogoutUrl,
 } from "./client";
