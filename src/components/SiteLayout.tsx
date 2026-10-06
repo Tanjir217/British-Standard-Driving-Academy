@@ -41,7 +41,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     ["/lessons", "Lessons"],
     ["/portal", "Learning Portal"],
     ["/instructors", "Instructors"],
-    ["/booking", "Booking and Inquiry"],
+    ["/booking", "Booking"],
     ["/faq", "FAQ"],
   ];
 
@@ -159,20 +159,23 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div>
-            <h4>Follow</h4>
-            <span>Facebook · Instagram · YouTube</span>
-            <span className="muted">
-              Social feed and learner updates will connect here.
-            </span>
+            <h4>Get in touch</h4>
+            <a href="tel:+447908807741">+44 7908 807741</a>
+            <a
+              href="https://wa.me/447908807741"
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp us
+            </a>
+            <Link to="/contact">Send an enquiry</Link>
+            <Link to="/faq">Read FAQs</Link>
           </div>
         </div>
 
         <div className="container footbottom">
           <span>© 2026 British Standard Driving Academy</span>
-          <span>
-            Wix packages and booking availability are connected. Payments and
-            protected student data are the next backend layer.
-          </span>
+          <span>Safety · Clarity · Progress · Confidence</span>
         </div>
       </footer>
     </div>
