@@ -12,7 +12,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      const isScrolled = window.scrollY > 16;
+      const isScrolled = window.scrollY > 110;
 
       setScrolled(isScrolled);
       setProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
