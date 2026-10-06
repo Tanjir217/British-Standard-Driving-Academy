@@ -146,8 +146,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <Link to="/lessons">Driving Lessons</Link>
             <Link to="/instructors">Instructors</Link>
             <Link to="/portal">Learning Portal</Link>
-            <Link to="/about">About us</Link>
-            <Link to="/contact">Contact us</Link>
           </div>
 
           <div>
