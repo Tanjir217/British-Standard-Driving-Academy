@@ -15,10 +15,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
 
       setScrolled(isScrolled);
       setProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
-
-      if (!isScrolled) {
-        setFloatingOpen(false);
-      }
     };
 
     onScroll();
