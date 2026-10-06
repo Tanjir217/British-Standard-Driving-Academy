@@ -4099,8 +4099,10 @@ nav .navbook {
   }
 
   .menu {
-    width: 44px;
-    height: 44px;
+    --home-quick-size: 44px;
+    --home-quick-open: 124px;
+    width: var(--home-quick-size);
+    height: var(--home-quick-size);
     border: 1px solid var(--line);
     border-radius: 8px;
     background: #fff;
@@ -5082,8 +5084,8 @@ nav .navbook {
   align-items: center;
   justify-content: flex-end;
   gap: 0;
-  width: 46px;
-  height: 46px;
+  width: var(--home-quick-size);
+  height: var(--home-quick-size);
   padding: 0 13px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
@@ -5142,7 +5144,7 @@ nav .navbook {
 
   .floatingQuickAction:hover,
   .floatingQuickAction:focus-visible {
-    width: 124px;
+    width: var(--home-quick-open);
   }
 }
 
@@ -5168,6 +5170,8 @@ nav .navbook {
 /* Home page quick-action intro: reveal each action once, then collapse back
    to the compact icon rail. The rail hands off to the global scrolled rail. */
 .homeQuickActions {
+  --home-quick-size: 46px;
+  --home-quick-open: 132px;
   position: fixed;
   right: 24px;
   bottom: 24px;
@@ -5223,11 +5227,11 @@ nav .navbook {
 }
 
 .homeQuickAction:nth-child(2) span {
-  animation-delay: .58s;
+  animation-delay: .65s;
 }
 
 .homeQuickAction:nth-child(3) span {
-  animation-delay: 1.16s;
+  animation-delay: 1.3s;
 }
 
 .homeQuickAction:hover,
@@ -5255,7 +5259,7 @@ nav .navbook {
     gap: 0;
   }
   35%, 65% {
-    width: 132px;
+    width: var(--home-quick-open);
     gap: 9px;
   }
   85%, 100% {
@@ -5300,19 +5304,21 @@ nav .navbook {
 
 @media (max-width: 560px) {
   .homeQuickActions {
+    --home-quick-size: 42px;
+    --home-quick-open: 116px;
     right: 14px;
     bottom: 14px;
   }
 
   .homeQuickAction {
-    width: 42px;
-    height: 42px;
+    width: var(--home-quick-size);
+    height: var(--home-quick-size);
     padding-inline: 11px;
   }
 
   .homeQuickAction:hover,
   .homeQuickAction:focus-visible {
-    width: 116px;
+    width: var(--home-quick-open);
   }
 }
 
