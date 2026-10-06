@@ -5115,6 +5115,23 @@ nav .navbook {
   opacity: 1;
 }
 
+/* The home intro reveal uses CSS animations on the same width/label properties.
+   Stop those animations as soon as the user hovers/focuses so the interactive
+   expanded state always wins and the label remains visible. */
+.floatingQuickActions.home-intro .floatingQuickAction:hover,
+.floatingQuickActions.home-intro .floatingQuickAction:focus-visible {
+  animation: none;
+  width: 132px;
+  gap: 9px;
+}
+
+.floatingQuickActions.home-intro .floatingQuickAction:hover span,
+.floatingQuickActions.home-intro .floatingQuickAction:focus-visible span {
+  animation: none;
+  max-width: 90px;
+  opacity: 1;
+}
+
 .floatingQuickAction:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
