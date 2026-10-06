@@ -113,7 +113,8 @@ export function Login() {
   const handleVerification = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setBusy(true);
-    clearMessages();
+    setError("");
+    setNotice("");
 
     try {
       const result = await completeMemberVerification(verificationCode.trim());
