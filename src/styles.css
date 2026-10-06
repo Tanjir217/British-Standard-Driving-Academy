@@ -3770,3 +3770,52 @@ nav .navbook {
     font-size: 9px !important;
   }
 }
+
+
+/* Keep the established login composition; only reclaim enough vertical space for the primary CTA. */
+@media (min-width: 981px) {
+  .authformarea {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .authformhead h2 {
+    font-size: 32px;
+    margin-bottom: 2px;
+  }
+
+  .authformhead p {
+    margin-bottom: 5px;
+  }
+
+  .authmode {
+    margin-bottom: 5px;
+  }
+
+  .authform {
+    gap: 4px;
+  }
+
+  .authform input {
+    height: 34px;
+  }
+
+  .authsubmit {
+    min-height: 36px;
+    margin-top: 0;
+  }
+
+  .authdivider {
+    margin-top: 5px;
+    margin-bottom: 4px;
+  }
+
+  .authprovider {
+    height: 34px;
+  }
+
+  .authsecure {
+    margin-top: 5px;
+    padding-top: 5px;
+  }
+}
