@@ -5195,8 +5195,8 @@ nav .navbook {
   align-items: center;
   justify-content: flex-end;
   gap: 0;
-  width: 46px;
-  height: 46px;
+  width: var(--home-quick-size);
+  height: var(--home-quick-size);
   padding: 0 13px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
@@ -5236,7 +5236,7 @@ nav .navbook {
 
 .homeQuickAction:hover,
 .homeQuickAction:focus-visible {
-  width: 132px;
+  width: var(--home-quick-open);
   gap: 9px;
   background: var(--red);
   color: #fff;
@@ -5255,7 +5255,7 @@ nav .navbook {
 
 @keyframes homeQuickReveal {
   0%, 20% {
-    width: 46px;
+    width: var(--home-quick-size);
     gap: 0;
   }
   35%, 65% {
@@ -5285,20 +5285,22 @@ nav .navbook {
 
 @media (max-width: 980px) {
   .homeQuickActions {
+    --home-quick-size: 44px;
+    --home-quick-open: 124px;
     right: 16px;
     bottom: 16px;
     gap: 8px;
   }
 
   .homeQuickAction {
-    width: 44px;
-    height: 44px;
+    width: var(--home-quick-size);
+    height: var(--home-quick-size);
     padding-inline: 12px;
   }
 
   .homeQuickAction:hover,
   .homeQuickAction:focus-visible {
-    width: 124px;
+    width: var(--home-quick-open);
   }
 }
 
