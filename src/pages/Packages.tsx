@@ -195,11 +195,23 @@ export function Packages() {
 
           {!loading && !error && serviceData.length > 0 && (
             <>
-              <div className="servicegrid">
-                {serviceData.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
-                ))}
-              </div>
+              {serviceData.some(
+                (service) =>
+                  !isCarHireService(service) &&
+                  !isTestPreparationService(service),
+              ) && (
+                <div className="servicegrid">
+                  {serviceData
+                    .filter(
+                      (service) =>
+                        !isCarHireService(service) &&
+                        !isTestPreparationService(service),
+                    )
+                    .map((service) => (
+                      <ServiceCard key={service.id} service={service} />
+                    ))}
+                </div>
+              )}
 
               {(serviceData.some(isCarHireService) ||
                 serviceData.some(isTestPreparationService)) && (
