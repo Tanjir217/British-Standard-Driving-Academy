@@ -146,7 +146,7 @@ export const bookingService: BookingService = {
         },
       };
     }
-  }
+  },
 
   async getAvailability(query) {
     try {
