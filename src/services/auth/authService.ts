@@ -163,9 +163,24 @@ export async function getCurrentMember() {
 }
 
 export async function signOutMember() {
-  const logoutUrl = await getWixLogoutUrl(window.location.href);
-  clearWixTokens();
-  window.location.href = logoutUrl;
+  try {
+    // Wix requires the post-logout URL to be an approved redirect domain.
+    // During local Vite development, localhost may not be allowlisted, so
+    // fall back to a local application logout instead of leaving the user
+    // stuck on Wix's "not a valid redirect domain" page.
+    const logoutUrl = await getWixLogoutUrl(window.location.href);
+    clearWixTokens();
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("bsda.wix.oauth");
+    }
+    window.location.assign(logoutUrl);
+  } catch {
+    clearWixTokens();
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("bsda.wix.oauth");
+    }
+    window.location.replace("/login");
+  }
 }
 
 export {
