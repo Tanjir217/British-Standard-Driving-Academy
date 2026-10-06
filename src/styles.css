@@ -5090,6 +5090,7 @@ nav .navbook {
 }
 
 .floatingQuickAction span {
+  display: inline-block;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
@@ -5109,6 +5110,7 @@ nav .navbook {
 
 .floatingQuickAction:hover span,
 .floatingQuickAction:focus-visible span {
+  display: inline-block;
   max-width: 90px;
   opacity: 1;
 }
