@@ -3345,3 +3345,146 @@ nav .navbook {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Login page refinement: keep the authentication form compact while retaining
+   the public BSDA header/footer supplied by SiteLayout. */
+.authscreen {
+  padding: 22px 24px;
+}
+
+.authshell {
+  min-height: 0;
+}
+
+.authvisual {
+  padding: 28px 36px;
+}
+
+.authvisualbody {
+  padding: 30px 0 20px;
+}
+
+.authvisualbody h1 {
+  font-size: clamp(42px, 4.5vw, 68px);
+  margin: 12px 0 14px;
+}
+
+.authroad {
+  height: 88px;
+  margin: 22px 0 18px;
+}
+
+.authroad:before {
+  top: 31px;
+  height: 34px;
+}
+
+.authroadline {
+  top: 38px;
+  height: 23px;
+  box-shadow: 0 34px 0 #eee7da;
+}
+
+.authroadcar {
+  top: 34px;
+}
+
+.authformarea {
+  padding: 34px 42px;
+}
+
+.authformcard {
+  width: min(420px, 100%);
+}
+
+.authformhead h2 {
+  font-size: 42px;
+  margin: 4px 0 7px;
+}
+
+.authformhead p {
+  margin-bottom: 18px;
+  font-size: 14px !important;
+  line-height: 1.45;
+}
+
+.authmode {
+  margin-bottom: 18px;
+}
+
+.authform {
+  gap: 11px;
+}
+
+.authform label {
+  gap: 5px;
+}
+
+.authform input {
+  height: 44px;
+}
+
+.authsubmit {
+  min-height: 46px;
+}
+
+.authdivider {
+  margin: 17px 0 12px;
+}
+
+.authprovider {
+  height: 45px;
+}
+
+.authsecure {
+  margin-top: 18px;
+  padding-top: 12px;
+}
+
+@media (max-width: 980px) {
+  .authscreen {
+    padding: 18px;
+  }
+
+  .authvisual {
+    min-height: 430px;
+    padding: 26px 32px;
+  }
+
+  .authformarea {
+    padding: 34px 28px 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  .authscreen {
+    padding: 0;
+  }
+
+  .authvisual {
+    min-height: 390px;
+    padding: 20px;
+  }
+
+  .authvisualbody {
+    padding: 24px 0 15px;
+  }
+
+  .authvisualbody h1 {
+    font-size: 43px;
+  }
+
+  .authroad {
+    height: 70px;
+    margin: 18px 0 14px;
+  }
+
+  .authformarea {
+    padding: 30px 20px 38px;
+  }
+
+  .authformhead h2 {
+    font-size: 38px;
+  }
+}
