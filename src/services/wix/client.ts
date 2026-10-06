@@ -125,7 +125,10 @@ export async function getWixLoginUrl(
 }
 
 export async function loginWithEmail(email: string, password: string) {
-  return wixClient.auth.login(email, password);
+  return wixClient.auth.login({
+    email,
+    password,
+  });
 }
 
 export async function registerWithEmail(
@@ -171,7 +174,9 @@ export async function completeWixLoginFromUrl(): Promise<{
     return { success: false };
   }
 
-  const oauthData = JSON.parse(raw) as { originalUrl?: string };
+  type WixOAuthData = Parameters<typeof wixClient.auth.getMemberTokens>[2];
+
+  const oauthData = JSON.parse(raw) as WixOAuthData;
   const { code, state, error } = wixClient.auth.parseFromUrl();
 
   if (error || !code || !state) {
