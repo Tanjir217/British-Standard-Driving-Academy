@@ -108,6 +108,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     ["/lessons", "Lessons"],
     ["/instructors", "Instructors"],
     ["/portal", "Learning Portal"],
+    ["/faq", "FAQ"],
   ];
 
   return (
@@ -214,15 +215,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               ))}
             </div>
 
-            <Link
-              className={
-                darkFlyoutItems["4"] ? "floatingMenuBook dark" : "floatingMenuBook"
-              }
-              to="/packages"
-              onClick={() => setFloatingOpen(false)}
-            >
-              Book a lesson <Icon n="arrow" s={17} />
-            </Link>
           </aside>
         </>
       )}
