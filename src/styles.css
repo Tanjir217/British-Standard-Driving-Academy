@@ -5012,3 +5012,15 @@ nav .navbook {
     color: #fff;
   }
 }
+
+
+/* Final desktop flyout: FAQ takes the former booking-action position,
+   preserving the existing diagonal composition. */
+@media (min-width: 981px) {
+  .floatingMenuLinks a:nth-child(5) {
+    left: 250px;
+    top: 112px;
+    right: auto;
+    bottom: auto;
+  }
+}
