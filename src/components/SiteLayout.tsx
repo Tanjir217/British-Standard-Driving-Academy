@@ -40,10 +40,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <Link to="/" onClick={() => setOpen(false)} aria-label="BSDA home">
             <Brand />
           </Link>
-          <button className="menu" aria-label="Open navigation" onClick={() => setOpen(!open)}>
-            <Icon n={open ? "close" : "menu"} />
-          </button>
-          <nav className={open ? "open" : ""}>
+          <nav className="desktopnav">
             {nav.map(([p, t]) => (
               <NavLink
                 key={p}
@@ -60,6 +57,61 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
+
+      <button
+        className={open ? "floatingMenuButton open" : "floatingMenuButton"}
+        type="button"
+        aria-label={open ? "Close navigation" : "Open navigation"}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <Icon n={open ? "close" : "menu"} />
+      </button>
+
+      {open && (
+        <>
+          <button
+            className="floatingMenuOverlay"
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setOpen(false)}
+          />
+          <aside className="floatingMenuPanel" aria-label="Site navigation">
+            <div className="floatingMenuHead">
+              <div>
+                <span className="ey">Navigation</span>
+                <strong>Where would you like to go?</strong>
+              </div>
+              <button
+                type="button"
+                className="floatingMenuClose"
+                aria-label="Close navigation"
+                onClick={() => setOpen(false)}
+              >
+                <Icon n="close" />
+              </button>
+            </div>
+
+            <div className="floatingMenuLinks">
+              {nav.map(([p, t]) => (
+                <NavLink
+                  key={p}
+                  to={p}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  <span>{t}</span>
+                  <Icon n="arrow" s={16} />
+                </NavLink>
+              ))}
+            </div>
+
+            <Link className="floatingMenuBook" to="/packages" onClick={() => setOpen(false)}>
+              Book a lesson <Icon n="arrow" s={17} />
+            </Link>
+          </aside>
+        </>
+      )}
 
       <main>{children}</main>
 
