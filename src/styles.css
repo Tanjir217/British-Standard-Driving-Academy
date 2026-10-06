@@ -4854,28 +4854,28 @@ nav .navbook {
     transform: none;
   }
 
-  /* Follow the user's quarter-circle track, with equal breathing room
-     from the bottom and right edges of the flyout. */
+  /* Compact quarter-circle flyout. Keep only the requested edge padding:
+     Learning Portal has right padding and Packages has bottom padding. */
   .floatingMenuLinks a:nth-child(1) {
     left: 190px;
-    top: 298px;
+    top: 286px;
     bottom: auto;
   }
 
   .floatingMenuLinks a:nth-child(2) {
-    left: 210px;
-    top: 235px;
+    left: 206px;
+    top: 228px;
     bottom: auto;
   }
 
   .floatingMenuLinks a:nth-child(3) {
-    left: 242px;
-    top: 172px;
+    left: 226px;
+    top: 170px;
     bottom: auto;
   }
 
   .floatingMenuBook {
-    left: 278px;
+    left: 250px;
     top: 112px;
     right: auto;
     bottom: auto;
@@ -4884,7 +4884,7 @@ nav .navbook {
   }
 
   .floatingMenuLinks a:nth-child(4) {
-    left: 316px;
+    left: 280px;
     top: 58px;
     right: auto;
     bottom: auto;
