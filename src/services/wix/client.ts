@@ -110,6 +110,7 @@ export async function getWixLoginUrl(
   redirectUri: string,
   originalUri?: string,
   idp?: "google" | "facebook",
+  sessionToken?: string,
 ): Promise<string> {
   const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
   const key = "bsda.wix.oauth";
@@ -119,7 +120,10 @@ export async function getWixLoginUrl(
 
   const { authUrl } = await wixClient.auth.getAuthUrl(
     oauthData,
-    idp ? { idp } : undefined,
+    {
+      ...(idp ? { idp } : {}),
+      ...(sessionToken ? { sessionToken } : {}),
+    },
   );
   return authUrl;
 }
