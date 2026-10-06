@@ -876,6 +876,15 @@ nav .navbook:hover {
 .lessoncards.light li svg {
   color: var(--red);
 }
+
+.page > .container > .heading + .lessoncards {
+  margin-top: 48px;
+}
+
+.page > .container > .heading + .timeline {
+  margin-top: 60px;
+}
+
 .darklink {
   margin-top: 28px;
 }
@@ -1234,6 +1243,10 @@ nav .navbook:hover {
   grid-template-columns: 1.4fr 0.75fr;
   gap: 24px;
 }
+
+.booking--spaced {
+  margin-top: 48px;
+}
 .form,
 .aside,
 .login {
@@ -1346,7 +1359,24 @@ textarea:focus {
 }
 .pagecards {
   max-width: 1060px;
-  margin: auto;
+  margin: 48px auto 0;
+}
+
+.pagecards .card > p {
+  min-height: 92px;
+  margin: 12px 0 0;
+}
+
+.servicepricing > .sectionIntro {
+  margin-bottom: 48px;
+}
+
+.servicepricing--highlight {
+  margin-top: 64px;
+}
+
+.servicepricing--highlight > .sectionIntro {
+  margin-bottom: 42px;
 }
 
 /* Homepage package grid: four equal cards on desktop. */
@@ -1402,15 +1432,23 @@ textarea:focus {
   margin: 0;
 }
 .paychips {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(155px, 1fr));
+  gap: 8px;
+  min-width: 330px;
 }
+
 .paychips span {
+  width: 100%;
+  min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: 9px;
+  padding: 9px 12px;
   border-radius: 7px;
   font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .timeline {
   display: grid;
@@ -1867,6 +1905,12 @@ footer {
   }
 }
 @media (max-width: 800px) {
+  .paychips {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .topbarin > div {
     display: none;
   }
@@ -1968,6 +2012,15 @@ footer {
   }
 }
 @media (max-width: 560px) {
+  .pagecards .card > p {
+    min-height: auto;
+  }
+
+  .paychips {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
   .container {
     width: calc(100% - 28px);
   }
