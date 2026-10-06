@@ -88,7 +88,7 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
         <p>{service.description || "Driving service available through BSDA."}</p>
       </div>
       <Link className="textlink" to="/packages">
-        Enquire <span>→</span>
+        View packages <span>→</span>
       </Link>
     </article>
   );
