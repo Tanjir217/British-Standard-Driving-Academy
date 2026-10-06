@@ -82,8 +82,7 @@ button {
   gap: 20px;
 }
 header {
-  position: sticky;
-  top: 3px;
+  position: relative;
   z-index: 20;
   background: rgba(255, 253, 250, 0.86);
   backdrop-filter: blur(18px);
@@ -3869,5 +3868,12 @@ nav .navbook {
 @media (max-width: 560px) {
   .portal > .container {
     padding: 18px;
+  }
+}
+
+/* Mobile footer: keep footer link groups compact and readable in two columns. */
+@media (max-width: 560px) {
+  .footgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
