@@ -97,25 +97,23 @@ function toBooking(booking: any): Booking {
 export const bookingService: BookingService = {
   async listServices() {
     try {
-      const response = await wixClient.services.queryServices({
-        query: {
+      const response = await wixClient.services.queryServices(
+        {
           filter: {
             type: { $eq: "APPOINTMENT" },
             hidden: { $eq: false },
           },
           paging: {
             limit: 100,
+            offset: 0,
           },
         },
-        fields: ["name", "type", "description", "payment"],
-      });
+        {
+          fields: ["name", "type", "description", "payment"],
+        },
+      );
 
-      const serviceResponse = response as any;
-      const serviceItems =
-        serviceResponse.services ??
-        serviceResponse.items ??
-        serviceResponse._items ??
-        [];
+      const serviceItems = response.items ?? [];
 
       return {
         ok: true,
@@ -229,15 +227,20 @@ export const bookingService: BookingService = {
 
   async getById(id) {
     try {
-      const response = await wixClient.bookings.queryExtendedBookings({
-        query: {
+      const response = await wixClient.extendedBookings.queryExtendedBookings(
+        {
           filter: {
             id: { $eq: id },
           },
         },
-      });
+        {},
+      );
 
-      const booking = response.items?.[0];
+      const booking =
+        (response as any).items?.[0] ??
+        (response as any).bookings?.[0] ??
+        (response as any).extendedBookings?.[0];
+
       if (!booking) {
         return {
           ok: false,
@@ -247,7 +250,7 @@ export const bookingService: BookingService = {
 
       return {
         ok: true,
-        data: toBooking(booking.booking ?? booking),
+        data: toBooking(booking),
       };
     } catch (error) {
       return {
