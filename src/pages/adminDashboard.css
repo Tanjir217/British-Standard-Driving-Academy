@@ -1365,3 +1365,39 @@
 .adminRevenue .revenueChart svg {
   min-height: 0 !important;
 }
+
+/* Calendar month selector: size and dropdown placement */
+.calendarToolbar .adminSelect {
+  width: 190px;
+  min-width: 190px;
+  flex: 0 0 190px;
+}
+
+.calendarToolbar .adminSelectTrigger {
+  width: 190px !important;
+  min-width: 190px !important;
+  min-height: 38px !important;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.calendarToolbar .adminSelectMenu {
+  left: 0 !important;
+  right: auto !important;
+  top: calc(100% + 6px) !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  box-sizing: border-box;
+  z-index: 40;
+}
+
+.calendarToolbar .adminSelectMenu button {
+  width: 100% !important;
+  min-height: 34px;
+  height: auto;
+  box-sizing: border-box;
+}
