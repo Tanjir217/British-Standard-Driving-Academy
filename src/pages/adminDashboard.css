@@ -898,73 +898,28 @@
   .adminContent {
     width: calc(100% - 28px);
     margin-top: -54px;
-  }
 
-  .adminStats {
-    grid-template-columns: 1fr 1fr;
-  }
+.calendarGrid button.hasReminder:not(.selected) {
+  box-shadow: inset 0 -2px 0 #c69b57;
 }
 
-@media (max-width: 560px) {
-  .adminTopbarInner {
-    width: calc(100% - 20px);
-  }
+.calendarReminderDot {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c69b57;
+  transform: translateX(-50%);
+}
 
-  .adminTopActions > button {
-    display: none;
-  }
+.calendarGrid button.selected .calendarReminderDot {
+  background: #fff;
+}
 
-  .adminUserMini > span {
-    width: 31px;
-    height: 31px;
-  }
-
-  .adminHero {
-    padding-inline: 14px;
-    min-height: 335px;
-  }
-
-  .adminHero h1 {
-    font-size: 36px;
-  }
-
-  .adminHero p {
-    font-size: 11px;
-  }
-
-  .adminHeroActions {
-    flex-direction: column;
-  }
-
-  .adminFilter,
-  .adminExport {
-    width: 100%;
-  }
-
-  .adminContent {
-    width: calc(100% - 20px);
-  }
-
-  .adminStats {
-    grid-template-columns: 1fr;
-  }
-
-  .adminPanel {
-    padding: 18px;
-  }
-
-  .adminLegend {
-    justify-content: flex-start;
-    margin: 14px 0 0;
-  }
-
-  .chartTooltip {
-    right: 7%;
-    top: 55px;
-  }
-
-  .adminPlaceholder {
-    width: calc(100% - 28px);
-    padding: 28px;
-  }
+.calendarCount small {
+  color: #c69b57;
+  font-size: 8px;
+  font-weight: 800;
 }
