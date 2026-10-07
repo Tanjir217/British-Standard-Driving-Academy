@@ -183,9 +183,9 @@ export function Login() {
       <div className="authshell">
         <section className="authvisual">
           <div className="authvisualtop">
-            <img src="/bsda-logo.jpg" alt="British Standard Driving Academy" />
+            <img src="/bsda-logo.jpg" alt="British Standard Driving Academy" onClick={() => navigate("/")}/>
             <button type="button" onClick={() => navigate("/")}>
-              Back to website <Icon n="arrow" s={17} />
+            Back to Home <Icon n="arrow" s={17} />
             </button>
           </div>
 
@@ -227,7 +227,7 @@ export function Login() {
             className="authmobileback"
             onClick={() => navigate("/")}
           >
-            <Icon n="arrow" s={16} /> Back to website
+            Back to Home <Icon n="arrow" s={16} /> 
           </button>
           <div className="authformcard">
             <div className="authformhead">

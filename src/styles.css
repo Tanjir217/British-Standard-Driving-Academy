@@ -72,7 +72,7 @@ button {
   letter-spacing: 0.3px;
 }
 .topbarin {
-  min-height: 29px;
+  min-height: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1986,6 +1986,9 @@ footer {
   nav > a {
     font-size: 11px;
     padding-inline: 7px;
+  }
+  .topbar{
+    display: none;
   }
   .lessoncards {
     grid-template-columns: 1fr 1fr;
@@ -5671,7 +5674,7 @@ nav .navbook {
 @media (max-width: 980px) {
   .authmobileback {
     display: inline-flex;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 }
 
@@ -5686,8 +5689,8 @@ nav .navbook {
 @media (max-width: 980px) {
   .authmobileback {
     display: inline-flex;
-    justify-self: center;
-    width: min(420px, 100%);
+    justify-self: start;
+    width: min(max-content, 100%);
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
@@ -5698,7 +5701,7 @@ nav .navbook {
     background: #fff;
     color: var(--red);
     box-shadow: 0 5px 14px rgba(17, 24, 39, 0.06);
-    font-size: 13px !important;
+    font-size: 16px !important;
     font-weight: 700;
     line-height: 1.2;
     transition:

@@ -39,10 +39,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const nav = [
     ["/packages", "Packages"],
     ["/lessons", "Lessons"],
-    ["/portal", "Learning Portal"],
     ["/instructors", "Instructors"],
-    ["/contact", "Contact Us"],
+    ["/portal", "Learning Portal"],
     ["/careers", "Careers"],
+    ["/contact", "Contact Us"],
     ["/faq", "FAQ"],
   ];
 
