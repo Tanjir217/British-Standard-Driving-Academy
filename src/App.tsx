@@ -12,6 +12,9 @@ import { Portal } from "./pages/Portal";
 import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
+import { Contact } from "./pages/Contact";
+import { Careers } from "./pages/Careers";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
 import "./styles.css";
 
@@ -28,6 +31,7 @@ function Scroll() {
 function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   if (isAuthRoute) {
     return (
@@ -36,6 +40,10 @@ function AppRoutes() {
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     );
+  }
+
+  if (isAdminRoute) {
+    return <AdminDashboard />;
   }
 
   return (
@@ -52,6 +60,8 @@ function AppRoutes() {
         />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/careers" element={<Careers />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteLayout>
