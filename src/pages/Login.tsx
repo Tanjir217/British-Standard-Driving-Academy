@@ -222,6 +222,13 @@ export function Login() {
         </section>
 
         <section className="authformarea">
+          <button
+            type="button"
+            className="authmobileback"
+            onClick={() => navigate("/")}
+          >
+            <Icon n="arrow" s={16} /> Back to website
+          </button>
           <div className="authformcard">
             <div className="authformhead">
               <span className="authmobileey">{eyebrow}</span>
