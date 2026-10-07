@@ -1401,3 +1401,105 @@
   height: auto;
   box-sizing: border-box;
 }
+
+/* Upcoming lessons panel fills the open space beside the calendar */
+.adminLeftColumn {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.adminUpcoming {
+  padding-top: 21px;
+  padding-bottom: 21px;
+}
+
+.upcomingList {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+
+.upcomingItem {
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.upcomingItem:hover {
+  border-color: rgba(213,31,42,.28);
+  background: #fffafa;
+  box-shadow: 0 5px 14px rgba(17,24,39,.06);
+  transform: translateY(-1px);
+}
+
+.upcomingTime {
+  color: #d51f2a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.upcomingInfo {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.upcomingInfo strong {
+  color: #34373e;
+  font-size: 9px;
+}
+
+.upcomingInfo small {
+  overflow: hidden;
+  color: #969aa1;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upcomingItem i {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.upcomingItem i.confirmed {
+  color: #39714b;
+  background: #e8f3eb;
+}
+
+.upcomingItem i.pending {
+  color: #986c2a;
+  background: #fbf1dd;
+}
+
+@media (max-width: 560px) {
+  .adminLeftColumn {
+    gap: 10px;
+  }
+
+  .adminUpcoming {
+    padding: 16px;
+  }
+
+  .upcomingItem {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    min-height: 50px;
+  }
+}
