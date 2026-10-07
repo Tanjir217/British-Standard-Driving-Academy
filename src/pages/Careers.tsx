@@ -36,7 +36,7 @@ export function Careers() {
               calm, capable road users—not just test-day preparation.
             </p>
             <div className="actions">
-              <a className="btn red" href="mailto:info@britishstandarddrivingacademy.co.uk">
+              <a className="btn red" href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27m%20interested%20in%20career%20opportunities." target="_blank" rel="noreferrer">
                 Send your CV <Icon n="arrow" />
               </a>
               <Link className="btn light" to="/contact">
@@ -100,7 +100,7 @@ export function Careers() {
             <h2>Tell us what you can bring to BSDA.</h2>
             <p>Send your CV and a short introduction. We can keep your details on file for relevant opportunities.</p>
           </div>
-          <a className="btn red" href="mailto:info@britishstandarddrivingacademy.co.uk?subject=BSDA%20Career%20Enquiry">
+          <a className="btn red" href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27d%20like%20to%20discuss%20career%20opportunities." target="_blank" rel="noreferrer">
             Start a conversation <Icon n="arrow" />
           </a>
         </div>
