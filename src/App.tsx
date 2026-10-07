@@ -13,7 +13,7 @@ import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
 import { Contact } from "./pages/Contact";
-import { Careers } from "./pages/Careers";
+import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
 import "./styles.css";
@@ -61,7 +61,7 @@ function AppRoutes() {
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/careers" element={<Careers />} />
+        <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteLayout>

@@ -23,7 +23,7 @@ const opportunities = [
   },
 ];
 
-export function Careers() {
+export function JoinOurTeam() {
   return (
     <section className="page careers-page">
       <div className="container">

@@ -41,7 +41,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     ["/lessons", "Lessons"],
     ["/instructors", "Instructors"],
     ["/portal", "Learning Portal"],
-    ["/careers", "Careers"],
+    ["/join-our-team", "Join Our Team"],
     ["/contact", "Contact Us"],
     ["/faq", "FAQ"],
   ];
