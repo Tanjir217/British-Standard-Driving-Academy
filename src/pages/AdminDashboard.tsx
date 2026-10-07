@@ -57,6 +57,12 @@ const reminders = [
   { time: "14:30", title: "Mock practical", detail: "Omar Khan · Vehicle assessment", tone: "cream" },
 ];
 
+const reminderDates: Record<number, string> = {
+  7: "Lesson reminder",
+  8: "Instructor availability",
+  14: "Mock practical",
+};
+
 export function AdminDashboard() {
   const [active, setActive] = useState("overview");
   const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
@@ -280,6 +286,7 @@ function CalendarPanel() {
         {Array.from({ length: firstDay }).map((_, index) => <span className="calendarEmpty" key={"empty-" + index} />)}
         {days.map((day) => {
           const booking = bookingDates[day];
+          const reminder = reminderDates[day];
           return (
             <button
               key={day}
@@ -287,12 +294,14 @@ function CalendarPanel() {
                 day === selectedDay ? "selected" : "",
                 day === 7 ? "today" : "",
                 booking ? "hasBooking" : "",
+                reminder ? "hasReminder" : "",
               ].filter(Boolean).join(" ")}
               onClick={() => setSelectedDay(day)}
-              title={booking?.label}
+              title={[booking?.label, reminder].filter(Boolean).join(" · ")}
             >
               <b>{day}</b>
               {booking && <i>{booking.count}</i>}
+              {reminder && <span className="calendarReminderDot" aria-label={reminder} />}
             </button>
           );
         })}
@@ -303,7 +312,10 @@ function CalendarPanel() {
           <span>Selected date</span>
           <strong>{selectedDay} October 2026</strong>
         </div>
-        <span className="calendarCount">{bookingDates[selectedDay]?.label ?? "No bookings"}</span>
+        <span className="calendarCount">
+          {bookingDates[selectedDay]?.label ?? "No bookings"}
+          {reminderDates[selectedDay] && <small> · Reminder</small>}
+        </span>
       </div>
 
       <div className="reminderList">
