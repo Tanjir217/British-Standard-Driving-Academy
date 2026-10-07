@@ -19,7 +19,7 @@ const nav: NavItem[] = [
 
 const stats = [
   { id: "students", label: "Active Students", value: "128", change: "+12.4%", note: "vs last month", icon: "users" },
-  { id: "lessons", label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month", icon: "car" },
+  { id: "bookings", label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month", icon: "car" },
   { id: "payments", label: "Revenue", value: "£18,640", change: "+14.2%", note: "vs last month", icon: "wallet" },
   { id: "bookings", label: "Pending Bookings", value: "17", change: "Needs action", note: "next 48 hours", icon: "calendar" },
 ];
