@@ -9,7 +9,7 @@
   min-height: 72px;
   background: #202126;
   color: #fff;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .adminTopbarInner {
@@ -169,7 +169,7 @@
   color: #9297a1;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: .05em;
+  letter-spacing: 0.05em;
 }
 
 .adminBreadcrumb span {
@@ -179,7 +179,10 @@
 
 .adminHero h1 {
   margin: 13px 0 9px;
-  font: 400 clamp(38px, 4.1vw, 57px)/1.02 Arial, Helvetica, sans-serif;
+  font:
+    400 clamp(38px, 4.1vw, 57px)/1.02 Arial,
+    Helvetica,
+    sans-serif;
   letter-spacing: -2.4px;
 }
 
@@ -259,7 +262,7 @@
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 7px;
-  box-shadow: 0 8px 25px rgba(17,24,39,.04);
+  box-shadow: 0 8px 25px rgba(17, 24, 39, 0.04);
   display: grid;
   align-content: center;
   gap: 4px;
@@ -291,7 +294,7 @@
 .adminStat strong {
   font-size: 29px;
   line-height: 1.05;
-  letter-spacing: -.8px;
+  letter-spacing: -0.8px;
   font-weight: 500;
 }
 
@@ -308,7 +311,7 @@
 
 .adminDashboardGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(360px, .95fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.95fr);
   gap: 16px;
   margin-top: 16px;
 }
@@ -318,7 +321,7 @@
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 7px;
-  box-shadow: 0 8px 25px rgba(17,24,39,.035);
+  box-shadow: 0 8px 25px rgba(17, 24, 39, 0.035);
   padding: 25px;
 }
 
@@ -333,7 +336,7 @@
   color: #8c9097;
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
 }
 
 .adminPanelHead h2 {
@@ -342,7 +345,7 @@
   font-size: 20px;
   line-height: 1.15;
   font-weight: 600;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .adminPanelHead p {
@@ -452,7 +455,7 @@
   border-radius: 7px;
   background: #202126;
   color: #fff;
-  box-shadow: 0 10px 20px rgba(17,24,39,.18);
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.18);
   display: grid;
   gap: 2px;
 }
@@ -660,8 +663,12 @@
   background: #d51f2a;
 }
 
-.reminderDot.navy { background: #202126; }
-.reminderDot.cream { background: #c69b57; }
+.reminderDot.navy {
+  background: #202126;
+}
+.reminderDot.cream {
+  background: #c69b57;
+}
 
 .reminderItem time {
   color: #999da4;
@@ -687,7 +694,7 @@
 
 .adminBottomGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .95fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
   gap: 16px;
   margin-top: 16px;
 }
@@ -700,7 +707,7 @@
 .bookingRow {
   min-width: 670px;
   display: grid;
-  grid-template-columns: .8fr 1.15fr 1.25fr 1fr .7fr;
+  grid-template-columns: 0.8fr 1.15fr 1.25fr 1fr 0.7fr;
   gap: 12px;
   align-items: center;
   padding: 12px 0;
@@ -714,7 +721,7 @@
   color: #9b9ea4;
   font-size: 8px;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
 .bookingRow strong {
@@ -869,7 +876,7 @@
     padding: 12px 0 11px;
   }
 
-  .adminNav button:nth-child(n+6) {
+  .adminNav button:nth-child(n + 6) {
     display: none;
   }
 
@@ -899,27 +906,29 @@
     width: calc(100% - 28px);
     margin-top: -54px;
 
-.calendarGrid button.hasReminder:not(.selected) {
-  box-shadow: inset 0 -2px 0 #c69b57;
-}
+    .calendarGrid button.hasReminder:not(.selected) {
+      box-shadow: inset 0 -2px 0 #c69b57;
+    }
 
-.calendarReminderDot {
-  position: absolute;
-  left: 50%;
-  bottom: 2px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #c69b57;
-  transform: translateX(-50%);
-}
+    .calendarReminderDot {
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #c69b57;
+      transform: translateX(-50%);
+    }
 
-.calendarGrid button.selected .calendarReminderDot {
-  background: #fff;
-}
+    .calendarGrid button.selected .calendarReminderDot {
+      background: #fff;
+    }
 
-.calendarCount small {
-  color: #c69b57;
-  font-size: 8px;
-  font-weight: 800;
+    .calendarCount small {
+      color: #c69b57;
+      font-size: 8px;
+      font-weight: 800;
+    }
+  }
 }
