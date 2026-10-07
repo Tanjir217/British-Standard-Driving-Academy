@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "../components/Brand";
 import { Icon } from "../components/Icon";
 import "./adminDashboard.css";
 
 type NavItem = [string, string, string];
+type SelectOption = { value: string; label: string };
 
 const nav: NavItem[] = [
   ["overview", "Overview", "car"],
@@ -17,10 +18,10 @@ const nav: NavItem[] = [
 ];
 
 const stats = [
-  { label: "Active Students", value: "128", change: "+12.4%", note: "vs last month", icon: "users" },
-  { label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month", icon: "car" },
-  { label: "Revenue", value: "£18,640", change: "+14.2%", note: "vs last month", icon: "wallet" },
-  { label: "Pending Bookings", value: "17", change: "Needs action", note: "next 48 hours", icon: "calendar" },
+  { id: "students", label: "Active Students", value: "128", change: "+12.4%", note: "vs last month", icon: "users" },
+  { id: "lessons", label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month", icon: "car" },
+  { id: "payments", label: "Revenue", value: "£18,640", change: "+14.2%", note: "vs last month", icon: "wallet" },
+  { id: "bookings", label: "Pending Bookings", value: "17", change: "Needs action", note: "next 48 hours", icon: "calendar" },
 ];
 
 const bookings = [
@@ -63,9 +64,38 @@ const reminderDates: Record<number, string> = {
   14: "Mock practical",
 };
 
+const periodOptions: SelectOption[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This week" },
+  { value: "month", label: "This month" },
+  { value: "year", label: "This year" },
+];
+
+const monthOptions: SelectOption[] = [
+  { value: "sep", label: "September 2026" },
+  { value: "oct", label: "October 2026" },
+  { value: "nov", label: "November 2026" },
+];
+
 export function AdminDashboard() {
   const [active, setActive] = useState("overview");
+  const [period, setPeriod] = useState("month");
   const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
+
+  const exportData = () => {
+    const csv = [
+      ["Reference", "Student", "Package", "Schedule", "Status"],
+      ...bookings,
+    ].map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "bsda-bookings.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="adminApp">
@@ -76,11 +106,12 @@ export function AdminDashboard() {
           </Link>
 
           <nav className="adminNav" aria-label="Admin navigation">
-            {nav.map(([id, label, icon]) => (
+            {nav.map(([id, label]) => (
               <button
                 key={id}
                 className={active === id ? "active" : ""}
                 onClick={() => setActive(id)}
+                type="button"
               >
                 <span>{label}</span>
               </button>
@@ -88,9 +119,15 @@ export function AdminDashboard() {
           </nav>
 
           <div className="adminTopActions">
-            <button aria-label="Settings"><Icon n="settings" s={18} /></button>
-            <button aria-label="Messages"><Icon n="mail" s={18} /></button>
-            <button aria-label="Notifications" className="hasDot"><Icon n="bell" s={18} /></button>
+            <button type="button" onClick={() => setActive("content")} aria-label="Open academy settings" title="Academy settings">
+              <Icon n="settings" s={18} />
+            </button>
+            <button type="button" onClick={() => setActive("students")} aria-label="Open student messages" title="Student messages">
+              <Icon n="mail" s={18} />
+            </button>
+            <button type="button" onClick={() => setActive("bookings")} aria-label="Open booking notifications" title="Booking notifications" className="hasDot">
+              <Icon n="bell" s={18} />
+            </button>
             <div className="adminUserMini">
               <span>AD</span>
               <div>
@@ -116,14 +153,21 @@ export function AdminDashboard() {
           <div className="adminHeroSide">
             <span className="adminDate">Wednesday, 7 October 2026</span>
             <div className="adminHeroActions">
-              <button className="adminFilter">Showing: <b>This month</b><Icon n="chevron" s={14} /></button>
-              <button className="adminExport"><Icon n="download" s={15} /> Export data</button>
+              <CustomSelect
+                value={period}
+                options={periodOptions}
+                onChange={setPeriod}
+                prefix="Showing:"
+              />
+              <button type="button" className="adminExport" onClick={exportData}>
+                <Icon n="download" s={15} /> Export data
+              </button>
             </div>
           </div>
         </section>
 
         {active === "overview" ? (
-          <Overview />
+          <Overview onNavigate={setActive} />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
@@ -132,6 +176,9 @@ export function AdminDashboard() {
               This section is part of the redesigned BSDA admin architecture.
               Its Wix-backed data layer can be connected without changing the dashboard shell.
             </p>
+            <button type="button" className="adminPrimaryButton" onClick={() => setActive("overview")}>
+              Back to overview <Icon n="arrow" s={14} />
+            </button>
           </section>
         )}
       </main>
@@ -139,12 +186,78 @@ export function AdminDashboard() {
   );
 }
 
-function Overview() {
+function CustomSelect({
+  value,
+  options,
+  onChange,
+  prefix,
+}: {
+  value: string;
+  options: SelectOption[];
+  onChange: (value: string) => void;
+  prefix?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  return (
+    <div className={`adminSelect ${open ? "open" : ""}`} ref={ref}>
+      <button
+        type="button"
+        className="adminSelectTrigger"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {prefix && <span>{prefix}</span>}
+        <b>{selected.label}</b>
+        <Icon n="chevron" s={13} />
+      </button>
+
+      {open && (
+        <div className="adminSelectMenu" role="listbox">
+          {options.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              key={option.value}
+              className={option.value === value ? "selected" : ""}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <Icon n="check" s={13} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
   return (
     <div className="adminContent">
       <section className="adminStats">
         {stats.map((stat) => (
-          <article className="adminStat" key={stat.label}>
+          <button
+            className="adminStat"
+            key={stat.label}
+            type="button"
+            onClick={() => onNavigate(stat.id)}
+            aria-label={`Open ${stat.label}`}
+          >
             <div className="adminStatTop">
               <span className="adminStatIcon"><Icon n={stat.icon} s={18} /></span>
               <span className="adminStatChange">{stat.change}</span>
@@ -152,7 +265,7 @@ function Overview() {
             <strong>{stat.value}</strong>
             <small>{stat.label}</small>
             <em>{stat.note}</em>
-          </article>
+          </button>
         ))}
       </section>
 
@@ -164,18 +277,15 @@ function Overview() {
               <h2>Bookings & revenue</h2>
               <p>Monthly performance across BSDA lessons and packages.</p>
             </div>
-            <button className="adminMore" aria-label="More revenue options"><Icon n="more" s={18} /></button>
-          </div>
-
-          <div className="adminLegend">
-            <span><i className="legendRevenue" /> Revenue</span>
-            <span><i className="legendBookings" /> Bookings</span>
+            <button type="button" className="adminPanelAction" onClick={() => onNavigate("payments")}>
+              Payments <Icon n="arrow" s={13} />
+            </button>
           </div>
 
           <RevenueChart />
         </article>
 
-        <CalendarPanel />
+        <CalendarPanel onNavigate={onNavigate} />
       </section>
 
       <section className="adminBottomGrid">
@@ -185,7 +295,9 @@ function Overview() {
               <span className="adminEyebrow">BOOKINGS</span>
               <h2>Recent bookings</h2>
             </div>
-            <button className="adminTextButton">View all <Icon n="arrow" s={13} /></button>
+            <button type="button" className="adminTextButton" onClick={() => onNavigate("bookings")}>
+              View all <Icon n="arrow" s={13} />
+            </button>
           </div>
 
           <div className="bookingTable">
@@ -193,13 +305,19 @@ function Overview() {
               <span>Reference</span><span>Student</span><span>Package</span><span>Schedule</span><span>Status</span>
             </div>
             {bookings.map((booking) => (
-              <div className="bookingRow" key={booking[0]}>
+              <button
+                type="button"
+                className="bookingRow bookingRowButton"
+                key={booking[0]}
+                onClick={() => onNavigate("bookings")}
+                title={`Open ${booking[0]}`}
+              >
                 <strong>{booking[0]}</strong>
                 <span>{booking[1]}</span>
                 <span>{booking[2]}</span>
                 <span>{booking[3]}</span>
                 <span><i className={booking[4].toLowerCase()}>{booking[4]}</i></span>
-              </div>
+              </button>
             ))}
           </div>
         </article>
@@ -210,13 +328,16 @@ function Overview() {
               <span className="adminEyebrow">ACTIVITY</span>
               <h2>Latest updates</h2>
             </div>
+            <button type="button" className="adminTextButton" onClick={() => onNavigate("overview")}>
+              Refresh view <Icon n="arrow" s={13} />
+            </button>
           </div>
           <div className="activityList">
             {activity.map(([time, title, detail]) => (
-              <div className="activityItem" key={title}>
+              <button type="button" className="activityItem" key={title} onClick={() => onNavigate("bookings")}>
                 <span>{time}</span>
                 <div><strong>{title}</strong><p>{detail}</p></div>
-              </div>
+              </button>
             ))}
           </div>
         </article>
@@ -226,40 +347,73 @@ function Overview() {
 }
 
 function RevenueChart() {
-  const points = "22,174 112,132 202,150 292,92 382,118 472,55 562,84";
-  const bookingPoints = "22,155 112,168 202,139 292,145 382,128 472,102 562,118";
+  const revenue = [12.2, 15.1, 13.8, 18.7, 16.9, 22.1, 19.4];
+  const bookingsCount = [29, 34, 31, 39, 36, 46, 42];
   const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"];
+  const maxRevenue = 24;
+  const width = 640;
+  const height = 230;
+  const left = 42;
+  const right = 12;
+  const top = 16;
+  const bottom = 34;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const revenuePoints = revenue.map((value, index) => [
+    left + (plotWidth / (revenue.length - 1)) * index,
+    top + plotHeight - (value / maxRevenue) * plotHeight,
+  ]);
+  const bookingPoints = bookingsCount.map((value, index) => [
+    left + (plotWidth / (bookingsCount.length - 1)) * index,
+    top + plotHeight - (value / 50) * plotHeight,
+  ]);
+  const revenueLine = revenuePoints.map(([x, y]) => `${x},${y}`).join(" ");
+  const bookingLine = bookingPoints.map(([x, y]) => `${x},${y}`).join(" ");
+  const areaPath = `M ${revenuePoints[0][0]} ${top + plotHeight} L ${revenuePoints.map(([x, y]) => `${x} ${y}`).join(" L ")} L ${revenuePoints[revenuePoints.length - 1][0]} ${top + plotHeight} Z`;
 
   return (
     <div className="revenueChart">
-      <svg viewBox="0 0 584 215" role="img" aria-label="Monthly revenue and bookings trend">
+      <div className="chartSummary">
+        <div><strong>£19.4K</strong><span>October revenue</span></div>
+        <div><strong>42</strong><span>Bookings</span></div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly BSDA revenue and bookings trend">
+        <defs>
+          <linearGradient id="adminRevenueFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(213,31,42,.16)" />
+            <stop offset="100%" stopColor="rgba(213,31,42,0)" />
+          </linearGradient>
+        </defs>
         <g className="chartGrid">
-          {[28, 69, 110, 151, 192].map((y) => <line key={y} x1="22" x2="562" y1={y} y2={y} />)}
+          {[0, 6, 12, 18, 24].map((value) => {
+            const y = top + plotHeight - (value / maxRevenue) * plotHeight;
+            return <g key={value}><line x1={left} x2={width - right} y1={y} y2={y} /><text x="0" y={y + 3}>{value === 0 ? "£0" : `£${value}K`}</text></g>;
+          })}
         </g>
-        <polyline className="chartBookings" points={bookingPoints} />
-        <polyline className="chartRevenue" points={points} />
-        {points.split(" ").map((point, index) => {
-          const [x, y] = point.split(",");
-          return <circle key={point} className="chartDot" cx={x} cy={y} r={index === 5 ? 5 : 3.5} />;
-        })}
-        <line className="chartGuide" x1="472" x2="472" y1="25" y2="194" />
+        <path className="chartArea" d={areaPath} />
+        <polyline className="chartBookings" points={bookingLine} />
+        <polyline className="chartRevenue" points={revenueLine} />
+        {revenuePoints.map(([x, y], index) => (
+          <circle key={months[index]} className={index === revenuePoints.length - 1 ? "chartDot active" : "chartDot"} cx={x} cy={y} r={index === revenuePoints.length - 1 ? 5 : 3.5} />
+        ))}
       </svg>
       <div className="chartMonths">
         {months.map((month) => <span key={month}>{month}</span>)}
       </div>
-      <div className="chartTooltip">
-        <small>September</small>
-        <strong>£18.6K</strong>
-        <span>46 bookings</span>
+      <div className="chartLegend">
+        <span><i className="legendRevenue" /> Revenue</span>
+        <span><i className="legendBookings" /> Bookings</span>
       </div>
     </div>
   );
 }
 
-function CalendarPanel() {
+function CalendarPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
   const [selectedDay, setSelectedDay] = useState(7);
-  const firstDay = 4; // October 2026 starts on Thursday when Sunday is 0.
-  const days = useMemo(() => Array.from({ length: 31 }, (_, index) => index + 1), []);
+  const [month, setMonth] = useState("oct");
+  const days = useMemo(() => month === "oct" ? Array.from({ length: 31 }, (_, index) => index + 1) : [], [month]);
+  const firstDay = month === "oct" ? 4 : 0;
+  const selectedMonthLabel = monthOptions.find((option) => option.value === month)?.label ?? "October 2026";
 
   return (
     <article className="adminPanel adminCalendar">
@@ -267,15 +421,15 @@ function CalendarPanel() {
         <div>
           <span className="adminEyebrow">SCHEDULE</span>
           <h2>Bookings calendar</h2>
-          <p>Lessons and reminders for October.</p>
+          <p>Lessons and reminders for the selected month.</p>
         </div>
-        <button className="adminMore" aria-label="More calendar options"><Icon n="more" s={18} /></button>
+        <button type="button" className="adminPanelAction" onClick={() => onNavigate("bookings")}>
+          View bookings <Icon n="arrow" s={13} />
+        </button>
       </div>
 
       <div className="calendarToolbar">
-        <button aria-label="Previous month">‹</button>
-        <strong>October 2026</strong>
-        <button aria-label="Next month">›</button>
+        <CustomSelect value={month} options={monthOptions} onChange={setMonth} />
       </div>
 
       <div className="calendarWeek">
@@ -289,6 +443,7 @@ function CalendarPanel() {
           const reminder = reminderDates[day];
           return (
             <button
+              type="button"
               key={day}
               className={[
                 day === selectedDay ? "selected" : "",
@@ -310,21 +465,21 @@ function CalendarPanel() {
       <div className="calendarSelection">
         <div>
           <span>Selected date</span>
-          <strong>{selectedDay} October 2026</strong>
+          <strong>{month === "oct" ? `${selectedDay} October 2026` : selectedMonthLabel}</strong>
         </div>
         <span className="calendarCount">
-          {bookingDates[selectedDay]?.label ?? "No bookings"}
-          {reminderDates[selectedDay] && <small> · Reminder</small>}
+          {month === "oct" ? bookingDates[selectedDay]?.label ?? "No bookings" : "No mock bookings"}
+          {month === "oct" && reminderDates[selectedDay] && <small> · Reminder</small>}
         </span>
       </div>
 
       <div className="reminderList">
         {reminders.map((item) => (
-          <div className="reminderItem" key={item.time + item.title}>
+          <button type="button" className="reminderItem" key={item.time + item.title} onClick={() => onNavigate("bookings")}>
             <span className={"reminderDot " + item.tone} />
             <time>{item.time}</time>
             <div><strong>{item.title}</strong><small>{item.detail}</small></div>
-          </div>
+          </button>
         ))}
       </div>
     </article>
