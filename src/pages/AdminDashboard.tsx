@@ -293,5 +293,5 @@ function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
             key={stat.label}
             type="button"
             onClick={() => onNavigate(stat.id)}
-            aria-label={`Open ${stat.label}`}
+            aria-label={"Open " + stat.label}
           >
