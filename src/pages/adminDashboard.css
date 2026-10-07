@@ -1321,3 +1321,47 @@
     grid-template-columns: 92px 125px 135px 115px 72px;
   }
 }
+
+/* Targeted fixes: calendar month selector + chart panel height */
+.calendarToolbar .adminSelectTrigger,
+.calendarToolbar .adminSelectTrigger span,
+.calendarToolbar .adminSelectTrigger b {
+  color: #282b31 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.calendarToolbar .adminSelectTrigger {
+  background: #f8f8f8 !important;
+  min-height: 38px;
+  line-height: 1.2;
+}
+
+.calendarToolbar .adminSelectMenu {
+  background: #fff !important;
+  color: #282b31 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.calendarToolbar .adminSelectMenu button,
+.calendarToolbar .adminSelectMenu button span {
+  color: #656a73 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.calendarToolbar .adminSelectMenu button.selected,
+.calendarToolbar .adminSelectMenu button:hover,
+.calendarToolbar .adminSelectMenu button.selected span,
+.calendarToolbar .adminSelectMenu button:hover span {
+  color: #b51b25 !important;
+}
+
+.adminDashboardGrid .adminRevenue {
+  align-self: start;
+}
+
+.adminRevenue .revenueChart svg {
+  min-height: 0 !important;
+}
