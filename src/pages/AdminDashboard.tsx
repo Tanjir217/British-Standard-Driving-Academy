@@ -307,7 +307,8 @@ function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
       </section>
 
       <section className="adminDashboardGrid">
-        <article className="adminPanel adminRevenue">
+        <div className="adminLeftColumn">
+          <article className="adminPanel adminRevenue">
           <div className="adminPanelHead">
             <div>
               <span className="adminEyebrow">ACADEMY PERFORMANCE</span>
@@ -320,7 +321,10 @@ function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
           </div>
 
           <RevenueChart />
-        </article>
+          </article>
+
+          <UpcomingLessons onNavigate={onNavigate} />
+        </div>
 
         <CalendarPanel onNavigate={onNavigate} />
       </section>
@@ -380,6 +384,47 @@ function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
         </article>
       </section>
     </div>
+  );
+}
+
+function UpcomingLessons({ onNavigate }: { onNavigate: (id: string) => void }) {
+  const lessons = [
+    ["16:00", "Aisha Rahman", "Standard · Lesson 4", "Confirmed"],
+    ["18:00", "Daniel Smith", "Beginner · Lesson 2", "Pending"],
+    ["Tomorrow", "Nusrat Jahan", "Intensive · Lesson 7", "Confirmed"],
+  ];
+
+  return (
+    <article className="adminPanel adminUpcoming">
+      <div className="adminPanelHead">
+        <div>
+          <span className="adminEyebrow">UPCOMING LESSONS</span>
+          <h2>Next on the schedule</h2>
+          <p>A quick view of the next learner sessions.</p>
+        </div>
+        <button type="button" className="adminTextButton" onClick={() => onNavigate("bookings")}>
+          View all <Icon n="arrow" s={13} />
+        </button>
+      </div>
+
+      <div className="upcomingList">
+        {lessons.map(([time, student, lesson, status]) => (
+          <button
+            type="button"
+            className="upcomingItem"
+            key={time + student}
+            onClick={() => onNavigate("bookings")}
+          >
+            <span className="upcomingTime">{time}</span>
+            <span className="upcomingInfo">
+              <strong>{student}</strong>
+              <small>{lesson}</small>
+            </span>
+            <i className={status.toLowerCase()}>{status}</i>
+          </button>
+        ))}
+      </div>
+    </article>
   );
 }
 
