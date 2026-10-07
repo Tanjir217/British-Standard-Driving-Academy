@@ -151,7 +151,6 @@ export function AdminDashboard() {
             </div>
           </div>
         </div>
-        </div>
       </header>
 
       {mobileMenuOpen && (
