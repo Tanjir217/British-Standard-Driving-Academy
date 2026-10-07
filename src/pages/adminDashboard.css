@@ -932,3 +932,586 @@
     }
   }
 }
+
+/* Interaction and responsive polish */
+.adminStat,
+.bookingRowButton,
+.activityItem,
+.reminderItem {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.adminStat {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.adminStat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(213,31,42,.28);
+  box-shadow: 0 14px 30px rgba(17,24,39,.08);
+}
+
+.adminStat:focus-visible,
+.bookingRowButton:focus-visible,
+.activityItem:focus-visible,
+.reminderItem:focus-visible,
+.adminSelectTrigger:focus-visible,
+.adminSelectMenu button:focus-visible,
+.adminPanelAction:focus-visible,
+.adminTextButton:focus-visible,
+.adminExport:focus-visible,
+.adminPrimaryButton:focus-visible {
+  outline: 2px solid rgba(213,31,42,.45);
+  outline-offset: 2px;
+}
+
+.adminSelect {
+  position: relative;
+  min-width: 175px;
+  z-index: 10;
+}
+
+.adminSelectTrigger {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid #3b3d44;
+  border-radius: 6px;
+  background: #25262c;
+  color: #969ba5;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.adminSelectTrigger b {
+  color: #fff;
+  font-weight: 600;
+}
+
+.adminSelectTrigger svg {
+  margin-left: auto;
+  transition: transform .18s ease;
+}
+
+.adminSelect.open .adminSelectTrigger svg {
+  transform: rotate(180deg);
+}
+
+.adminSelectMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 7px);
+  min-width: 190px;
+  padding: 5px;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 35px rgba(17,24,39,.14);
+}
+
+.adminSelectMenu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #656a73;
+  font-size: 10px;
+  text-align: left;
+}
+
+.adminSelectMenu button:hover,
+.adminSelectMenu button.selected {
+  background: #fff0f1;
+  color: #b51b25;
+}
+
+.adminHeroActions .adminSelect {
+  min-width: 172px;
+}
+
+.adminHeroActions .adminSelectTrigger {
+  background: transparent;
+}
+
+.adminPanelAction {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: #d51f2a;
+  padding: 4px 0;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.adminPanelAction:hover,
+.adminTextButton:hover {
+  color: #ae1720;
+}
+
+.adminPrimaryButton {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #d51f2a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.adminPrimaryButton:hover {
+  background: #ae1720;
+}
+
+.adminRevenue {
+  overflow: hidden;
+}
+
+.chartSummary {
+  display: flex;
+  align-items: flex-end;
+  gap: 35px;
+  margin-top: 22px;
+}
+
+.chartSummary div {
+  display: grid;
+  gap: 2px;
+}
+
+.chartSummary strong {
+  color: #202126;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.5px;
+}
+
+.chartSummary span {
+  color: #989ca3;
+  font-size: 8px;
+}
+
+.revenueChart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 7px;
+}
+
+.chartGrid line {
+  stroke: #ededed;
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.chartGrid text {
+  fill: #a1a4aa;
+  font-size: 8px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.chartArea {
+  fill: url(#adminRevenueFill);
+}
+
+.chartRevenue {
+  stroke: #d51f2a;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chartBookings {
+  stroke: #8ca6b8;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-dasharray: 5 6;
+  stroke-linecap: round;
+}
+
+.chartDot {
+  fill: #fff;
+  stroke: #d51f2a;
+  stroke-width: 2;
+}
+
+.chartDot.active {
+  fill: #d51f2a;
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+
+.chartMonths {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: -1px 3px 0 42px;
+  padding: 0;
+  color: #989ca3;
+  font-size: 8px;
+  text-align: center;
+}
+
+.chartLegend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 17px;
+  margin-top: 8px;
+  color: #656a73;
+  font-size: 8px;
+}
+
+.chartLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chartLegend i {
+  width: 19px;
+  height: 2px;
+  display: inline-block;
+}
+
+.adminCalendar .adminPanelHead {
+  align-items: center;
+}
+
+.calendarToolbar {
+  margin-top: 17px;
+}
+
+.calendarToolbar .adminSelect {
+  width: 100%;
+  min-width: 0;
+}
+
+.calendarToolbar .adminSelectTrigger {
+  background: #f8f8f8;
+  border-color: #e4e4e4;
+  color: #6f737b;
+}
+
+.calendarToolbar .adminSelectTrigger b {
+  color: #2e3137;
+}
+
+.calendarGrid button {
+  transition: background .15s ease, transform .15s ease;
+}
+
+.calendarGrid button:hover {
+  transform: translateY(-1px);
+}
+
+.calendarGrid button.hasReminder {
+  box-shadow: inset 0 -2px 0 #c69b57;
+}
+
+.bookingRowButton {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #eeeeee;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bookingRowButton:hover {
+  background: #fafafa;
+}
+
+.bookingRowButton strong,
+.bookingRowButton span {
+  min-width: 0;
+}
+
+.activityItem {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #eeeeee;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.activityItem:hover {
+  background: #fafafa;
+}
+
+.reminderItem {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #eeeeee;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reminderItem:hover {
+  background: #fafafa;
+}
+
+@media (max-width: 980px) {
+  .adminTopbarInner {
+    width: calc(100% - 32px);
+  }
+
+  .adminHero {
+    padding-bottom: 95px;
+  }
+
+  .adminContent {
+    width: calc(100% - 32px);
+  }
+
+  .adminDashboardGrid,
+  .adminBottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .adminCalendar {
+    max-width: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .adminTopbarInner {
+    width: calc(100% - 24px);
+  }
+
+  .adminNav {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+  }
+
+  .adminNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adminNav button {
+    padding: 11px 0 10px;
+  }
+
+  .adminTopActions {
+    margin-left: 10px;
+  }
+
+  .adminHero {
+    min-height: 0;
+    padding: 30px 16px 88px;
+  }
+
+  .adminHero h1 {
+    font-size: clamp(32px, 8vw, 42px);
+  }
+
+  .adminHeroSide {
+    width: 100%;
+  }
+
+  .adminHeroActions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .adminHeroActions .adminSelect {
+    min-width: 0;
+  }
+
+  .adminExport {
+    justify-content: center;
+    min-width: 115px;
+  }
+
+  .adminContent {
+    width: calc(100% - 24px);
+    margin-top: -60px;
+  }
+
+  .adminStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .adminStat {
+    min-height: 135px;
+    padding: 16px;
+  }
+
+  .adminStat strong {
+    font-size: 25px;
+  }
+
+  .adminPanel {
+    padding: 20px;
+  }
+
+  .adminPanelHead h2 {
+    font-size: 18px;
+  }
+
+  .bookingTable {
+    margin-inline: -4px;
+  }
+
+  .bookingRow {
+    min-width: 640px;
+  }
+}
+
+@media (max-width: 520px) {
+  .adminTopbarInner {
+    min-height: 58px;
+    padding-top: 8px;
+  }
+
+  .adminTopActions {
+    gap: 7px;
+  }
+
+  .adminTopActions > button {
+    display: none;
+  }
+
+  .adminUserMini > span {
+    width: 31px;
+    height: 31px;
+  }
+
+  .adminNav {
+    gap: 20px;
+  }
+
+  .adminNav button {
+    font-size: 10px;
+  }
+
+  .adminHero {
+    padding: 25px 12px 84px;
+  }
+
+  .adminBreadcrumb {
+    font-size: 8px;
+  }
+
+  .adminHero p {
+    max-width: none;
+    font-size: 10px;
+  }
+
+  .adminHeroActions {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .adminExport,
+  .adminHeroActions .adminSelect {
+    width: 100%;
+  }
+
+  .adminContent {
+    width: calc(100% - 16px);
+    margin-top: -52px;
+  }
+
+  .adminStats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .adminStat {
+    min-height: 120px;
+  }
+
+  .adminDashboardGrid,
+  .adminBottomGrid {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .adminPanel {
+    padding: 16px;
+  }
+
+  .adminPanelHead {
+    gap: 8px;
+  }
+
+  .adminPanelAction {
+    font-size: 8px;
+  }
+
+  .chartSummary {
+    gap: 22px;
+  }
+
+  .chartSummary strong {
+    font-size: 19px;
+  }
+
+  .revenueChart svg {
+    min-height: 185px;
+  }
+
+  .chartMonths {
+    margin-left: 42px;
+  }
+
+  .chartLegend {
+    justify-content: flex-start;
+  }
+
+  .calendarGrid button,
+  .calendarEmpty {
+    min-height: 35px;
+  }
+
+  .calendarSelection {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .calendarCount {
+    white-space: normal;
+  }
+
+  .bookingRow {
+    min-width: 600px;
+    grid-template-columns: .8fr 1.1fr 1.2fr .9fr .65fr;
+  }
+
+  .adminPlaceholder {
+    width: calc(100% - 16px);
+    margin: 35px auto;
+    padding: 25px 20px;
+  }
+}
