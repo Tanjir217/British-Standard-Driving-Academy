@@ -41,7 +41,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     ["/lessons", "Lessons"],
     ["/portal", "Learning Portal"],
     ["/instructors", "Instructors"],
-    ["/booking", "Booking and Inquiry"],
+    ["/contact", "Contact Us"],
+    ["/careers", "Careers"],
     ["/faq", "FAQ"],
   ];
 
@@ -151,17 +152,25 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <div>
             <h4>Academy</h4>
             <Link to="/faq">FAQ</Link>
+            <Link to="/contact">Contact Us</Link>
+            <Link to="/careers">Careers</Link>
             <Link to="/packages">Book a lesson</Link>
             <span>37 Dunfield Rd, London, SE6 3RW</span>
             <span>+44 7908 807741</span>
           </div>
 
           <div>
-            <h4>Follow</h4>
-            <span>Facebook · Instagram · YouTube</span>
-            <span className="muted">
-              Social feed and learner updates will connect here.
-            </span>
+            <h4>Get in touch</h4>
+            <a href="tel:+447908807741">+44 7908 807741</a>
+            <a
+              href="https://wa.me/447908807741"
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp us
+            </a>
+            <Link to="/contact">Send an enquiry</Link>
+            <Link to="/careers">Careers</Link>
           </div>
         </div>
 
