@@ -1527,3 +1527,170 @@
   background: rgba(213,31,42,.12);
   line-height: 1.4;
 }
+
+
+/* Wix-backed packages module */
+.adminPackagesPanel {
+  width: min(100% - 72px, 1180px);
+  margin: 0 auto 60px;
+  display: grid;
+  gap: 16px;
+}
+
+.adminPackagesHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.adminPackagesHeader h2 {
+  margin: 7px 0 5px;
+  color: #282b31;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.35px;
+}
+
+.adminPackagesHeader p {
+  margin: 0;
+  color: #8b8f96;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.adminPackageCount {
+  flex: none;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8f3eb;
+  color: #39714b;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.adminPackageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adminPackageCard {
+  min-width: 0;
+  padding: 21px;
+  border: 1px solid #e4e4e4;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(17,24,39,.025);
+  transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.adminPackageCard:hover {
+  border-color: rgba(213,31,42,.28);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(17,24,39,.07);
+}
+
+.adminPackageCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adminPackageCardTop span {
+  color: #d51f2a;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.adminPackageCardTop b {
+  color: #202126;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.adminPackageCard h3 {
+  margin: 14px 0 8px;
+  color: #30333a;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.adminPackageCard p {
+  min-height: 36px;
+  margin: 0;
+  color: #8a8e95;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.adminPackageMeta {
+  margin-top: 18px;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid #eeeeee;
+  color: #777c84;
+  font-size: 8px;
+  text-transform: capitalize;
+}
+
+.adminPackageStatus {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #e8f3eb;
+  color: #39714b;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.adminPackageState {
+  padding: 28px;
+}
+
+.adminPackageState h3 {
+  margin: 8px 0 5px;
+  color: #30333a;
+  font-size: 15px;
+}
+
+.adminPackageState p {
+  margin: 0;
+  color: #8a8e95;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.adminPackageState.error {
+  border-color: rgba(213,31,42,.22);
+  background: #fffafa;
+}
+
+.adminPackageState.error .adminEyebrow {
+  color: #d51f2a;
+}
+
+@media (max-width: 900px) {
+  .adminPackageGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .adminPackagesPanel {
+    width: calc(100% - 28px);
+  }
+
+  .adminPackagesHeader {
+    flex-direction: column;
+  }
+
+  .adminPackageGrid {
+    grid-template-columns: 1fr;
+  }
+}
