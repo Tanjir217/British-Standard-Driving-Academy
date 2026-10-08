@@ -337,7 +337,6 @@ export function Home() {
               <span aria-hidden="true">›</span>
             </button>
           </div>
-          </div>
         </div>
       </section>
       <section className="testimonials">
