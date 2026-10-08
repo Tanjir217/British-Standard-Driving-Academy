@@ -114,7 +114,7 @@ export const adminDashboardService = {
         (bookingResponse as any).items ??
         [];
 
-      const bookings = rawBookings
+      const bookings: AdminBookingRecord[] = rawBookings
         .map((entry: any): AdminBookingRecord => {
           const booking = entry?.booking ?? entry;
           const slot = getBookingSlot(booking);
@@ -137,9 +137,12 @@ export const adminDashboardService = {
         })
         .filter((booking: AdminBookingRecord) => booking.id);
 
-      const bookingValue = bookings.reduce((total, booking) => {
-        return total + (serviceMap.get(booking.serviceId)?.price ?? 0);
-      }, 0);
+      const bookingValue = bookings.reduce(
+        (total: number, booking: AdminBookingRecord) => {
+          return total + (serviceMap.get(booking.serviceId)?.price ?? 0);
+        },
+        0,
+      );
 
       const staff =
         (staffResponse as any).staffMembers ??
