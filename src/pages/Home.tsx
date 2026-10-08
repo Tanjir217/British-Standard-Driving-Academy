@@ -60,6 +60,71 @@ export function Home() {
         </div>
       </section>
 
+      <section className="quickLinks section">
+        <div className="container">
+          <div className="quickLinksGrid">
+            {[
+              {
+                image: "/quick-links/driving-lessons.svg",
+                eyebrow: "Start learning",
+                title: "Driving Lessons",
+                text: "Manual and automatic lessons with qualified instructors.",
+                label: "Learn more",
+                to: "/lessons",
+              },
+              {
+                image: "/quick-links/packages.svg",
+                eyebrow: "Choose your pace",
+                title: "Price & Packages",
+                text: "Starter, Plus and Premium lesson paths with transparent pricing.",
+                label: "View packages",
+                to: "/packages",
+              },
+              {
+                image: "/quick-links/learning-portal.svg",
+                eyebrow: "Keep progressing",
+                title: "Learning Portal",
+                text: "Access theory support, mock tests and progress tracking.",
+                label: "Student login",
+                to: "/portal",
+              },
+              {
+                image: "/quick-links/government-links.svg",
+                eyebrow: "Official information",
+                title: "Government Info Links",
+                text: "Find DVLA, theory test booking and practical exam information.",
+                label: "More info",
+                to: "/faq",
+              },
+            ].map((item, index) => (
+              <Reveal key={item.title} delay={index * 70}>
+                <article className="quickLinkCard">
+                  <div className="quickLinkImage">
+                    <img
+                      src={item.image}
+                      alt=""
+                      width="800"
+                      height="450"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="quickLinkBody">
+                    <span className="ey">{item.eyebrow}</span>
+                    <h2>{item.title}</h2>
+                    <p>{item.text}</p>
+                    <Link className="btn light" to={item.to}>
+                      {item.label}
+                      <Icon n="arrow" />
+                    </Link>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="journey section">
         <div className="container">
           <div className="sectionIntro">
