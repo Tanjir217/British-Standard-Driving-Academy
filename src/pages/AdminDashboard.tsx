@@ -1,24 +1,32 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "../components/Brand";
 import { Icon } from "../components/Icon";
+import { adminDashboardService, type AdminDashboardSnapshot } from "../services/adminDashboardService";
+import { packageService } from "../services/packages/packageService";
+import type { Package } from "../services/domain/types";
+import { studentService, type WixStudentSummary } from "../services/students/studentService";
 import { AdminContentManager } from "./AdminContentManager";
 import "./adminDashboard.css";
 
-const nav = [
+type NavItem = [string, string, string];
+type SelectOption = { value: string; label: string };
+
+const nav: NavItem[] = [
   ["overview", "Overview", "car"],
+  ["packages", "Packages", "book"],
   ["bookings", "Bookings", "calendar"],
-  ["students", "Students", "book"],
+  ["students", "Students", "users"],
   ["instructors", "Instructors", "car"],
-  ["payments", "Payments", "check"],
+  ["payments", "Payments", "wallet"],
   ["content", "Content", "book"],
 ];
 
 const stats = [
-  { label: "Active Students", value: "128", change: "+12.4%", note: "vs last month" },
-  { label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month" },
-  { label: "Revenue", value: "£18,640", change: "+14.2%", note: "vs last month" },
-  { label: "Pending Bookings", value: "17", change: "Needs action", note: "next 48 hours" },
+  { id: "students", label: "Active Students", value: "128", change: "+12.4%", note: "vs last month", icon: "users" },
+  { id: "bookings", label: "Lessons This Month", value: "246", change: "+8.7%", note: "vs last month", icon: "car" },
+  { id: "payments", label: "Revenue", value: "£18,640", change: "+14.2%", note: "vs last month", icon: "wallet" },
+  { id: "bookings", label: "Pending Bookings", value: "17", change: "Needs action", note: "next 48 hours", icon: "calendar" },
 ];
 
 const bookings = [
@@ -26,7 +34,7 @@ const bookings = [
   ["BSDA-1047", "Daniel Smith", "Beginner · 5h", "Today · 18:00", "Pending"],
   ["BSDA-1046", "Nusrat Jahan", "Intensive · 20h", "Tomorrow · 10:00", "Confirmed"],
   ["BSDA-1045", "Omar Khan", "Mock Practical", "Tomorrow · 14:30", "Confirmed"],
-  ["BSDA-1044", "Sadia Islam", "Automatic · 10h", "Wed · 11:00", "Pending"],
+  ["BSDA-1044", "Sadia Islam", "Automatic · 10h", "Thu · 11:00", "Pending"],
 ];
 
 const activity = [
@@ -36,67 +44,270 @@ const activity = [
   ["Yesterday", "Instructor availability changed", "Nabila opened Thursday afternoon slots."],
 ];
 
+const bookingDates: Record<number, { count: number; label: string }> = {
+  7: { count: 3, label: "3 bookings" },
+  8: { count: 2, label: "2 bookings" },
+  10: { count: 4, label: "4 bookings" },
+  12: { count: 1, label: "1 booking" },
+  14: { count: 3, label: "3 bookings" },
+  16: { count: 2, label: "2 bookings" },
+  19: { count: 5, label: "5 bookings" },
+  22: { count: 2, label: "2 bookings" },
+  24: { count: 3, label: "3 bookings" },
+  28: { count: 1, label: "1 booking" },
+};
+
+const reminders = [
+  { time: "09:30", title: "Lesson reminder", detail: "Aisha Rahman · Standard lesson", tone: "red" },
+  { time: "11:00", title: "Instructor availability", detail: "Review Nabila's Thursday slots", tone: "navy" },
+  { time: "14:30", title: "Mock practical", detail: "Omar Khan · Vehicle assessment", tone: "cream" },
+];
+
+const reminderDates: Record<number, string> = {
+  7: "Lesson reminder",
+  8: "Instructor availability",
+  14: "Mock practical",
+};
+
+const periodOptions: SelectOption[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This week" },
+  { value: "month", label: "This month" },
+  { value: "year", label: "This year" },
+];
+
+const monthOptions: SelectOption[] = [
+  { value: "sep", label: "September 2026" },
+  { value: "oct", label: "October 2026" },
+  { value: "nov", label: "November 2026" },
+];
+
 export function AdminDashboard() {
   const [active, setActive] = useState("overview");
+  const [period, setPeriod] = useState("month");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [liveData, setLiveData] = useState<AdminDashboardSnapshot | null>(null);
+  const [dataError, setDataError] = useState("");
+  const [loadingData, setLoadingData] = useState(true);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
+  const [packagesError, setPackagesError] = useState("");
+  const [students, setStudents] = useState<WixStudentSummary[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentsError, setStudentsError] = useState("");
+  const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAdminData() {
+      setLoadingData(true);
+      setDataError("");
+
+      const now = new Date();
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      try {
+        const snapshot = await adminDashboardService.loadSnapshot(
+          from.toISOString(),
+          to.toISOString(),
+        );
+        if (!cancelled) setLiveData(snapshot);
+      } catch (error) {
+        if (!cancelled) {
+          setDataError(
+            error instanceof Error
+              ? error.message
+              : "Unable to connect to Wix dashboard data.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingData(false);
+      }
+    }
+
+    loadAdminData();
+
+    let packageActive = true;
+    setPackagesLoading(true);
+    packageService.list().then((result) => {
+      if (!packageActive) return;
+      if (result.ok) {
+        setPackages(result.data);
+        setPackagesError("");
+      } else {
+        setPackages([]);
+        setPackagesError(result.error.message);
+      }
+      setPackagesLoading(false);
+    });
+
+    let studentActive = true;
+    setStudentsLoading(true);
+    studentService.list().then((result) => {
+      if (!studentActive) return;
+      if (result.ok) {
+        setStudents(result.data);
+        setStudentsError("");
+      } else {
+        setStudents([]);
+        setStudentsError(result.error.message);
+      }
+      setStudentsLoading(false);
+    });
+
+    return () => {
+      packageActive = false;
+      studentActive = false;
+      cancelled = true;
+    };
+  }, []);
+
+  const exportData = () => {
+    const csv = [
+      ["Reference", "Student", "Package", "Schedule", "Status"],
+      ...bookings,
+    ].map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "bsda-bookings.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="adminApp">
-      <aside className="adminSidebar">
-        <Link className="adminBrand" to="/" aria-label="Back to public site">
-          <Brand />
-        </Link>
-        <div className="adminWorkspace">
-          <span>ADMINISTRATION</span>
-          <strong>BSDA Academy</strong>
-        </div>
-        <nav className="adminNav" aria-label="Admin navigation">
-          {nav.map(([id, label, icon]) => (
-            <button
-              key={id}
-              className={active === id ? "active" : ""}
-              onClick={() => setActive(id)}
-            >
-              <Icon n={icon} s={18} />
-              <span>{label}</span>
+      <header className="adminTopbar">
+        <div className="adminTopbarInner">
+          <Link className="adminBrand" to="/" aria-label="Back to public BSDA website">
+            <Brand />
+          </Link>
+
+          <nav className="adminNav" aria-label="Admin navigation">
+            {nav.map(([id, label]) => (
+              <button
+                key={id}
+                className={active === id ? "active" : ""}
+                onClick={() => {
+                  setActive(id);
+                  setMobileMenuOpen(false);
+                }}
+                type="button"
+              >
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <button
+            type="button"
+            className="adminMobileMenuButton"
+            aria-label={mobileMenuOpen ? "Close admin menu" : "Open admin menu"}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((current) => !current)}
+          >
+            <Icon n={mobileMenuOpen ? "close" : "menu"} s={21} />
+          </button>
+
+          <div className="adminTopActions">
+            <button type="button" onClick={() => setActive("content")} aria-label="Open academy settings" title="Academy settings">
+              <Icon n="settings" s={18} />
             </button>
-          ))}
-        </nav>
-        <div className="adminSidebarBottom">
-          <div className="adminUser">
-            <div className="adminAvatar">AD</div>
-            <div>
-              <strong>Academy Admin</strong>
-              <span>Administrator</span>
+            <button type="button" onClick={() => setActive("students")} aria-label="Open student messages" title="Student messages">
+              <Icon n="mail" s={18} />
+            </button>
+            <button type="button" onClick={() => setActive("bookings")} aria-label="Open booking notifications" title="Booking notifications" className="hasDot">
+              <Icon n="bell" s={18} />
+            </button>
+            <div className="adminUserMini">
+              <span>AD</span>
+              <div>
+                <strong>Academy Admin</strong>
+                <small>Administrator</small>
+              </div>
             </div>
           </div>
-          <Link to="/" className="adminBack">← View public website</Link>
         </div>
-      </aside>
+      </header>
+
+      {mobileMenuOpen && (
+        <div className="adminMobileMenu">
+          <div className="adminMobileMenuInner">
+            <div className="adminMobileMenuLabel">ADMIN MENU</div>
+            {nav.map(([id, label, icon]) => (
+              <button
+                key={id}
+                type="button"
+                className={active === id ? "active" : ""}
+                onClick={() => {
+                  setActive(id);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="adminMobileMenuIcon"><Icon n={icon} s={16} /></span>
+                <span>{label}</span>
+                <Icon n="arrow" s={13} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className="adminMain">
-        <header className="adminHeader">
+        <section className="adminHero">
           <div>
-            <span className="adminEyebrow">DASHBOARD / {active.toUpperCase()}</span>
-            <h1>{active === "overview" ? "Good morning, Admin." : nav.find(([id]) => id === active)?.[1]}</h1>
+            <div className="adminBreadcrumb">OVERVIEW <span>/</span> {pageTitle.toUpperCase()}</div>
+            <h1>{active === "overview" ? "Welcome back, Admin" : pageTitle}</h1>
+            <p>
+              Manage students, lessons, instructors and bookings from one place.
+              Your BSDA academy overview is ready for today's work.
+            </p>
+            {loadingData && <span className="adminDataStatus">Connecting to Wix data…</span>}
+            {!loadingData && !dataError && liveData && (
+              <span className="adminDataStatus live">● Live Wix data</span>
+            )}
+            {dataError && <span className="adminDataStatus error">{dataError}</span>}
           </div>
-          <div className="adminHeaderActions">
-            <span className="adminStatus"><i /> System ready</span>
-            <button className="adminProfile">AD</button>
+
+          <div className="adminHeroSide">
+            <span className="adminDate">Wednesday, 7 October 2026</span>
+            <div className="adminHeroActions">
+              <CustomSelect
+                value={period}
+                options={periodOptions}
+                onChange={setPeriod}
+                prefix="Showing:"
+              />
+              <button type="button" className="adminExport" onClick={exportData}>
+                <Icon n="download" s={15} /> Export data
+              </button>
+            </div>
           </div>
-        </header>
+        </section>
 
         {active === "overview" ? (
-          <Overview />
+          <Overview onNavigate={setActive} liveData={liveData} />
+        ) : active === "packages" ? (
+          <PackagesPanel packages={packages} loading={packagesLoading} error={packagesError} />
+        ) : active === "students" ? (
+          <StudentsPanel students={students} loading={studentsLoading} error={studentsError} />
         ) : active === "content" ? (
           <AdminContentManager />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
-            <h2>{nav.find(([id]) => id === active)?.[1]} will connect to the BSDA backend next.</h2>
+            <h2>{pageTitle}</h2>
             <p>
-              The dashboard shell is intentionally separated from the public website.
-              This module will become data-driven when Wix CMS, Members, Bookings and Payments are connected.
+              This section is part of the redesigned BSDA admin architecture.
+              Its Wix-backed data layer can be connected without changing the dashboard shell.
             </p>
+            <button type="button" className="adminPrimaryButton" onClick={() => setActive("overview")}>
+              Back to overview <Icon n="arrow" s={14} />
+            </button>
           </section>
         )}
       </main>
@@ -104,79 +315,392 @@ export function AdminDashboard() {
   );
 }
 
-function Overview() {
-  return (
-    <div className="adminContent">
-      <section className="adminStats">
-        {stats.map((stat) => (
-          <article className="adminStat" key={stat.label}>
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-            <small><b>{stat.change}</b> {stat.note}</small>
-          </article>
-        ))}
-      </section>
+function CustomSelect({
+  value,
+  options,
+  onChange,
+  prefix,
+}: {
+  value: string;
+  options: SelectOption[];
+  onChange: (value: string) => void;
+  prefix?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
 
-      <section className="adminGridTop">
-        <article className="adminPanel adminRevenue">
-          <div className="adminPanelHead">
-            <div>
-              <span className="adminEyebrow">REVENUE</span>
-              <h2>Monthly performance</h2>
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  return (
+    <div className={`adminSelect ${open ? "open" : ""}`} ref={ref}>
+      <button
+        type="button"
+        className="adminSelectTrigger"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {prefix && <span>{prefix}</span>}
+        <b>{selected.label}</b>
+        <Icon n="chevron" s={13} />
+      </button>
+
+      {open && (
+        <div className="adminSelectMenu" role="listbox">
+          {options.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              key={option.value}
+              className={option.value === value ? "selected" : ""}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <Icon n="check" s={13} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function PackagesPanel({
+  packages,
+  loading,
+  error,
+}: {
+  packages: Package[];
+  loading: boolean;
+  error: string;
+}) {
+  const formatMoney = (amountMinor: number, currency: string) =>
+    new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amountMinor / 100);
+
+  return (
+    <section className="adminPackagesPanel">
+      <div className="adminPanel adminPackagesHeader">
+        <div>
+          <span className="adminEyebrow">WIX PRICING PLANS</span>
+          <h2>Available packages</h2>
+          <p>Live active public packages fetched directly from Wix Pricing Plans.</p>
+        </div>
+        {!loading && !error && (
+          <span className="adminPackageCount">{packages.length} available</span>
+        )}
+      </div>
+
+      {loading && (
+        <div className="adminPanel adminPackageState">
+          <span className="adminEyebrow">LIVE WIX DATA</span>
+          <h3>Loading packages…</h3>
+          <p>Fetching the current pricing plans from Wix.</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="adminPanel adminPackageState error">
+          <span className="adminEyebrow">WIX DATA ERROR</span>
+          <h3>Packages could not be loaded.</h3>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && packages.length === 0 && (
+        <div className="adminPanel adminPackageState">
+          <span className="adminEyebrow">NO AVAILABLE PACKAGES</span>
+          <h3>No active public pricing plans were found.</h3>
+          <p>The dashboard is connected to Wix, but Wix currently returned no available packages.</p>
+        </div>
+      )}
+
+      {!loading && !error && packages.length > 0 && (
+        <div className="adminPackageGrid">
+          {packages.map((plan) => (
+            <article className="adminPackageCard" key={plan.id}>
+              <div className="adminPackageCardTop">
+                <span>{plan.lessonHours > 0 ? plan.lessonHours + " Hours" : "Driving package"}</span>
+                <b>{formatMoney(plan.priceMinor, plan.currency)}</b>
+              </div>
+              <h3>{plan.name}</h3>
+              <p>
+                {plan.features.length > 0
+                  ? plan.features.join(" · ")
+                  : "Structured driving tuition package."}
+              </p>
+              <div className="adminPackageMeta">
+                <span>{plan.transmission === "either" ? "Manual / Automatic" : plan.transmission}</span>
+                <span className="adminPackageStatus">Active</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+function StudentsPanel({
+  students,
+  loading,
+  error,
+}: {
+  students: WixStudentSummary[];
+  loading: boolean;
+  error: string;
+}) {
+  const formatDate = (value: string) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <section className="adminStudentsPanel">
+      <div className="adminPanel adminStudentsHeader">
+        <div>
+          <span className="adminEyebrow">WIX MEMBERS</span>
+          <h2>Students</h2>
+          <p>Member records fetched directly from the Wix Members API.</p>
+        </div>
+        {!loading && !error && (
+          <span className="adminStudentCount">{students.length} returned</span>
+        )}
+      </div>
+
+      {loading && (
+        <div className="adminPanel adminStudentState">
+          <span className="adminEyebrow">LIVE WIX DATA</span>
+          <h3>Loading students…</h3>
+          <p>Fetching member records from Wix.</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="adminPanel adminStudentState error">
+          <span className="adminEyebrow">WIX DATA ERROR</span>
+          <h3>Students could not be loaded.</h3>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && students.length === 0 && (
+        <div className="adminPanel adminStudentState">
+          <span className="adminEyebrow">NO MEMBERS RETURNED</span>
+          <h3>Wix returned no member records.</h3>
+          <p>The dashboard is connected to Wix, but there are no member records available to this Wix account.</p>
+        </div>
+      )}
+
+      {!loading && !error && students.length > 0 && (
+        <div className="adminPanel adminStudentTablePanel">
+          <div className="adminStudentTable">
+            <div className="adminStudentRow adminStudentHead">
+              <span>Student</span>
+              <span>Email</span>
+              <span>Phone</span>
+              <span>Status</span>
+              <span>Joined</span>
+              <span>Last login</span>
             </div>
-            <button className="adminSelect">Last 6 months <Icon n="chevron" s={13} /></button>
-          </div>
-          <div className="revenueFigure">
-            <strong>£18,640</strong>
-            <span>+14.2% from previous period</span>
-          </div>
-          <div className="barChart" aria-label="Revenue trend">
-            {[48, 62, 54, 76, 70, 94].map((height, index) => (
-              <div className="barColumn" key={index}>
-                <div className="barTrack"><i style={{ height: `${height}%` }} /></div>
-                <span>{["May", "Jun", "Jul", "Aug", "Sep", "Oct"][index]}</span>
+
+            {students.map((student) => (
+              <div className="adminStudentRow" key={student.id}>
+                <div className="adminStudentIdentity">
+                  {student.profilePhotoUrl ? (
+                    <img src={student.profilePhotoUrl} alt="" />
+                  ) : (
+                    <span>{student.name.slice(0, 2).toUpperCase()}</span>
+                  )}
+                  <strong>{student.name}</strong>
+                </div>
+                <span>{student.email || "—"}</span>
+                <span>{student.phone || "—"}</span>
+                <span>
+                  <i className="adminStudentStatus">
+                    {student.status.replaceAll("_", " ")}
+                  </i>
+                </span>
+                <span>{formatDate(student.createdDate)}</span>
+                <span>{formatDate(student.lastLoginDate)}</span>
               </div>
             ))}
           </div>
-        </article>
+        </div>
+      )}
+    </section>
+  );
+}
 
-        <article className="adminPanel adminQuick">
-          <div className="adminPanelHead">
-            <div>
-              <span className="adminEyebrow">QUICK ACTIONS</span>
-              <h2>Keep the academy moving.</h2>
+function Overview({
+  onNavigate,
+  liveData,
+}: {
+  onNavigate: (id: string) => void;
+  liveData: AdminDashboardSnapshot | null;
+}) {
+  const liveBookings = liveData?.bookings ?? [];
+  const pendingCount = liveBookings.filter((booking) =>
+    ["PENDING", "PENDING_APPROVAL", "PENDING_CHECKOUT"].includes(booking.status),
+  ).length;
+  const uniqueStudents = new Set(
+    liveBookings.map((booking) => booking.contactId).filter(Boolean),
+  ).size;
+
+  const dashboardStats = liveData
+    ? [
+        {
+          id: "students",
+          label: "Active Students",
+          value: String(uniqueStudents),
+          change: "Wix",
+          note: "students with bookings",
+          icon: "users",
+        },
+        {
+          id: "bookings",
+          label: "Lessons This Month",
+          value: String(liveBookings.length),
+          change: "Wix",
+          note: "scheduled bookings",
+          icon: "car",
+        },
+        {
+          id: "payments",
+          label: "Booking Value",
+          value: new Intl.NumberFormat("en-GB", {
+            style: "currency",
+            currency: liveData.currency || "GBP",
+            maximumFractionDigits: 0,
+          }).format(liveData.bookingValue),
+          change: "Wix",
+          note: "current service pricing",
+          icon: "wallet",
+        },
+        {
+          id: "bookings",
+          label: "Pending Bookings",
+          value: String(pendingCount),
+          change: "Wix",
+          note: "awaiting action",
+          icon: "calendar",
+        },
+      ]
+    : stats;
+  return (
+    <div className="adminContent">
+      <section className="adminStats">
+        {dashboardStats.map((stat) => (
+          <button
+            className="adminStat"
+            key={stat.label}
+            type="button"
+            onClick={() => onNavigate(stat.id)}
+            aria-label={"Open " + stat.label}
+          >
+            <div className="adminStatTop">
+              <span className="adminStatIcon"><Icon n={stat.icon} s={18} /></span>
+              <span className="adminStatChange">{stat.change}</span>
             </div>
-          </div>
-          <div className="quickGrid">
-            <button><Icon n="calendar" s={19} /><span>New booking</span><b>+</b></button>
-            <button><Icon n="book" s={19} /><span>Add student</span><b>+</b></button>
-            <button><Icon n="car" s={19} /><span>Add instructor</span><b>+</b></button>
-            <button><Icon n="check" s={19} /><span>Record payment</span><b>+</b></button>
-          </div>
-        </article>
+            <strong>{stat.value}</strong>
+            <small>{stat.label}</small>
+            <em>{stat.note}</em>
+          </button>
+        ))}
       </section>
 
-      <section className="adminGridBottom">
-        <article className="adminPanel">
+      <section className="adminDashboardGrid">
+        <div className="adminLeftColumn">
+          <article className="adminPanel adminRevenue">
+          <div className="adminPanelHead">
+            <div>
+              <span className="adminEyebrow">ACADEMY PERFORMANCE</span>
+              <h2>Bookings & revenue</h2>
+              <p>Monthly performance across BSDA lessons and packages.</p>
+            </div>
+            <button type="button" className="adminPanelAction" onClick={() => onNavigate("payments")}>
+              Payments <Icon n="arrow" s={13} />
+            </button>
+          </div>
+
+          <RevenueChart />
+          </article>
+
+          <UpcomingLessons onNavigate={onNavigate} bookings={liveBookings} />
+        </div>
+
+        <CalendarPanel onNavigate={onNavigate} bookings={liveBookings} />
+      </section>
+
+      <section className="adminBottomGrid">
+        <article className="adminPanel adminBookings">
           <div className="adminPanelHead">
             <div>
               <span className="adminEyebrow">BOOKINGS</span>
               <h2>Recent bookings</h2>
             </div>
-            <button className="adminTextButton">View all →</button>
+            <button type="button" className="adminTextButton" onClick={() => onNavigate("bookings")}>
+              View all <Icon n="arrow" s={13} />
+            </button>
           </div>
+
           <div className="bookingTable">
             <div className="bookingRow bookingHead">
               <span>Reference</span><span>Student</span><span>Package</span><span>Schedule</span><span>Status</span>
             </div>
-            {bookings.map((booking) => (
-              <div className="bookingRow" key={booking[0]}>
+            {(liveData
+              ? liveBookings.slice(0, 5).map((booking) => {
+                  const start = new Date(booking.startDate);
+                  const schedule = start.toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  return [
+                    booking.id.slice(0, 8).toUpperCase(),
+                    booking.studentName,
+                    booking.serviceName,
+                    schedule,
+                    booking.status.replaceAll("_", " "),
+                  ];
+                })
+              : bookings
+            ).map((booking) => (
+              <button
+                type="button"
+                className="bookingRow bookingRowButton"
+                key={booking[0]}
+                onClick={() => onNavigate("bookings")}
+                title={`Open ${booking[0]}`}
+              >
                 <strong>{booking[0]}</strong>
                 <span>{booking[1]}</span>
                 <span>{booking[2]}</span>
                 <span>{booking[3]}</span>
-                <span><i className={booking[4].toLowerCase()}>{booking[4]}</i></span>
-              </div>
+                <span><i className={booking[4].toLowerCase().includes("confirm") ? "confirmed" : "pending"}>{booking[4]}</i></span>
+              </button>
             ))}
           </div>
         </article>
@@ -187,17 +711,237 @@ function Overview() {
               <span className="adminEyebrow">ACTIVITY</span>
               <h2>Latest updates</h2>
             </div>
+            <button type="button" className="adminTextButton" onClick={() => onNavigate("overview")}>
+              Refresh view <Icon n="arrow" s={13} />
+            </button>
           </div>
           <div className="activityList">
             {activity.map(([time, title, detail]) => (
-              <div className="activityItem" key={title}>
+              <button type="button" className="activityItem" key={title} onClick={() => onNavigate("bookings")}>
                 <span>{time}</span>
                 <div><strong>{title}</strong><p>{detail}</p></div>
-              </div>
+              </button>
             ))}
           </div>
         </article>
       </section>
     </div>
+  );
+}
+
+function UpcomingLessons({
+  onNavigate,
+  bookings: liveBookings,
+}: {
+  onNavigate: (id: string) => void;
+  bookings: AdminDashboardSnapshot["bookings"];
+}) {
+  const lessons = liveBookings.length
+    ? liveBookings.slice(0, 3).map((booking) => [
+        new Date(booking.startDate).toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        booking.studentName,
+        booking.serviceName,
+        booking.status.replaceAll("_", " "),
+      ])
+    : [
+        ["16:00", "Aisha Rahman", "Standard · Lesson 4", "Confirmed"],
+        ["18:00", "Daniel Smith", "Beginner · Lesson 2", "Pending"],
+        ["Tomorrow", "Nusrat Jahan", "Intensive · Lesson 7", "Confirmed"],
+      ];
+
+  return (
+    <article className="adminPanel adminUpcoming">
+      <div className="adminPanelHead">
+        <div>
+          <span className="adminEyebrow">UPCOMING LESSONS</span>
+          <h2>Next on the schedule</h2>
+          <p>A quick view of the next learner sessions.</p>
+        </div>
+        <button type="button" className="adminTextButton" onClick={() => onNavigate("bookings")}>
+          View all <Icon n="arrow" s={13} />
+        </button>
+      </div>
+
+      <div className="upcomingList">
+        {lessons.map(([time, student, lesson, status]) => (
+          <button
+            type="button"
+            className="upcomingItem"
+            key={time + student}
+            onClick={() => onNavigate("bookings")}
+          >
+            <span className="upcomingTime">{time}</span>
+            <span className="upcomingInfo">
+              <strong>{student}</strong>
+              <small>{lesson}</small>
+            </span>
+            <i className={status.toLowerCase()}>{status}</i>
+          </button>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function RevenueChart() {
+  const revenue = [12.2, 15.1, 13.8, 18.7, 16.9, 22.1, 19.4];
+  const bookingsCount = [29, 34, 31, 39, 36, 46, 42];
+  const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"];
+  const maxRevenue = 24;
+  const width = 640;
+  const height = 230;
+  const left = 42;
+  const right = 12;
+  const top = 16;
+  const bottom = 34;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const revenuePoints = revenue.map((value, index) => [
+    left + (plotWidth / (revenue.length - 1)) * index,
+    top + plotHeight - (value / maxRevenue) * plotHeight,
+  ]);
+  const bookingPoints = bookingsCount.map((value, index) => [
+    left + (plotWidth / (bookingsCount.length - 1)) * index,
+    top + plotHeight - (value / 50) * plotHeight,
+  ]);
+  const revenueLine = revenuePoints.map(([x, y]) => `${x},${y}`).join(" ");
+  const bookingLine = bookingPoints.map(([x, y]) => `${x},${y}`).join(" ");
+  const areaPath = `M ${revenuePoints[0][0]} ${top + plotHeight} L ${revenuePoints.map(([x, y]) => `${x} ${y}`).join(" L ")} L ${revenuePoints[revenuePoints.length - 1][0]} ${top + plotHeight} Z`;
+
+  return (
+    <div className="revenueChart">
+      <div className="chartSummary">
+        <div><strong>£19.4K</strong><span>October revenue</span></div>
+        <div><strong>42</strong><span>Bookings</span></div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly BSDA revenue and bookings trend">
+        <defs>
+          <linearGradient id="adminRevenueFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(213,31,42,.16)" />
+            <stop offset="100%" stopColor="rgba(213,31,42,0)" />
+          </linearGradient>
+        </defs>
+        <g className="chartGrid">
+          {[0, 6, 12, 18, 24].map((value) => {
+            const y = top + plotHeight - (value / maxRevenue) * plotHeight;
+            return <g key={value}><line x1={left} x2={width - right} y1={y} y2={y} /><text x="0" y={y + 3}>{value === 0 ? "£0" : `£${value}K`}</text></g>;
+          })}
+        </g>
+        <path className="chartArea" d={areaPath} />
+        <polyline className="chartBookings" points={bookingLine} />
+        <polyline className="chartRevenue" points={revenueLine} />
+        {revenuePoints.map(([x, y], index) => (
+          <circle key={months[index]} className={index === revenuePoints.length - 1 ? "chartDot active" : "chartDot"} cx={x} cy={y} r={index === revenuePoints.length - 1 ? 5 : 3.5} />
+        ))}
+      </svg>
+      <div className="chartMonths">
+        {months.map((month) => <span key={month}>{month}</span>)}
+      </div>
+      <div className="chartLegend">
+        <span><i className="legendRevenue" /> Revenue</span>
+        <span><i className="legendBookings" /> Bookings</span>
+      </div>
+    </div>
+  );
+}
+
+function CalendarPanel({
+  onNavigate,
+  bookings: liveBookings,
+}: {
+  onNavigate: (id: string) => void;
+  bookings: AdminDashboardSnapshot["bookings"];
+}) {
+  const [selectedDay, setSelectedDay] = useState(7);
+  const [month, setMonth] = useState("oct");
+  const days = useMemo(() => month === "oct" ? Array.from({ length: 31 }, (_, index) => index + 1) : [], [month]);
+  const firstDay = month === "oct" ? 4 : 0;
+  const liveBookingDates = useMemo(() => {
+    const counts: Record<number, { count: number; label: string }> = {};
+    liveBookings.forEach((booking) => {
+      const date = new Date(booking.startDate);
+      if (date.getMonth() !== 9 || date.getFullYear() !== 2026) return;
+      const day = date.getDate();
+      counts[day] = {
+        count: (counts[day]?.count ?? 0) + 1,
+        label: `${(counts[day]?.count ?? 0) + 1} bookings`,
+      };
+    });
+    return counts;
+  }, [liveBookings]);
+  const calendarBookings = liveBookings.length ? liveBookingDates : bookingDates;
+  const selectedMonthLabel = monthOptions.find((option) => option.value === month)?.label ?? "October 2026";
+
+  return (
+    <article className="adminPanel adminCalendar">
+      <div className="adminPanelHead">
+        <div>
+          <span className="adminEyebrow">SCHEDULE</span>
+          <h2>Bookings calendar</h2>
+          <p>Lessons and reminders for the selected month.</p>
+        </div>
+        <button type="button" className="adminPanelAction" onClick={() => onNavigate("bookings")}>
+          View bookings <Icon n="arrow" s={13} />
+        </button>
+      </div>
+
+      <div className="calendarToolbar">
+        <CustomSelect value={month} options={monthOptions} onChange={setMonth} />
+      </div>
+
+      <div className="calendarWeek">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
+      </div>
+
+      <div className="calendarGrid">
+        {Array.from({ length: firstDay }).map((_, index) => <span className="calendarEmpty" key={"empty-" + index} />)}
+        {days.map((day) => {
+          const booking = calendarBookings[day];
+          const reminder = reminderDates[day];
+          return (
+            <button
+              type="button"
+              key={day}
+              className={[
+                day === selectedDay ? "selected" : "",
+                day === 7 ? "today" : "",
+                booking ? "hasBooking" : "",
+                reminder ? "hasReminder" : "",
+              ].filter(Boolean).join(" ")}
+              onClick={() => setSelectedDay(day)}
+              title={[booking?.label, reminder].filter(Boolean).join(" · ")}
+            >
+              <b>{day}</b>
+              {booking && <i>{booking.count}</i>}
+              {reminder && <span className="calendarReminderDot" aria-label={reminder} />}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="calendarSelection">
+        <div>
+          <span>Selected date</span>
+          <strong>{month === "oct" ? `${selectedDay} October 2026` : selectedMonthLabel}</strong>
+        </div>
+        <span className="calendarCount">
+          {month === "oct" ? calendarBookings[selectedDay]?.label ?? "No bookings" : "No bookings"}
+          {month === "oct" && reminderDates[selectedDay] && <small> · Reminder</small>}
+        </span>
+      </div>
+
+      <div className="reminderList">
+        {reminders.map((item) => (
+          <button type="button" className="reminderItem" key={item.time + item.title} onClick={() => onNavigate("bookings")}>
+            <span className={"reminderDot " + item.tone} />
+            <time>{item.time}</time>
+            <div><strong>{item.title}</strong><small>{item.detail}</small></div>
+          </button>
+        ))}
+      </div>
+    </article>
   );
 }
