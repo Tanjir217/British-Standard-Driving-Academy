@@ -8933,3 +8933,134 @@ nav .navbook {
     margin-top: 12px;
   }
 }
+
+
+/* Mission & vision */
+.missionVision {
+  background: var(--cream);
+}
+
+.missionVisionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 38px;
+}
+
+.missionVisionCard {
+  position: relative;
+  overflow: hidden;
+  min-height: 330px;
+  padding: 38px 36px 32px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 18px 45px rgba(17, 24, 39, .07);
+}
+
+.missionVisionCard:after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  right: -80px;
+  top: -80px;
+  border-radius: 50%;
+  background: rgba(213, 31, 42, .07);
+}
+
+.visionCard {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+
+.visionCard:after {
+  background: rgba(255, 255, 255, .07);
+}
+
+.missionVisionLabel {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-bottom: 17px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.visionCard .missionVisionLabel {
+  color: #f2a6ad;
+}
+
+.missionVisionCard h2 {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin: 0 0 16px;
+  color: var(--navy);
+  font: 700 clamp(28px, 3vw, 40px)/1.08 "Times New Roman", Times, serif;
+  letter-spacing: -.5px;
+}
+
+.visionCard h2 {
+  color: var(--white);
+}
+
+.missionVisionCard p {
+  position: relative;
+  z-index: 1;
+  max-width: 540px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.visionCard p {
+  color: #cbd2dc;
+}
+
+.missionVisionLine {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 3px;
+  margin-top: 28px;
+  border-radius: 10px;
+  background: var(--red);
+}
+
+.visionCard .missionVisionLine {
+  background: #f2a6ad;
+}
+
+.missionVisionTag {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 13px;
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.visionCard .missionVisionTag {
+  color: #eef1f5;
+}
+
+@media (max-width: 760px) {
+  .missionVisionGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .missionVisionCard {
+    min-height: auto;
+    padding: 30px 25px 27px;
+  }
+}
