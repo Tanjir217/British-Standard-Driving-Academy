@@ -1163,7 +1163,7 @@ nav .navbook:hover {
 
 .testimonialControls {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 10px;
   margin-top: 16px;
 }
