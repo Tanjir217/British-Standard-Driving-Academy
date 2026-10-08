@@ -247,6 +247,42 @@ export function Home() {
         </div>
       </section>
 
+      <section className="socialReels section">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading
+              center
+              ey="Follow the journey"
+              title="See BSDA in motion."
+              text="Short tips, road moments and learner-focused content from our social channels."
+            />
+            <span className="sectionNumber">04</span>
+          </div>
+
+          <div className="socialReelsGrid">
+            {[
+              { platform: "YouTube", label: "Watch on YouTube" },
+              { platform: "TikTok", label: "Watch on TikTok" },
+              { platform: "Facebook", label: "Watch on Facebook" },
+              { platform: "Instagram", label: "Watch on Instagram" },
+            ].map((item) => (
+              <article className="socialReelCard" key={item.platform}>
+                <div className="socialReelFrame">
+                  <div className="socialReelPlaceholder">
+                    <span>{item.platform}</span>
+                    <strong>Short video</strong>
+                    <small>{item.label}</small>
+                    <button type="button" aria-label={item.label}>
+                      <span className="socialReelPlay" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="testimonials">
         <div className="container testimonialgrid">
           <div>
