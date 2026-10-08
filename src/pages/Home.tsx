@@ -60,7 +60,7 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
-  const visibleReels = reelItems.slice(reelPage * 2, reelPage * 2 + 4);
+  const visibleReels = reelItems.slice(reelPage, reelPage + 4);
   return (
     <>
       <section className="hero">
@@ -305,7 +305,7 @@ export function Home() {
           <div className="socialReelsViewport">
             <div className="socialReelsGrid">
               {visibleReels.map((platform, index) => {
-                const reelIndex = reelPage * 2 + index;
+                const reelIndex = reelPage + index;
                 return (
                   <article className="socialReelCard" key={platform + "-" + reelIndex}>
                     <div className="socialReelFrame" aria-label={platform + " short video " + (reelIndex + 1)}>
@@ -321,7 +321,7 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => setReelPage(0)}
+              onClick={() => setReelPage((current) => Math.max(0, current - 1))}
               disabled={reelPage === 0}
               aria-label="Show previous short videos"
             >
@@ -330,8 +330,8 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => setReelPage(1)}
-              disabled={reelPage === 1}
+              onClick={() => setReelPage((current) => Math.min(reelItems.length - 4, current + 1))}
+              disabled={reelPage === reelItems.length - 4}
               aria-label="Show next short videos"
             >
               <span aria-hidden="true">›</span>
