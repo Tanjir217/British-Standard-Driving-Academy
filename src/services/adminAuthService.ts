@@ -105,7 +105,7 @@ export async function validateAdminSession(): Promise<void> {
 
     throw new AdminAuthError(
       isLocalVite
-        ? "The local Vite server is running, but the Vercel /api/admin/session function is not. Start the project with 'vercel dev' to run the admin API locally."
+        ? "The local Vite server is running, but the Vercel /api/admin/session function is not. Start the project with 'npm run dev' so the admin API runs locally."
         : "The admin API returned a non-JSON response.",
       {
         stage: "ADMIN_API_RESPONSE",
