@@ -9,7 +9,12 @@ import { Lessons } from "./pages/Lessons";
 import { Instructors } from "./pages/Instructors";
 import { InstructorDetail } from "./pages/InstructorDetail";
 import { Portal } from "./pages/Portal";
+import { Login } from "./pages/Login";
+import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
+import { Contact } from "./pages/Contact";
+import { JoinOurTeam } from "./pages/JoinOurTeam";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
 import { DrivingJourneyPrototype } from "./pages/DrivingJourneyPrototype";
 import "./styles.css";
@@ -26,24 +31,44 @@ function Scroll() {
 
 function AppRoutes() {
   const { pathname } = useLocation();
+  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   if (pathname === "/driving-journey") {
     return <DrivingJourneyPrototype />;
   }
 
+  if (isAuthRoute) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+      </Routes>
+    );
+  }
+
+  if (isAdminRoute) {
+    return <AdminDashboard />;
+  }
+
   return (
     <SiteLayout>
       <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/packages" element={<Packages />} />
-          <Route path="/lessons" element={<Lessons />} />
-          <Route path="/instructors" element={<Instructors />} />
-          <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
-          <Route path="/portal" element={<Portal />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/packages" element={<Packages />} />
+        <Route path="/lessons" element={<Lessons />} />
+        <Route path="/instructors" element={<Instructors />} />
+        <Route
+          path="/instructors/:instructorId"
+          element={<InstructorDetail />}
+        />
+        <Route path="/portal" element={<Portal />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/join-our-team" element={<JoinOurTeam />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </SiteLayout>
   );
 }
