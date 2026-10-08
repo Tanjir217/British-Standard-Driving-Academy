@@ -59,8 +59,33 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
+  const reelViewportRef = useRef<HTMLDivElement | null>(null);
   const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
-  const visibleReels = reelItems.slice(reelPage, reelPage + 4);
+
+  const scrollReels = (direction: -1 | 1) => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    viewport.scrollBy({
+      left: direction * (card.getBoundingClientRect().width + gap),
+      behavior: "smooth",
+    });
+  };
+
+  const syncReelPage = () => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const step = card.getBoundingClientRect().width + gap;
+    const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
+    setReelPage(Math.max(0, Math.min(reelItems.length - 4, page)));
+  };
   return (
     <>
       <section className="hero">
@@ -302,18 +327,19 @@ export function Home() {
             <span className="sectionNumber">04</span>
           </div>
 
-          <div className="socialReelsViewport">
+          <div
+            className="socialReelsViewport"
+            ref={reelViewportRef}
+            onScroll={syncReelPage}
+          >
             <div className="socialReelsGrid">
-              {visibleReels.map((platform, index) => {
-                const reelIndex = reelPage + index;
-                return (
-                  <article className="socialReelCard" key={platform + "-" + reelIndex}>
-                    <div className="socialReelFrame" aria-label={platform + " short video " + (reelIndex + 1)}>
-                      <div className="socialReelPlaceholder" aria-hidden="true" />
-                    </div>
-                  </article>
-                );
-              })}
+              {reelItems.map((platform, index) => (
+                <article className="socialReelCard" key={platform + "-" + index}>
+                  <div className="socialReelFrame" aria-label={platform + " short video " + (index + 1)}>
+                    <div className="socialReelPlaceholder" aria-hidden="true" />
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
 
@@ -321,7 +347,7 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => setReelPage((current) => Math.max(0, current - 1))}
+              onClick={() => scrollReels(-1)}
               disabled={reelPage === 0}
               aria-label="Show previous short videos"
             >
@@ -330,7 +356,7 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => setReelPage((current) => Math.min(reelItems.length - 4, current + 1))}
+              onClick={() => scrollReels(1)}
               disabled={reelPage === reelItems.length - 4}
               aria-label="Show next short videos"
             >
