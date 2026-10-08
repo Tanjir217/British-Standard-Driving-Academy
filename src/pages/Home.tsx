@@ -122,13 +122,6 @@ export function Home() {
             </div>
           </div>
         </div>
-
-        <div className="container heroNumbers">
-          <div><b>01</b><span>Clear learning path</span></div>
-          <div><b>02</b><span>Instructor-led practice</span></div>
-          <div><b>03</b><span>Test-ready confidence</span></div>
-          <div><b>04</b><span>Support beyond the lesson</span></div>
-        </div>
       </section>
 
       <section className="journey section">

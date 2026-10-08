@@ -474,26 +474,6 @@ nav .navbook:hover {
   background: var(--red);
   animation: growBar 1.2s 0.9s both;
 }
-.heroNumbers {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-top: 1px solid var(--line);
-  margin-top: 45px;
-}
-.heroNumbers div {
-  padding: 20px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.heroNumbers b {
-  font: 700 21px "Times New Roman";
-  color: var(--red);
-}
-.heroNumbers span {
-  font-size: 10px;
-  color: #626b7b;
-}
 .section,
 .page {
   padding: 40px 0;
