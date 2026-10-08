@@ -52,7 +52,7 @@ export async function signInAdminWithEmail(
       getErrorMessage(error, "Wix rejected the administrator login request."),
       {
         stage: "WIX_LOGIN_REQUEST",
-        detail: error instanceof Error ? error.stack : undefined,
+        detail: error instanceof Error ? error.message : undefined,
       },
     );
   }
@@ -99,7 +99,7 @@ export async function signInAdminWithEmail(
       getErrorMessage(error, "Wix could not create the administrator session."),
       {
         stage: "WIX_TOKEN_EXCHANGE",
-        detail: error instanceof Error ? error.stack : undefined,
+        detail: error instanceof Error ? error.message : undefined,
       },
     );
   }
@@ -154,7 +154,7 @@ export async function validateAdminSession(): Promise<void> {
       getErrorMessage(error, "Wix could not verify administrator access."),
       {
         stage: "WIX_ADMIN_PERMISSION_CHECK",
-        detail: error instanceof Error ? error.stack : undefined,
+        detail: error instanceof Error ? error.message : undefined,
       },
     );
   }
