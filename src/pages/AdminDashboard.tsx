@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Brand } from "../components/Brand";
 import { Icon } from "../components/Icon";
 import { adminDashboardService, type AdminDashboardSnapshot } from "../services/adminDashboardService";
+import { packageService } from "../services/packages/packageService";
+import type { Package } from "../services/domain/types";
 import "./adminDashboard.css";
 
 type NavItem = [string, string, string];
@@ -85,6 +87,9 @@ export function AdminDashboard() {
   const [liveData, setLiveData] = useState<AdminDashboardSnapshot | null>(null);
   const [dataError, setDataError] = useState("");
   const [loadingData, setLoadingData] = useState(true);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
+  const [packagesError, setPackagesError] = useState("");
   const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
 
   useEffect(() => {
@@ -119,7 +124,22 @@ export function AdminDashboard() {
 
     loadAdminData();
 
+    let packageActive = true;
+    setPackagesLoading(true);
+    packageService.list().then((result) => {
+      if (!packageActive) return;
+      if (result.ok) {
+        setPackages(result.data);
+        setPackagesError("");
+      } else {
+        setPackages([]);
+        setPackagesError(result.error.message);
+      }
+      setPackagesLoading(false);
+    });
+
     return () => {
+      packageActive = false;
       cancelled = true;
     };
   }, []);
@@ -251,6 +271,8 @@ export function AdminDashboard() {
 
         {active === "overview" ? (
           <Overview onNavigate={setActive} liveData={liveData} />
+        ) : active === "packages" ? (
+          <PackagesPanel packages={packages} loading={packagesLoading} error={packagesError} />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
@@ -326,6 +348,86 @@ function CustomSelect({
         </div>
       )}
     </div>
+  );
+}
+
+
+function PackagesPanel({
+  packages,
+  loading,
+  error,
+}: {
+  packages: Package[];
+  loading: boolean;
+  error: string;
+}) {
+  const formatMoney = (amountMinor: number, currency: string) =>
+    new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amountMinor / 100);
+
+  return (
+    <section className="adminPackagesPanel">
+      <div className="adminPanel adminPackagesHeader">
+        <div>
+          <span className="adminEyebrow">WIX PRICING PLANS</span>
+          <h2>Available packages</h2>
+          <p>Live active public packages fetched directly from Wix Pricing Plans.</p>
+        </div>
+        {!loading && !error && (
+          <span className="adminPackageCount">{packages.length} available</span>
+        )}
+      </div>
+
+      {loading && (
+        <div className="adminPanel adminPackageState">
+          <span className="adminEyebrow">LIVE WIX DATA</span>
+          <h3>Loading packages…</h3>
+          <p>Fetching the current pricing plans from Wix.</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="adminPanel adminPackageState error">
+          <span className="adminEyebrow">WIX DATA ERROR</span>
+          <h3>Packages could not be loaded.</h3>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && packages.length === 0 && (
+        <div className="adminPanel adminPackageState">
+          <span className="adminEyebrow">NO AVAILABLE PACKAGES</span>
+          <h3>No active public pricing plans were found.</h3>
+          <p>The dashboard is connected to Wix, but Wix currently returned no available packages.</p>
+        </div>
+      )}
+
+      {!loading && !error && packages.length > 0 && (
+        <div className="adminPackageGrid">
+          {packages.map((plan) => (
+            <article className="adminPackageCard" key={plan.id}>
+              <div className="adminPackageCardTop">
+                <span>{plan.lessonHours > 0 ? plan.lessonHours + " Hours" : "Driving package"}</span>
+                <b>{formatMoney(plan.priceMinor, plan.currency)}</b>
+              </div>
+              <h3>{plan.name}</h3>
+              <p>
+                {plan.features.length > 0
+                  ? plan.features.join(" · ")
+                  : "Structured driving tuition package."}
+              </p>
+              <div className="adminPackageMeta">
+                <span>{plan.transmission === "either" ? "Manual / Automatic" : plan.transmission}</span>
+                <span className="adminPackageStatus">Active</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
