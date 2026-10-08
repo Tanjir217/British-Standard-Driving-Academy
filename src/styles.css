@@ -1425,6 +1425,13 @@ textarea:focus {
 .pagecards {
   max-width: 1060px;
   margin: 48px auto 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .pagecards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .pagecards .card h3 {
