@@ -8921,11 +8921,47 @@ nav .navbook {
 .socialReelPlaceholder {
   position: absolute;
   inset: 0;
-  display: block;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 28%, rgba(213,31,42,.3), transparent 30%),
     linear-gradient(160deg, rgba(255,255,255,.04), transparent 42%);
+  color: rgba(255,255,255,.72);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+.socialReelEmbed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.managedVideoEmpty {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 20px;
+  text-align: center;
+  background: var(--navy);
+  color: #fff;
+}
+.managedVideoEmpty span {
+  color: #f2a6ad;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+.managedVideoEmpty p {
+  max-width: 230px;
+  margin: 0;
+  color: #c5ccd7;
+  font-size: 10px;
+  line-height: 1.5;
 }
 
 .socialReelsControls {
