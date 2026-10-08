@@ -23,17 +23,45 @@ const opportunities = [
   },
 ];
 
+const adiPathway = [
+  {
+    number: "01",
+    title: "ADI Part 1",
+    text: "Theory test covering the knowledge and hazard perception skills needed to begin qualifying.",
+  },
+  {
+    number: "02",
+    title: "ADI Part 2",
+    text: "Driving ability test to demonstrate the standard of driving required for professional instruction.",
+  },
+  {
+    number: "03",
+    title: "Trainee experience",
+    text: "After passing Part 2, you can apply for a trainee licence and gain practical teaching experience before Part 3.",
+  },
+  {
+    number: "04",
+    title: "ADI Part 3",
+    text: "Instructional ability test assessing how effectively you teach and support learner drivers.",
+  },
+  {
+    number: "05",
+    title: "Become fully qualified",
+    text: "Pass all three tests, register as an ADI and begin your professional driving instructor career.",
+  },
+];
+
 export function JoinOurTeam() {
   return (
     <section className="page careers-page">
       <div className="container">
         <div className="careershero">
           <div>
-            <span className="ey">Careers at BSDA</span>
+            <span className="ey">JOIN OUR TEAM</span>
             <h1>Help people become better, safer drivers.</h1>
             <p>
-              BSDA is built around a simple idea: driving education should create
-              calm, capable road users—not just test-day preparation.
+              Join BSDA and build a career around professional, safety-first
+              driving education.
             </p>
             <div className="actions">
               <a className="btn red" href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27m%20interested%20in%20career%20opportunities." target="_blank" rel="noreferrer">
@@ -70,6 +98,41 @@ export function JoinOurTeam() {
             <p>Professional standards come before shortcuts.</p>
           </div>
         </div>
+
+        <section className="adi-section">
+          <Heading
+            ey="BECOME A DRIVING INSTRUCTOR"
+            title="Your complete journey from ADI Part 1 to becoming a fully qualified instructor."
+          />
+
+          <div className="adi-pathway">
+            {adiPathway.map((step) => (
+              <article className="adi-step" key={step.number}>
+                <span className="adi-step-number">{step.number}</span>
+                <div>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="qualified-adi">
+          <div>
+            <span className="ey">ALREADY A QUALIFIED ADI?</span>
+            <h2>Join the BSDA instructor team and explore opportunities to work with us.</h2>
+          </div>
+          <div>
+            <p>
+              we will support you throughout your journey and give you the
+              training and guidance you need to work towards success.
+            </p>
+            <a className="btn red" href="https://wa.me/447908807741?text=Hi%20BSDA%2C%20I%27m%20a%20qualified%20ADI%20and%20I%27m interested in joining the instructor team." target="_blank" rel="noreferrer">
+              Talk to the team <Icon n="arrow" />
+            </a>
+          </div>
+        </section>
 
         <div className="sectionIntro careersintro">
           <Heading
