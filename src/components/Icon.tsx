@@ -40,6 +40,25 @@ export function Icon({ n, s = 20 }: { n: string; s?: number }) {
         <path d="M4 7h16M4 12h16M4 17h16" />
       </>
     ),
+    mail: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </>
+    ),
+    message: (
+      <>
+        <path d="M4 5.5h16v11H8l-4 3v-14z" />
+        <path d="M8 10h.01M12 10h.01M16 10h.01" />
+      </>
+    ),
+    help: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.5 9a2.5 2.5 0 1 1 4.4 1.6c-.9 1-1.9 1.2-1.9 2.7" />
+        <path d="M12 17h.01" />
+      </>
+    ),
     close: (
       <>
         <path d="M6 6l12 12M18 6L6 18" />
