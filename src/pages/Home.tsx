@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
@@ -9,6 +10,54 @@ import { LessonCard } from "../components/LessonCard";
 import { InstructorCard } from "../components/InstructorCard";
 import { FAQSection } from "../components/FAQSection";
 import { packages, lessons, instructors } from "../data/site";
+
+function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    let frame = 0;
+    let started = false;
+
+    const animate = () => {
+      const duration = 1300;
+      const start = performance.now();
+
+      const tick = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(target * eased);
+        if (element) {
+          element.textContent =
+            value.toString().padStart(target < 10 ? 2 : 1, "0") + suffix;
+        }
+        if (progress < 1) frame = requestAnimationFrame(tick);
+      };
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          started = true;
+          animate();
+        }
+      },
+      { threshold: 0.45 },
+    );
+
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [target, suffix]);
+
+  return <strong ref={ref}>{target < 10 ? "0" : ""}{target}{suffix}</strong>;
+}
 
 export function Home() {
   return (
@@ -145,10 +194,10 @@ export function Home() {
 
         <div className="homeStats">
           <div className="container homeStatsGrid">
-            <div><strong>01</strong><span>Clear learning path</span></div>
-            <div><strong>03</strong><span>Flexible lesson paths</span></div>
-            <div><strong>24/7</strong><span>Learning resources</span></div>
-            <div><strong>100%</strong><span>Safety-first coaching</span></div>
+            <div><AnimatedStat target={1} /><span>Clear learning path</span></div>
+            <div><AnimatedStat target={3} /><span>Flexible lesson paths</span></div>
+            <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
+            <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
           </div>
         </div>
       </section>
