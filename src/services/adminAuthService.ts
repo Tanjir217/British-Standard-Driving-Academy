@@ -48,7 +48,11 @@ export async function signInAdminWithEmail(email: string, password: string): Pro
     );
   }
 
-  const sessionToken = "data" in response ? response.data?.sessionToken : undefined;
+  const responseData = "data" in response ? response.data : undefined;
+  const sessionToken =
+    responseData && "sessionToken" in responseData
+      ? responseData.sessionToken
+      : undefined;
 
   if (!sessionToken) {
     throw new AdminAuthError(
