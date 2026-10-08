@@ -13,6 +13,7 @@ import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
 import { NotFound } from "./pages/NotFound";
+import { DrivingJourneyPrototype } from "./pages/DrivingJourneyPrototype";
 import "./styles.css";
 
 function Scroll() {
@@ -28,6 +29,10 @@ function Scroll() {
 function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+
+  if (pathname === "/driving-journey") {
+    return <DrivingJourneyPrototype />;
+  }
 
   if (isAuthRoute) {
     return (
