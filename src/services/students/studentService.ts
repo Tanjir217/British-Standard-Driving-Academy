@@ -40,7 +40,6 @@ export const studentService: StudentService = {
 
       const response = await wixClient.members
         .queryMembers({ fieldsets: ["FULL"] })
-        .ascending("contact.firstName")
         .limit(100)
         .find();
 
