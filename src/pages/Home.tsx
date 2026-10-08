@@ -223,6 +223,16 @@ export function Home() {
         </div>
       </section>
 
+      <section className="section videoSection">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
+            <span className="sectionNumber">04</span>
+          </div>
+          <Reveal><VideoShowcase /></Reveal>
+        </div>
+      </section>
+
       <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
@@ -235,16 +245,6 @@ export function Home() {
             ))}
           </div>
           <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
-        </div>
-      </section>
-
-      <section className="section videoSection">
-        <div className="container">
-          <div className="sectionIntro">
-            <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
-            <span className="sectionNumber">04</span>
-          </div>
-          <Reveal><VideoShowcase /></Reveal>
         </div>
       </section>
 
