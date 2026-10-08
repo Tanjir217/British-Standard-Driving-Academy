@@ -59,6 +59,7 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
   const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
 
@@ -371,9 +372,50 @@ export function Home() {
             <span className="ey">Learner feedback</span>
             <h2>“The goal is not just passing. It is knowing what to do when the road changes.”</h2>
           </div>
-          <div className="quoteCards">
-            <article><b>“</b><p>My lessons finally felt structured. I knew what I had improved and what I needed to practise next.</p><span>— Demo learner · Beginner</span></article>
-            <article><b>“</b><p>The calm coaching made a huge difference. I became much more comfortable in busy traffic.</p><span>— Demo learner · Refresher</span></article>
+
+          <div className="testimonialCarousel">
+            <div className="testimonialViewport">
+              <div
+                className="testimonialTrack"
+                style={{ transform: `translateY(-${testimonialIndex * 50}%)` }}
+              >
+                {[
+                  ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
+                  ["The calm coaching made a huge difference. I became much more comfortable in busy traffic.", "Demo learner · Refresher"],
+                  ["I stopped feeling rushed behind the wheel and started making decisions with confidence.", "Demo learner · New driver"],
+                  ["The instructor explained everything clearly and gave me a plan for every lesson.", "Demo learner · Beginner"],
+                  ["I felt much more prepared for real traffic, not just the test route.", "Demo learner · Test preparation"],
+                  ["The lessons were practical, patient and focused on the areas I actually needed to improve.", "Demo learner · Refresher"],
+                ].map(([quote, learner], index) => (
+                  <article className="quoteCard" key={index}>
+                    <b>“</b>
+                    <p>{quote}</p>
+                    <span>— {learner}</span>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="testimonialControls" aria-label="Learner feedback navigation">
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setTestimonialIndex((current) => Math.max(0, current - 1))}
+                disabled={testimonialIndex === 0}
+                aria-label="Show previous learner feedback"
+              >
+                <span aria-hidden="true">↑</span>
+              </button>
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setTestimonialIndex((current) => Math.min(4, current + 1))}
+                disabled={testimonialIndex === 4}
+                aria-label="Show next learner feedback"
+              >
+                <span aria-hidden="true">↓</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
