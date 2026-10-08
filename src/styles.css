@@ -9786,3 +9786,40 @@ nav .navbook {
     font-size: 15px !important;
   }
 }
+
+
+/* Home ticker and statistics: improved readability */
+.homeMotionTickerTrack span {
+  font-size: 18px;
+}
+
+.homeMotionTickerTrack i {
+  font-size: 15px;
+}
+
+.homeStatsGrid strong {
+  font-size: clamp(36px, 3.5vw, 52px);
+}
+
+.homeStatsGrid span {
+  font-size: 17px;
+}
+
+@media (max-width: 700px) {
+  .homeMotionTickerTrack span {
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .homeMotionTickerTrack i {
+    font-size: 13px;
+  }
+
+  .homeStatsGrid strong {
+    font-size: clamp(32px, 8vw, 42px);
+  }
+
+  .homeStatsGrid span {
+    font-size: 15px;
+  }
+}
