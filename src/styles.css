@@ -1117,27 +1117,93 @@ nav .navbook:hover {
   letter-spacing: -1.8px;
   margin: 12px 0;
 }
-.quoteCards {
-  display: grid;
-  gap: 12px;
+.testimonialCarousel {
+  min-width: 0;
 }
-.quoteCards article {
+
+.testimonialViewport {
+  height: 430px;
+  overflow: hidden;
+}
+
+.testimonialTrack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform .55s cubic-bezier(.22, .61, .36, 1);
+  will-change: transform;
+}
+
+.quoteCard {
+  flex: 0 0 209px;
+  min-height: 209px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 12px;
 }
-.quoteCards b {
-  font: 700 38px "Times New Roman";
+
+.quoteCard b {
+  display: block;
+  font: 700 38px/1 "Times New Roman";
   color: #e85a61;
 }
-.quoteCards p {
-  font: 12px;
+
+.quoteCard p {
+  margin: 12px 0 18px;
   color: #d1d6df;
+  font-size: 16px;
+  line-height: 1.5;
 }
-.quoteCards span {
-  font-size: 9px;
+
+.quoteCard span {
   color: #929aaa;
+  font-size: 14px;
+}
+
+.testimonialControls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.testimonialArrow {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  border-radius: 0;
+  padding: 0;
+  transition: background .2s ease, opacity .2s ease, transform .2s ease;
+}
+
+.testimonialArrow:hover:not(:disabled) {
+  background: rgba(255,255,255,.12);
+  transform: translateY(-2px);
+}
+
+.testimonialArrow:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.testimonialArrow span {
+  font: 400 24px/1 "Times New Roman";
+}
+
+@media (max-width: 800px) {
+  .testimonialgrid {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .testimonialViewport {
+    height: 430px;
+  }
 }
 .faqsection {
   padding: 100px 0;
