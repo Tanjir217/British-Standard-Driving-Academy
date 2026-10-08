@@ -1694,3 +1694,172 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Wix-backed students module */
+.adminStudentsPanel {
+  width: min(100% - 72px, 1180px);
+  margin: 0 auto 60px;
+  display: grid;
+  gap: 16px;
+}
+
+.adminStudentsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.adminStudentsHeader h2 {
+  margin: 7px 0 5px;
+  color: #282b31;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.35px;
+}
+
+.adminStudentsHeader p {
+  margin: 0;
+  color: #8b8f96;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.adminStudentCount {
+  flex: none;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8f3eb;
+  color: #39714b;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.adminStudentState {
+  padding: 28px;
+}
+
+.adminStudentState h3 {
+  margin: 8px 0 5px;
+  color: #30333a;
+  font-size: 15px;
+}
+
+.adminStudentState p {
+  margin: 0;
+  color: #8a8e95;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.adminStudentState.error {
+  border-color: rgba(213,31,42,.22);
+  background: #fffafa;
+}
+
+.adminStudentState.error .adminEyebrow {
+  color: #d51f2a;
+}
+
+.adminStudentTablePanel {
+  padding: 20px;
+  overflow: hidden;
+}
+
+.adminStudentTable {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.adminStudentRow {
+  min-width: 900px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.25fr) minmax(190px, 1.35fr) minmax(130px, .9fr) 105px 105px 105px;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 10px;
+  border-top: 1px solid #eeeeee;
+  color: #6e737b;
+  font-size: 9px;
+}
+
+.adminStudentHead {
+  border-top: 0;
+  padding-top: 0;
+  padding-bottom: 9px;
+  color: #9b9ea4;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.adminStudentIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.adminStudentIdentity > span,
+.adminStudentIdentity img {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 50%;
+}
+
+.adminStudentIdentity > span {
+  display: grid;
+  place-items: center;
+  background: #f0f0f0;
+  color: #555a62;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.adminStudentIdentity img {
+  object-fit: cover;
+}
+
+.adminStudentIdentity strong {
+  overflow: hidden;
+  color: #34373e;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminStudentRow > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminStudentStatus {
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #e8f3eb;
+  color: #39714b;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (max-width: 560px) {
+  .adminStudentsPanel {
+    width: calc(100% - 28px);
+  }
+
+  .adminStudentsHeader {
+    flex-direction: column;
+  }
+
+  .adminStudentTablePanel {
+    padding: 15px;
+  }
+}
