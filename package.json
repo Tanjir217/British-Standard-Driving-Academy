@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "dev:vercel": "npx --yes vercel dev --listen 5173",
-    "dev:vite": "vite"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@wix/bookings": "^1.0.1699",
