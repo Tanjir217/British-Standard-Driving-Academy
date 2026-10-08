@@ -60,6 +60,14 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTestimonialIndex((current) => (current >= 4 ? 0 : current + 1));
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, []);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
   const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
 
