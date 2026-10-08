@@ -39,10 +39,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const nav = [
     ["/packages", "Packages"],
     ["/lessons", "Lessons"],
-    ["/instructors", "Instructors"],
     ["/portal", "Learning Portal"],
-    ["/join-our-team", "Join Our Team"],
-    ["/contact", "Contact Us"],
+    ["/instructors", "Instructors"],
+    ["/booking", "Booking"],
     ["/faq", "FAQ"],
   ];
 
@@ -152,8 +151,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           <div>
             <h4>Academy</h4>
             <Link to="/faq">FAQ</Link>
-            <Link to="/contact">Contact Us</Link>
-            <Link to="/careers">Careers</Link>
+            <Link to="/about">About us</Link>
+            <Link to="/contact">Contact us</Link>
             <Link to="/packages">Book a lesson</Link>
             <span>37 Dunfield Rd, London, SE6 3RW</span>
             <span>+44 7908 807741</span>
@@ -170,16 +169,13 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               WhatsApp us
             </a>
             <Link to="/contact">Send an enquiry</Link>
-            <Link to="/careers">Careers</Link>
+            <Link to="/faq">Read FAQs</Link>
           </div>
         </div>
 
         <div className="container footbottom">
           <span>© 2026 British Standard Driving Academy</span>
-          <span>
-            Demo UI — final Wix CMS, bookings, payments and portal
-            integrations are planned next.
-          </span>
+          <span>Safety · Clarity · Progress · Confidence</span>
         </div>
       </footer>
     </div>
