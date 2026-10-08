@@ -1,6 +1,6 @@
-import { gsap } from "gsap/dist/gsap";
-import { MotionPathPlugin } from "gsap/dist/MotionPathPlugin";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { gsap } from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
@@ -52,7 +52,7 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
       mobile: "(max-width: 900px)",
       reduceMotion: "(prefers-reduced-motion: reduce)",
     },
-    (context) => {
+    (context: gsap.Context) => {
       const conditions = context.conditions as {
         desktop: boolean;
         mobile: boolean;
@@ -99,7 +99,7 @@ export function setupDrivingJourney(refs: DrivingJourneyRefs) {
           pinSpacing: false,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onUpdate: (self) => {
+          onUpdate: (self: ScrollTrigger) => {
             gsap.set(progress, { scaleX: self.progress });
           },
         },
