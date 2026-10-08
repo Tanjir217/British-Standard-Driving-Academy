@@ -5736,3 +5736,114 @@ nav .navbook {
     border-radius: 7px;
   }
 }
+
+
+/* ADI pathway and qualified instructor sections */
+.adi-section {
+  margin: 90px 0 65px;
+}
+
+.adi-section > .heading {
+  max-width: 900px;
+}
+
+.adi-pathway {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 42px;
+}
+
+.adi-step {
+  min-height: 260px;
+  padding: 24px 20px;
+  background: #fffdfa;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  position: relative;
+}
+
+.adi-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.adi-step h3 {
+  font: 700 23px/1.1 "Times New Roman", Times, serif;
+  margin: 28px 0 12px;
+}
+
+.adi-step p {
+  color: var(--muted);
+  font-size: 15px !important;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.qualified-adi {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 45px;
+  align-items: center;
+  margin: 0 0 80px;
+  padding: 38px;
+  border-radius: 15px;
+  background: var(--navy);
+  color: #fff;
+}
+
+.qualified-adi .ey {
+  color: #ef6a71;
+}
+
+.qualified-adi h2 {
+  font: 700 36px/1.08 "Times New Roman", Times, serif;
+  margin: 9px 0 0;
+}
+
+.qualified-adi p {
+  color: #b9c1cf;
+  font-size: 17px !important;
+  line-height: 1.65;
+  margin: 0 0 20px;
+}
+
+@media (max-width: 1050px) {
+  .adi-pathway {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .adi-section {
+    margin: 65px 0 50px;
+  }
+
+  .adi-pathway {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+  }
+
+  .adi-step {
+    min-height: auto;
+  }
+
+  .qualified-adi {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 65px;
+    padding: 28px;
+  }
+
+  .qualified-adi h2 {
+    font-size: 30px;
+  }
+}
