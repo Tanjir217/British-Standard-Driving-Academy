@@ -377,7 +377,7 @@ export function Home() {
             <div className="testimonialViewport">
               <div
                 className="testimonialTrack"
-                style={{ transform: `translateY(-${testimonialIndex * 50}%)` }}
+                style={{ transform: `translateY(-${testimonialIndex * 221}px)` }}
               >
                 {[
                   ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
