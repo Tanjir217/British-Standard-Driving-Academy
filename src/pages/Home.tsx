@@ -60,6 +60,7 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
+  const [testimonialResetting, setTestimonialResetting] = useState(false);
 
   const testimonialItems = [
     ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
@@ -77,6 +78,25 @@ export function Home() {
 
     return () => window.clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (testimonialIndex >= 18) {
+      setTestimonialResetting(true);
+      setTestimonialIndex(6);
+    } else if (testimonialIndex <= 1) {
+      setTestimonialResetting(true);
+      setTestimonialIndex(13);
+    }
+  }, [testimonialIndex]);
+
+  useEffect(() => {
+    if (!testimonialResetting) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setTestimonialResetting(false);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [testimonialResetting]);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
   const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
 
@@ -393,10 +413,10 @@ export function Home() {
           <div className="testimonialCarousel">
             <div className="testimonialViewport">
               <div
-                className="testimonialTrack"
+                className={"testimonialTrack" + (testimonialResetting ? " testimonialTrackReset" : "")}
                 style={{ transform: `translateY(-${testimonialIndex * 221}px)` }}
               >
-                {[...testimonialItems, ...testimonialItems, ...testimonialItems].map(([quote, learner], index) => (
+                {[...testimonialItems, ...testimonialItems, ...testimonialItems, ...testimonialItems].map(([quote, learner], index) => (
                   <article className="quoteCard" key={index}>
                     <b>“</b>
                     <p>{quote}</p>
