@@ -1707,6 +1707,69 @@ textarea:focus {
 .dashboardpanel p {
   max-width: 680px;
 }
+
+.portalLearningVideos {
+  margin-top: 58px;
+}
+
+.portalLearningVideos .sectionIntro {
+  margin-bottom: 28px;
+}
+
+.portalLearningVideos .heading h2 {
+  font-size: clamp(32px, 4vw, 48px);
+}
+
+.portalVideoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.portalVideoCard {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.portalVideoFrame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--navy);
+}
+
+.portalVideoFrame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.portalVideoCard > span {
+  display: block;
+  padding: 12px 5px 5px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.portalVideoEmpty {
+  margin-top: 0;
+}
+
+.portalVideoEmpty h3 {
+  margin: 7px 0;
+  font-size: 25px;
+}
+
+.portalVideoEmpty p {
+  color: var(--muted);
+  font-size: 11px;
+}
 .portalgrid {
   min-height: 600px;
   display: grid;
@@ -9164,4 +9227,12 @@ nav .navbook {
     right: 14px;
     bottom: 14px;
   }
+}
+
+@media (max-width: 900px) {
+  .portalVideoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .portalVideoGrid { grid-template-columns: 1fr; }
 }
