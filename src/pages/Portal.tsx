@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { VideoEmbed } from "../components/VideoEmbed";
+import { getSiteContent, type SiteContentMap } from "../services/siteContentService";
 import {
   getCurrentMember,
   signOutMember,
@@ -19,12 +21,16 @@ export function Portal() {
   const [member, setMember] = useState<MemberSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [learningVideos, setLearningVideos] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
 
-    getCurrentMember()
-      .then((currentMember) => {
+    Promise.all([
+      getCurrentMember(),
+      getSiteContent().catch(() => ({} as SiteContentMap)),
+    ])
+      .then(([currentMember, content]) => {
         if (!active) return;
 
         if (!currentMember) {
@@ -45,6 +51,12 @@ export function Portal() {
               }
             : undefined,
         });
+        setLearningVideos(
+          Array.from(
+            { length: 6 },
+            (_, index) => content["portal-video-" + (index + 1)]?.url || "",
+          ).filter(Boolean),
+        );
       })
       .catch((err) => {
         if (!active) return;
@@ -140,6 +152,34 @@ export function Portal() {
             text="Theory practice, preparation resources and training videos will be available here."
           />
         </div>
+
+        <section className="portalLearningVideos">
+          <div className="sectionIntro">
+            <div className="heading">
+              <span className="ey">Learning resources</span>
+              <h2>Training videos from BSDA.</h2>
+              <p>Watch the latest learning materials added by the academy team.</p>
+            </div>
+          </div>
+          {learningVideos.length ? (
+            <div className="portalVideoGrid">
+              {learningVideos.map((url, index) => (
+                <article className="portalVideoCard" key={url + index}>
+                  <div className="portalVideoFrame">
+                    <VideoEmbed url={url} title={"BSDA learning video " + (index + 1)} />
+                  </div>
+                  <span>LEARNING VIDEO {String(index + 1).padStart(2, "0")}</span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="panel portalVideoEmpty">
+              <span className="ey">Learning resources</span>
+              <h3>Your training videos will appear here.</h3>
+              <p>The academy team can add videos from Admin → Content → Student Portal.</p>
+            </div>
+          )}
+        </section>
 
         <div className="panel dashboardpanel">
           <div>
