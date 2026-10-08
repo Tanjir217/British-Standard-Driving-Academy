@@ -7,24 +7,29 @@ export async function validateAdminSession(): Promise<void> {
     throw new Error("ADMIN_AUTH_REQUIRED");
   }
 
-  const response = await fetch("/api/admin/session", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      accessToken: tokens.accessToken,
-    }),
-  });
+  try {
+    // Wix documents that site owners and collaborators with admin
+    // permissions receive an additional member role named "Admin" when
+    // they are signed in on the live site.
+    const roles = await wixClient.members.getRoles();
+    const isAdmin = roles.some(
+      (role) => String(role.name).toLowerCase() === "admin",
+    );
 
-  const payload = (await response.json()) as { error?: string };
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
+    if (!isAdmin) {
       clearWixTokens();
       throw new Error("ADMIN_ACCESS_DENIED");
     }
+  } catch (error) {
+    if (error instanceof Error && error.message === "ADMIN_ACCESS_DENIED") {
+      throw error;
+    }
 
-    throw new Error(payload.error ?? "Unable to verify administrator access.");
+    // A failed member-role lookup should not silently grant access.
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Unable to verify administrator access.",
+    );
   }
 }
