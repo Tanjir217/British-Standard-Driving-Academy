@@ -423,10 +423,10 @@ function Overview({
           <RevenueChart />
           </article>
 
-          <UpcomingLessons onNavigate={onNavigate} />
+          <UpcomingLessons onNavigate={onNavigate} bookings={liveBookings} />
         </div>
 
-        <CalendarPanel onNavigate={onNavigate} />
+        <CalendarPanel onNavigate={onNavigate} bookings={liveBookings} />
       </section>
 
       <section className="adminBottomGrid">
@@ -445,7 +445,25 @@ function Overview({
             <div className="bookingRow bookingHead">
               <span>Reference</span><span>Student</span><span>Package</span><span>Schedule</span><span>Status</span>
             </div>
-            {bookings.map((booking) => (
+            {(liveData
+              ? liveBookings.slice(0, 5).map((booking) => {
+                  const start = new Date(booking.startDate);
+                  const schedule = start.toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  return [
+                    booking.id.slice(0, 8).toUpperCase(),
+                    booking.studentName,
+                    booking.serviceName,
+                    schedule,
+                    booking.status.replaceAll("_", " "),
+                  ];
+                })
+              : bookings
+            ).map((booking) => (
               <button
                 type="button"
                 className="bookingRow bookingRowButton"
@@ -457,7 +475,7 @@ function Overview({
                 <span>{booking[1]}</span>
                 <span>{booking[2]}</span>
                 <span>{booking[3]}</span>
-                <span><i className={booking[4].toLowerCase()}>{booking[4]}</i></span>
+                <span><i className={booking[4].toLowerCase().includes("confirm") ? "confirmed" : "pending"}>{booking[4]}</i></span>
               </button>
             ))}
           </div>
@@ -487,12 +505,28 @@ function Overview({
   );
 }
 
-function UpcomingLessons({ onNavigate }: { onNavigate: (id: string) => void }) {
-  const lessons = [
-    ["16:00", "Aisha Rahman", "Standard · Lesson 4", "Confirmed"],
-    ["18:00", "Daniel Smith", "Beginner · Lesson 2", "Pending"],
-    ["Tomorrow", "Nusrat Jahan", "Intensive · Lesson 7", "Confirmed"],
-  ];
+function UpcomingLessons({
+  onNavigate,
+  bookings: liveBookings,
+}: {
+  onNavigate: (id: string) => void;
+  bookings: AdminDashboardSnapshot["bookings"];
+}) {
+  const lessons = liveBookings.length
+    ? liveBookings.slice(0, 3).map((booking) => [
+        new Date(booking.startDate).toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        booking.studentName,
+        booking.serviceName,
+        booking.status.replaceAll("_", " "),
+      ])
+    : [
+        ["16:00", "Aisha Rahman", "Standard · Lesson 4", "Confirmed"],
+        ["18:00", "Daniel Smith", "Beginner · Lesson 2", "Pending"],
+        ["Tomorrow", "Nusrat Jahan", "Intensive · Lesson 7", "Confirmed"],
+      ];
 
   return (
     <article className="adminPanel adminUpcoming">
@@ -590,11 +624,31 @@ function RevenueChart() {
   );
 }
 
-function CalendarPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
+function CalendarPanel({
+  onNavigate,
+  bookings: liveBookings,
+}: {
+  onNavigate: (id: string) => void;
+  bookings: AdminDashboardSnapshot["bookings"];
+}) {
   const [selectedDay, setSelectedDay] = useState(7);
   const [month, setMonth] = useState("oct");
   const days = useMemo(() => month === "oct" ? Array.from({ length: 31 }, (_, index) => index + 1) : [], [month]);
   const firstDay = month === "oct" ? 4 : 0;
+  const liveBookingDates = useMemo(() => {
+    const counts: Record<number, { count: number; label: string }> = {};
+    liveBookings.forEach((booking) => {
+      const date = new Date(booking.startDate);
+      if (date.getMonth() !== 9 || date.getFullYear() !== 2026) return;
+      const day = date.getDate();
+      counts[day] = {
+        count: (counts[day]?.count ?? 0) + 1,
+        label: `${(counts[day]?.count ?? 0) + 1} bookings`,
+      };
+    });
+    return counts;
+  }, [liveBookings]);
+  const calendarBookings = liveBookings.length ? liveBookingDates : bookingDates;
   const selectedMonthLabel = monthOptions.find((option) => option.value === month)?.label ?? "October 2026";
 
   return (
@@ -621,7 +675,7 @@ function CalendarPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
       <div className="calendarGrid">
         {Array.from({ length: firstDay }).map((_, index) => <span className="calendarEmpty" key={"empty-" + index} />)}
         {days.map((day) => {
-          const booking = bookingDates[day];
+          const booking = calendarBookings[day];
           const reminder = reminderDates[day];
           return (
             <button
@@ -650,7 +704,7 @@ function CalendarPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
           <strong>{month === "oct" ? `${selectedDay} October 2026` : selectedMonthLabel}</strong>
         </div>
         <span className="calendarCount">
-          {month === "oct" ? bookingDates[selectedDay]?.label ?? "No bookings" : "No mock bookings"}
+          {month === "oct" ? calendarBookings[selectedDay]?.label ?? "No bookings" : "No bookings"}
           {month === "oct" && reminderDates[selectedDay] && <small> · Reminder</small>}
         </span>
       </div>
