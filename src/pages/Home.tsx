@@ -247,6 +247,46 @@ export function Home() {
         </div>
       </section>
 
+      <section className="missionVision section">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading
+              center
+              ey="Our purpose"
+              title="Building better drivers for life."
+              text="Our mission and vision shape every lesson, from the first control to confident everyday driving."
+            />
+            <span className="sectionNumber">04</span>
+          </div>
+
+          <div className="missionVisionGrid">
+            <article className="missionVisionCard missionCard">
+              <span className="missionVisionLabel">Our Mission</span>
+              <h2>Teach with purpose. Coach with patience.</h2>
+              <p>
+                To provide structured, safety-first driving education that helps
+                every learner develop practical skills, sound judgement and the
+                confidence to drive independently.
+              </p>
+              <div className="missionVisionLine" />
+              <span className="missionVisionTag">Learn · Practise · Progress</span>
+            </article>
+
+            <article className="missionVisionCard visionCard">
+              <span className="missionVisionLabel">Our Vision</span>
+              <h2>A generation of confident, responsible drivers.</h2>
+              <p>
+                To become a trusted driving education academy where learners
+                leave with more than a licence — they leave with the awareness,
+                discipline and road confidence to make better decisions every day.
+              </p>
+              <div className="missionVisionLine" />
+              <span className="missionVisionTag">Confidence · Safety · Independence</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section className="socialReels section">
         <div className="container">
           <div className="sectionIntro">
