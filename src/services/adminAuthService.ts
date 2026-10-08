@@ -3,6 +3,7 @@ import {
   exchangeDirectLoginSession,
   getWixTokens,
   loginWithEmail,
+  wixClient,
 } from "./wix/client";
 
 export class AdminAuthError extends Error {
@@ -11,7 +12,10 @@ export class AdminAuthError extends Error {
   readonly status?: number;
   readonly detail?: string;
 
-  constructor(message: string, options: { stage: string; code?: string; status?: number; detail?: string }) {
+  constructor(
+    message: string,
+    options: { stage: string; code?: string; status?: number; detail?: string },
+  ) {
     super(message);
     this.name = "AdminAuthError";
     this.stage = options.stage;
@@ -21,21 +25,47 @@ export class AdminAuthError extends Error {
   }
 }
 
-export async function signInAdminWithEmail(email: string, password: string): Promise<void> {
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function isPermissionError(error: unknown) {
+  const message = getErrorMessage(error, "");
+  return /403|forbidden|permission|unauthori[sz]ed|access denied/i.test(message);
+}
+
+function isAuthenticationError(error: unknown) {
+  const message = getErrorMessage(error, "");
+  return /401|invalid.*token|expired.*token|authentication/i.test(message);
+}
+
+export async function signInAdminWithEmail(
+  email: string,
+  password: string,
+): Promise<void> {
   let response: Awaited<ReturnType<typeof loginWithEmail>>;
 
   try {
     response = await loginWithEmail(email, password);
   } catch (error) {
     throw new AdminAuthError(
-      error instanceof Error ? error.message : "Wix rejected the administrator login request.",
-      { stage: "WIX_LOGIN_REQUEST", detail: error instanceof Error ? error.stack : undefined },
+      getErrorMessage(error, "Wix rejected the administrator login request."),
+      {
+        stage: "WIX_LOGIN_REQUEST",
+        detail: error instanceof Error ? error.stack : undefined,
+      },
     );
   }
 
   if (String(response.loginState) !== "SUCCESS") {
-    const code = "errorCode" in response && response.errorCode ? String(response.errorCode) : undefined;
-    const detail = "error" in response && response.error ? String(response.error) : undefined;
+    const code =
+      "errorCode" in response && response.errorCode
+        ? String(response.errorCode)
+        : undefined;
+    const detail =
+      "error" in response && response.error
+        ? String(response.error)
+        : undefined;
 
     throw new AdminAuthError(
       detail ||
@@ -66,8 +96,11 @@ export async function signInAdminWithEmail(email: string, password: string): Pro
   } catch (error) {
     clearWixTokens();
     throw new AdminAuthError(
-      error instanceof Error ? error.message : "Wix could not create the administrator session.",
-      { stage: "WIX_TOKEN_EXCHANGE", detail: error instanceof Error ? error.stack : undefined },
+      getErrorMessage(error, "Wix could not create the administrator session."),
+      {
+        stage: "WIX_TOKEN_EXCHANGE",
+        detail: error instanceof Error ? error.stack : undefined,
+      },
     );
   }
 }
@@ -82,69 +115,46 @@ export async function validateAdminSession(): Promise<void> {
     });
   }
 
-  let response: Response;
-
   try {
-    response = await fetch("/api/admin/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accessToken: tokens.accessToken }),
-    });
-  } catch (error) {
-    throw new AdminAuthError("The browser could not reach the BSDA admin API.", {
-      stage: "ADMIN_API_NETWORK",
-      detail: error instanceof Error ? error.message : undefined,
-    });
-  }
-
-  const contentType = response.headers.get("content-type") ?? "";
-  const rawBody = await response.text();
-
-  if (!contentType.includes("application/json")) {
-    const isLocalVite = window.location.hostname === "localhost";
-
-    throw new AdminAuthError(
-      isLocalVite
-        ? "The local Vite server is running, but the Vercel /api/admin/session function is not. Start the project with 'npm run dev' so the admin API runs locally."
-        : "The admin API returned a non-JSON response.",
-      {
-        stage: "ADMIN_API_RESPONSE",
-        status: response.status,
-        code: "NON_JSON_API_RESPONSE",
-        detail: rawBody.slice(0, 500),
-      },
+    // Wix Bookings enforces the caller's actual permissions here. Ordinary
+    // members cannot read Extended Bookings; an authorized Wix administrator
+    // can. No Vercel/server proxy is required for this permission check.
+    await wixClient.extendedBookings.queryExtendedBookings(
+      { cursorPaging: { limit: 1 } },
+      {},
     );
-  }
-
-  let payload: {
-    data?: { isAdmin?: boolean };
-    error?: string;
-    debug?: { name?: string; message?: string };
-  };
-
-  try {
-    payload = JSON.parse(rawBody) as typeof payload;
-  } catch {
-    throw new AdminAuthError("The admin API returned invalid JSON.", {
-      stage: "ADMIN_API_JSON",
-      status: response.status,
-      code: "INVALID_JSON",
-      detail: rawBody.slice(0, 500),
-    });
-  }
-
-  if (!response.ok || !payload.data?.isAdmin) {
-    if (response.status === 401 || response.status === 403) {
+  } catch (error) {
+    if (isPermissionError(error)) {
       clearWixTokens();
+      throw new AdminAuthError(
+        "This Wix account does not have administrator access.",
+        {
+          stage: "WIX_ADMIN_PERMISSION_CHECK",
+          code: "ADMIN_ACCESS_DENIED",
+          status: 403,
+          detail: getErrorMessage(error, "Wix denied the admin operation."),
+        },
+      );
+    }
+
+    if (isAuthenticationError(error)) {
+      clearWixTokens();
+      throw new AdminAuthError(
+        "Your Wix administrator session has expired. Please sign in again.",
+        {
+          stage: "WIX_ADMIN_SESSION_CHECK",
+          code: "ADMIN_AUTH_REQUIRED",
+          status: 401,
+          detail: getErrorMessage(error, "Wix rejected the current session."),
+        },
+      );
     }
 
     throw new AdminAuthError(
-      payload.error ?? "Wix did not authorize this account for the admin dashboard.",
+      getErrorMessage(error, "Wix could not verify administrator access."),
       {
-        stage: "ADMIN_PERMISSION_CHECK",
-        status: response.status,
-        code: response.status === 403 ? "ADMIN_ACCESS_DENIED" : undefined,
-        detail: payload.debug?.message ?? `HTTP ${response.status}: ${rawBody.slice(0, 500)}`,
+        stage: "WIX_ADMIN_PERMISSION_CHECK",
+        detail: error instanceof Error ? error.stack : undefined,
       },
     );
   }
