@@ -20,7 +20,12 @@ export default async function handler(req: any, res: any) {
   const { accessToken } = req.body ?? {};
 
   if (!accessToken?.value) {
-    return send(res, 401, { error: "A Wix member session is required." });
+    return send(res, 401, {
+      error: "A Wix member session is required.",
+      debug: process.env.NODE_ENV !== "production"
+        ? { name: "MissingAccessToken", message: "No access token was supplied." }
+        : undefined,
+    });
   }
 
   try {
@@ -35,21 +40,32 @@ export default async function handler(req: any, res: any) {
           },
         },
       }),
-      modules: {
-        extendedBookings,
-      },
+      modules: { extendedBookings },
     });
 
-    // The privileged Bookings API enforces the signed-in member's Wix
-    // permissions. A normal student/member should therefore fail here,
-    // while an authorised administrator can query the resource.
-    await client.extendedBookings.queryExtendedBookings({
-      cursorPaging: { limit: 1 },
-    });
+    // Query Extended Bookings requires booking-reader permissions. A signed-in
+    // site owner/collaborator with the Wix Admin identity can satisfy this,
+    // while an ordinary member cannot.
+    await client.extendedBookings.queryExtendedBookings(
+      { cursorPaging: { limit: 1 } },
+      {},
+    );
 
     return send(res, 200, { data: { isAdmin: true } });
   } catch (error) {
     console.error("BSDA admin session validation failed:", error);
+
+    const debug =
+      process.env.NODE_ENV !== "production"
+        ? {
+            name: error instanceof Error ? error.name : "UnknownError",
+            message:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          }
+        : undefined;
+
     const message =
       error instanceof Error
         ? error.message
@@ -58,17 +74,20 @@ export default async function handler(req: any, res: any) {
     if (/403|forbidden|permission|unauthori[sz]ed/i.test(message)) {
       return send(res, 403, {
         error: "This account does not have administrator access.",
+        debug,
       });
     }
 
     if (/401|invalid.*token|expired.*token|authentication/i.test(message)) {
       return send(res, 401, {
         error: "Your administrator session has expired. Please sign in again.",
+        debug,
       });
     }
 
     return send(res, 500, {
       error: "We could not verify administrator access right now.",
+      debug,
     });
   }
 }
