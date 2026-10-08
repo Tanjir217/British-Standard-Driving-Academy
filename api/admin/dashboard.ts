@@ -1,5 +1,4 @@
 import { createClient, OAuthStrategy } from "@wix/sdk";
-import { members } from "@wix/members";
 import { extendedBookings, services, staffMembers } from "@wix/bookings";
 import wixConfig from "../../wix.config.json";
 
@@ -29,10 +28,6 @@ function getStudentName(booking: any) {
     details.email ||
     "Unknown student"
   );
-}
-
-function isAdminRole(role: any) {
-  return role?.name === "Admin" || role?.title === "Admin";
 }
 
 export default async function handler(req: any, res: any) {
@@ -65,18 +60,11 @@ export default async function handler(req: any, res: any) {
     const client = createClient({
       auth,
       modules: {
-        members,
         extendedBookings,
         services,
         staffMembers,
       },
     });
-
-    const roles = await client.members.getRoles();
-    if (!roles.some(isAdminRole)) {
-      return send(res, 403, { error: "Administrator access is required." });
-    }
-
     const [bookingResponse, serviceResponse, staffResponse] = await Promise.all([
       client.extendedBookings.queryExtendedBookings(
         {
