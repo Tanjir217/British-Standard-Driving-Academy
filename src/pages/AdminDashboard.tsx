@@ -5,6 +5,7 @@ import { Icon } from "../components/Icon";
 import { adminDashboardService, type AdminDashboardSnapshot } from "../services/adminDashboardService";
 import { packageService } from "../services/packages/packageService";
 import type { Package } from "../services/domain/types";
+import { studentService, type WixStudentSummary } from "../services/students/studentService";
 import "./adminDashboard.css";
 
 type NavItem = [string, string, string];
@@ -90,6 +91,9 @@ export function AdminDashboard() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
   const [packagesError, setPackagesError] = useState("");
+  const [students, setStudents] = useState<WixStudentSummary[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentsError, setStudentsError] = useState("");
   const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
 
   useEffect(() => {
@@ -138,8 +142,23 @@ export function AdminDashboard() {
       setPackagesLoading(false);
     });
 
+    let studentActive = true;
+    setStudentsLoading(true);
+    studentService.list().then((result) => {
+      if (!studentActive) return;
+      if (result.ok) {
+        setStudents(result.data);
+        setStudentsError("");
+      } else {
+        setStudents([]);
+        setStudentsError(result.error.message);
+      }
+      setStudentsLoading(false);
+    });
+
     return () => {
       packageActive = false;
+      studentActive = false;
       cancelled = true;
     };
   }, []);
@@ -273,6 +292,8 @@ export function AdminDashboard() {
           <Overview onNavigate={setActive} liveData={liveData} />
         ) : active === "packages" ? (
           <PackagesPanel packages={packages} loading={packagesLoading} error={packagesError} />
+        ) : active === "students" ? (
+          <StudentsPanel students={students} loading={studentsLoading} error={studentsError} />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
@@ -425,6 +446,104 @@ function PackagesPanel({
               </div>
             </article>
           ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+function StudentsPanel({
+  students,
+  loading,
+  error,
+}: {
+  students: WixStudentSummary[];
+  loading: boolean;
+  error: string;
+}) {
+  const formatDate = (value: string) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <section className="adminStudentsPanel">
+      <div className="adminPanel adminStudentsHeader">
+        <div>
+          <span className="adminEyebrow">WIX MEMBERS</span>
+          <h2>Students</h2>
+          <p>Member records fetched directly from the Wix Members API.</p>
+        </div>
+        {!loading && !error && (
+          <span className="adminStudentCount">{students.length} returned</span>
+        )}
+      </div>
+
+      {loading && (
+        <div className="adminPanel adminStudentState">
+          <span className="adminEyebrow">LIVE WIX DATA</span>
+          <h3>Loading students…</h3>
+          <p>Fetching member records from Wix.</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="adminPanel adminStudentState error">
+          <span className="adminEyebrow">WIX DATA ERROR</span>
+          <h3>Students could not be loaded.</h3>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && students.length === 0 && (
+        <div className="adminPanel adminStudentState">
+          <span className="adminEyebrow">NO MEMBERS RETURNED</span>
+          <h3>Wix returned no member records.</h3>
+          <p>The dashboard is connected to Wix, but there are no member records available to this Wix account.</p>
+        </div>
+      )}
+
+      {!loading && !error && students.length > 0 && (
+        <div className="adminPanel adminStudentTablePanel">
+          <div className="adminStudentTable">
+            <div className="adminStudentRow adminStudentHead">
+              <span>Student</span>
+              <span>Email</span>
+              <span>Phone</span>
+              <span>Status</span>
+              <span>Joined</span>
+              <span>Last login</span>
+            </div>
+
+            {students.map((student) => (
+              <div className="adminStudentRow" key={student.id}>
+                <div className="adminStudentIdentity">
+                  {student.profilePhotoUrl ? (
+                    <img src={student.profilePhotoUrl} alt="" />
+                  ) : (
+                    <span>{student.name.slice(0, 2).toUpperCase()}</span>
+                  )}
+                  <strong>{student.name}</strong>
+                </div>
+                <span>{student.email || "—"}</span>
+                <span>{student.phone || "—"}</span>
+                <span>
+                  <i className="adminStudentStatus">
+                    {student.status.replaceAll("_", " ")}
+                  </i>
+                </span>
+                <span>{formatDate(student.createdDate)}</span>
+                <span>{formatDate(student.lastLoginDate)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </section>
