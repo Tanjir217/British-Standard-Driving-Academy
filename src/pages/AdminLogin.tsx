@@ -1,24 +1,36 @@
 import { FormEvent, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { signInWithEmail } from "../services/auth/authService";
+import {
+  AdminAuthError,
+  signInAdminWithEmail,
+  validateAdminSession,
+} from "../services/adminAuthService";
 import "./adminLogin.css";
 
-export function AdminLogin() {
+export function AdminLogin({ initialError = "" }: { initialError?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(
-    new URLSearchParams(location.search).get("error") === "unauthorized"
-      ? "This account does not have administrator access."
-      : "",
+    initialError ||
+      (new URLSearchParams(location.search).get("error") === "unauthorized"
+        ? "This account does not have administrator access."
+        : ""),
   );
+  const [diagnostics, setDiagnostics] = useState<{
+    stage: string;
+    code?: string;
+    status?: number;
+    detail?: string;
+  } | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setDiagnostics(null);
 
     if (!email.trim() || !password) {
       setError("Enter your administrator email and password.");
@@ -28,34 +40,29 @@ export function AdminLogin() {
     setBusy(true);
 
     try {
-      const result = await signInWithEmail(
-        email.trim(),
-        password,
-        "/admin",
-      );
-
-      if (result.state === "REDIRECT") {
-        window.location.assign(result.authUrl);
-        return;
-      }
-
-      if (result.state === "EMAIL_VERIFICATION_REQUIRED") {
-        setError("Your email needs to be verified before administrator access can be granted.");
-        return;
-      }
-
-      if (result.state === "OWNER_APPROVAL_REQUIRED") {
-        setError("This account is still awaiting Wix owner approval.");
-        return;
-      }
-
+      await signInAdminWithEmail(email.trim(), password);
+      await validateAdminSession();
       navigate("/admin", { replace: true });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "We could not sign you in. Please check your credentials and try again.",
-      );
+      if (err instanceof AdminAuthError) {
+        setError(err.message);
+        setDiagnostics({
+          stage: err.stage,
+          code: err.code,
+          status: err.status,
+          detail: err.detail,
+        });
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "We could not complete administrator sign in.",
+        );
+        setDiagnostics({
+          stage: "UNKNOWN",
+          detail: err instanceof Error ? err.stack : String(err),
+        });
+      }
     } finally {
       setBusy(false);
     }
@@ -92,8 +99,45 @@ export function AdminLogin() {
         {error && (
           <div className="adminLoginError" role="alert">
             <Icon n="shield" s={16} />
-            <span>{error}</span>
+            <div>
+              <strong>Sign-in failed</strong>
+              <span>{error}</span>
+            </div>
           </div>
+        )}
+
+        {diagnostics && (
+          <details className="adminLoginDiagnostics" open>
+            <summary>Technical error details</summary>
+            <dl>
+              <div>
+                <dt>Stage</dt>
+                <dd>{diagnostics.stage}</dd>
+              </div>
+              {diagnostics.code && (
+                <div>
+                  <dt>Code</dt>
+                  <dd>{diagnostics.code}</dd>
+                </div>
+              )}
+              {diagnostics.status !== undefined && (
+                <div>
+                  <dt>HTTP status</dt>
+                  <dd>{diagnostics.status}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Browser</dt>
+                <dd>{window.location.origin}</dd>
+              </div>
+              {diagnostics.detail && (
+                <div>
+                  <dt>Detail</dt>
+                  <dd>{diagnostics.detail}</dd>
+                </div>
+              )}
+            </dl>
+          </details>
         )}
 
         <form className="adminLoginForm" onSubmit={handleSubmit}>
@@ -124,14 +168,16 @@ export function AdminLogin() {
           </label>
 
           <button type="submit" className="adminLoginSubmit" disabled={busy}>
-            {busy ? "Signing in…" : "Sign in to admin"}
+            {busy ? "Verifying access…" : "Sign in to admin"}
             {!busy && <Icon n="arrow" s={16} />}
           </button>
         </form>
 
         <div className="adminLoginSecurity">
           <Icon n="shield" s={15} />
-          <span>Administrator access is protected by your Wix account permissions.</span>
+          <span>
+            Administrator access is protected by your Wix account permissions.
+          </span>
         </div>
 
         <button
