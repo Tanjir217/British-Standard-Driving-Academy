@@ -7,3 +7,4 @@ export * from "./lessons/lessonService";
 export * from "./packages/packageService";
 export * from "./payments/paymentService";
 export * from "./students/studentService";
+export * from "./contactService";
