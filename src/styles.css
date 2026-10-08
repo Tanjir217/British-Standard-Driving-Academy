@@ -5847,3 +5847,126 @@ nav .navbook {
     font-size: 30px;
   }
 }
+
+
+/* Contact channels */
+.contact-channels {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 1040px;
+  margin: 55px auto 25px;
+}
+
+.contact-channel {
+  min-height: 310px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: .25s;
+}
+
+.contact-channel:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+}
+
+.whatsapp-channel {
+  background: var(--navy);
+  color: #fff;
+}
+
+.email-channel {
+  background: #fffdfa;
+}
+
+.contact-channel-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(213, 31, 42, .1);
+  color: var(--red);
+  margin-bottom: 24px;
+}
+
+.whatsapp-channel .contact-channel-icon {
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+}
+
+.contact-channel .ey {
+  margin-bottom: 7px;
+}
+
+.whatsapp-channel .ey {
+  color: #ef6a71;
+}
+
+.contact-channel h2 {
+  font: 700 31px/1.08 "Times New Roman", Times, serif;
+  margin: 0 0 12px;
+}
+
+.contact-channel p {
+  color: var(--muted);
+  font-size: 16px !important;
+  line-height: 1.65;
+  max-width: 520px;
+  margin: 0 0 24px;
+}
+
+.whatsapp-channel p {
+  color: #b9c1cf;
+}
+
+.contact-channel .btn {
+  margin-top: auto;
+}
+
+.contact-form-intro {
+  color: var(--muted);
+  font-size: 15px !important;
+  line-height: 1.55;
+  margin: -10px 0 22px;
+}
+
+.contact-form-error {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 8px;
+  background: #fff0f0;
+  border: 1px solid rgba(213, 31, 42, .18);
+  color: var(--red2);
+  font-size: 14px !important;
+}
+
+.contact-form button:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+
+@media (max-width: 800px) {
+  .contact-channels {
+    grid-template-columns: 1fr;
+    margin-top: 40px;
+  }
+
+  .contact-channel {
+    min-height: 270px;
+  }
+}
+
+@media (max-width: 560px) {
+  .contact-channel {
+    padding: 25px;
+  }
+
+  .contact-channel h2 {
+    font-size: 28px;
+  }
+}
