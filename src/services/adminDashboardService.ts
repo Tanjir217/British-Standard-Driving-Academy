@@ -62,7 +62,7 @@ export const adminDashboardService = {
     if (!contentType.includes("application/json")) {
       if (window.location.hostname === "localhost") {
         throw new Error(
-          "The dashboard API is not running under plain Vite. Start this project with 'vercel dev' so the /api/admin/dashboard function is available locally.",
+          "The dashboard API is not running under plain Vite. Start this project with 'npm run dev' so the /api/admin/dashboard function is available locally.",
         );
       }
 
