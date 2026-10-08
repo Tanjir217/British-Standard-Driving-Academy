@@ -8816,7 +8816,7 @@ nav .navbook {
 }
 
 .socialReelCard {
-  flex: 0 0 calc((1180px - 54px) / 4);
+  flex: 0 0 calc((min(1180px, 100vw - 40px) - 54px) / 4);
   min-width: 0;
   animation: socialReelIn .28s ease both;
 }
@@ -8888,7 +8888,7 @@ nav .navbook {
   }
 
   .socialReelCard {
-    flex-basis: calc((min(100vw - 40px, 720px) - 14px) / 2);
+    flex-basis: calc((min(1180px, 100vw - 40px) - 14px) / 2);
   }
 }
 
