@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { VideoEmbed } from "../components/VideoEmbed";
-import { getSiteContent } from "../services/siteContentService";
+import { getSiteContent, type SiteContentMap } from "../services/siteContentService";
 import {
   getCurrentMember,
   signOutMember,
@@ -28,7 +28,7 @@ export function Portal() {
 
     Promise.all([
       getCurrentMember(),
-      getSiteContent().catch(() => ({})),
+      getSiteContent().catch(() => ({} as SiteContentMap)),
     ])
       .then(([currentMember, content]) => {
         if (!active) return;
