@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLogin } from "./AdminLogin";
-import { validateAdminSession } from "../services/adminAuthService";
+import {
+  AdminAuthError,
+  validateAdminSession,
+} from "../services/adminAuthService";
 import { isWixMemberLoggedIn, restoreWixTokens } from "../services/wix/client";
 import { AdminDashboard } from "./AdminDashboard";
 
 export function AdminGate() {
   const navigate = useNavigate();
   const [state, setState] = useState<"checking" | "login" | "allowed">("checking");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -25,17 +29,22 @@ export function AdminGate() {
       try {
         await validateAdminSession();
         if (active) setState("allowed");
-      } catch (error) {
+      } catch (err) {
         if (!active) return;
 
-        if (error instanceof Error && error.message === "ADMIN_ACCESS_DENIED") {
-          navigate("/admin/login?error=unauthorized", { replace: true });
-          return;
-        }
+        if (err instanceof AdminAuthError) {
+          if (err.code === "ADMIN_ACCESS_DENIED") {
+            navigate("/admin/login?error=unauthorized", { replace: true });
+            return;
+          }
 
-        if (error instanceof Error && error.message === "ADMIN_AUTH_REQUIRED") {
-          setState("login");
-          return;
+          setError(err.message);
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "We could not verify administrator access.",
+          );
         }
 
         setState("login");
@@ -49,7 +58,7 @@ export function AdminGate() {
     };
   }, [navigate]);
 
-  if (state === "login") return <AdminLogin />;
+  if (state === "login") return <AdminLogin initialError={error} />;
 
   if (state === "allowed") return <AdminDashboard />;
 
