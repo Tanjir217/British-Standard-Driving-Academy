@@ -165,7 +165,7 @@ export const instructors = [
 export const faqs = [
   [
     "How do I book a lesson?",
-    "Choose a package, submit your details and select your preferred payment method. Our team confirms your lesson schedule after payment verification.",
+    "Choose a package, select a lesson service and available time, then submit your details. Payment and any required checkout step will follow the booking process.",
   ],
   [
     "Can I choose manual or automatic?",
