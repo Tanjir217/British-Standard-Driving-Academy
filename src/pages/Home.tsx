@@ -79,12 +79,22 @@ export function Home() {
     return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (testimonialIndex >= 18) {
-      setTestimonialResetting(true);
-      setTestimonialIndex(6);
-    } else if (testimonialIndex <= 1) {
-      setTestimonialResetting(true);
-      setTestimonialIndex(13);
+    if (testimonialIndex === 12) {
+      const timer = window.setTimeout(() => {
+        setTestimonialResetting(true);
+        setTestimonialIndex(6);
+      }, 560);
+
+      return () => window.clearTimeout(timer);
+    }
+
+    if (testimonialIndex === 5) {
+      const timer = window.setTimeout(() => {
+        setTestimonialResetting(true);
+        setTestimonialIndex(11);
+      }, 560);
+
+      return () => window.clearTimeout(timer);
     }
   }, [testimonialIndex]);
 
