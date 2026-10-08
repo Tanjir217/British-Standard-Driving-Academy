@@ -8674,3 +8674,121 @@ nav .navbook {
     min-height: 0;
   }
 }
+
+
+/* Animated ticker + stats band below the quick links */
+.homeMotionStats {
+  overflow: hidden;
+  background: var(--navy);
+}
+
+.homeMotionTicker {
+  overflow: hidden;
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(90deg, var(--red2), var(--red), #8f1821, var(--red));
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.homeMotionTickerTrack {
+  display: inline-flex;
+  align-items: center;
+  min-width: max-content;
+  padding: 15px 0;
+  animation: bsdaTicker 30s linear infinite;
+  will-change: transform;
+}
+
+.homeMotionTickerTrack span {
+  display: inline-block;
+  margin: 0 24px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.homeMotionTickerTrack i {
+  color: #f5d7da;
+  font-style: normal;
+  font-size: 12px;
+}
+
+@keyframes bsdaTicker {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.homeStats {
+  background: linear-gradient(135deg, var(--navy2), var(--navy));
+}
+
+.homeStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  min-height: 175px;
+  align-items: center;
+}
+
+.homeStatsGrid > div {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border-right: 1px solid rgba(255,255,255,.11);
+  text-align: center;
+}
+
+.homeStatsGrid > div:last-child {
+  border-right: 0;
+}
+
+.homeStatsGrid strong {
+  color: #f2a6ad;
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+
+.homeStatsGrid span {
+  margin-top: 10px;
+  color: #eef1f5;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homeMotionTickerTrack {
+    animation: none;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 700px) {
+  .homeMotionTickerTrack {
+    padding: 12px 0;
+    animation-duration: 24s;
+  }
+
+  .homeMotionTickerTrack span {
+    margin: 0 16px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .homeStatsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    min-height: 230px;
+  }
+
+  .homeStatsGrid > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .homeStatsGrid > div:nth-child(-n+2) {
+    border-bottom: 1px solid rgba(255,255,255,.11);
+  }
+}
