@@ -120,7 +120,7 @@ export function Home() {
       .then((content) => {
         if (!active) return;
         setReelUrls(
-          Array.from({ length: 6 }, (_, index) => content[\`reel-\${index + 1}\`]?.url || ""),
+          Array.from({ length: 6 }, (_, index) => content[`reel-${index + 1}`]?.url || ""),
         );
       })
       .catch(() => {
