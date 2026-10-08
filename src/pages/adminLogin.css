@@ -276,3 +276,47 @@
     margin: 24px 0 26px;
   }
 }
+
+
+.adminLoginDiagnostics {
+  margin: 14px 0 18px;
+  padding: 11px 12px;
+  border: 1px solid rgba(213, 31, 42, 0.28);
+  border-radius: 10px;
+  background: rgba(213, 31, 42, 0.06);
+  color: #c9cdd5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.adminLoginDiagnostics summary {
+  cursor: pointer;
+  color: #e6e8ed;
+  font-weight: 700;
+}
+
+.adminLoginDiagnostics dl {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.adminLoginDiagnostics dl > div {
+  display: grid;
+  gap: 2px;
+}
+
+.adminLoginDiagnostics dt {
+  color: #8e95a1;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.adminLoginDiagnostics dd {
+  margin: 0;
+  color: #d9dce2;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
