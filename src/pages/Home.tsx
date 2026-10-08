@@ -125,6 +125,34 @@ export function Home() {
         </div>
       </section>
 
+      <section className="homeMotionStats" aria-label="BSDA highlights">
+        <div className="homeMotionTicker" aria-hidden="true">
+          <div className="homeMotionTickerTrack">
+            <span>DRIVING LESSONS</span><i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
+            <span>THEORY TEST SUPPORT</span><i>✦</i>
+            <span>INTENSIVE COURSES</span><i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+            <span>DRIVING LESSONS</span><i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
+            <span>THEORY TEST SUPPORT</span><i>✦</i>
+            <span>INTENSIVE COURSES</span><i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+          </div>
+        </div>
+
+        <div className="homeStats">
+          <div className="container homeStatsGrid">
+            <div><strong>01</strong><span>Clear learning path</span></div>
+            <div><strong>03</strong><span>Flexible lesson paths</span></div>
+            <div><strong>24/7</strong><span>Learning resources</span></div>
+            <div><strong>100%</strong><span>Safety-first coaching</span></div>
+          </div>
+        </div>
+      </section>
+
       <section className="journey section">
         <div className="container">
           <div className="sectionIntro">
