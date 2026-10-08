@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "../components/Brand";
 import { Icon } from "../components/Icon";
+import { AdminContentManager } from "./AdminContentManager";
 import "./adminDashboard.css";
 
 const nav = [
@@ -86,6 +87,8 @@ export function AdminDashboard() {
 
         {active === "overview" ? (
           <Overview />
+        ) : active === "content" ? (
+          <AdminContentManager />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
