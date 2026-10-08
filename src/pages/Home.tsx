@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
@@ -58,6 +58,9 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 }
 
 export function Home() {
+  const [reelPage, setReelPage] = useState(0);
+  const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
+  const visibleReels = reelItems.slice(reelPage * 2, reelPage * 2 + 4);
   return (
     <>
       <section className="hero">
@@ -299,21 +302,41 @@ export function Home() {
             <span className="sectionNumber">04</span>
           </div>
 
-          <div className="socialReelsGrid">
-            {[
-              "YouTube",
-              "TikTok",
-              "Facebook",
-              "Instagram",
-              "YouTube",
-              "Instagram",
-            ].map((platform, index) => (
-              <article className="socialReelCard" key={`${platform}-${index}`}>
-                <div className="socialReelFrame" aria-label={`${platform} short video ${index + 1}`}>
-                  <div className="socialReelPlaceholder" aria-hidden="true" />
-                </div>
-              </article>
-            ))}
+          <div className="socialReelsViewport">
+            <div className="socialReelsGrid">
+              {visibleReels.map((platform, index) => {
+                const reelIndex = reelPage * 2 + index;
+                return (
+                  <article className="socialReelCard" key={platform + "-" + reelIndex}>
+                    <div className="socialReelFrame" aria-label={platform + " short video " + (reelIndex + 1)}>
+                      <div className="socialReelPlaceholder" aria-hidden="true" />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="socialReelsControls" aria-label="Short video navigation">
+            <button
+              type="button"
+              className="socialReelArrow"
+              onClick={() => setReelPage(0)}
+              disabled={reelPage === 0}
+              aria-label="Show previous short videos"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              type="button"
+              className="socialReelArrow"
+              onClick={() => setReelPage(1)}
+              disabled={reelPage === 1}
+              aria-label="Show next short videos"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
           </div>
         </div>
       </section>
