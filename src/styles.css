@@ -8795,19 +8795,22 @@ nav .navbook {
 
 
 /* Social reels: vertical short-form video layout */
-.socialReels {
-  background: var(--paper);
+.socialReels { background: var(--paper); }
+
+.socialReelsViewport {
+  overflow: hidden;
+  margin-top: 38px;
 }
 
 .socialReelsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
-  margin-top: 38px;
 }
 
 .socialReelCard {
   min-width: 0;
+  animation: socialReelIn .28s ease both;
 }
 
 .socialReelFrame {
@@ -8831,6 +8834,46 @@ nav .navbook {
     linear-gradient(160deg, rgba(255,255,255,.04), transparent 42%);
 }
 
+.socialReelsControls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.socialReelArrow {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--navy);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--navy);
+  padding: 0;
+  transition: background .2s ease, color .2s ease, opacity .2s ease, transform .2s ease;
+}
+
+.socialReelArrow span {
+  font: 400 30px/1 "Times New Roman", Times, serif;
+}
+
+.socialReelArrow:hover:not(:disabled) {
+  background: var(--navy);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.socialReelArrow:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+@keyframes socialReelIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @media (max-width: 900px) {
   .socialReelsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8840,31 +8883,13 @@ nav .navbook {
 }
 
 @media (max-width: 520px) {
+  .socialReelsViewport { margin-top: 28px; }
   .socialReelsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
-    margin-top: 28px;
   }
-
-  .socialReelFrame {
-    border-radius: 12px;
-  }
-
-  .socialReelPlaceholder {
-    padding: 16px 10px;
-  }
-
-  .socialReelPlaceholder strong {
-    font-size: 16px;
-  }
-
-  .socialReelPlaceholder button {
-    width: 42px;
-    height: 42px;
-    margin-top: 12px;
-  }
+  .socialReelFrame { border-radius: 12px; }
 }
-
 
 /* Mission & vision */
 .missionVision {
