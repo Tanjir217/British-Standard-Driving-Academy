@@ -17,9 +17,10 @@ function getTikTokId(value: string) {
   return match?.[1] || "";
 }
 
-function getInstagramId(value: string) {
+function getInstagramEmbed(value: string) {
   const match = value.match(/\/(reel|p)\/([A-Za-z0-9_-]+)/);
-  return match?.[2] || "";
+  if (!match) return "";
+  return `https://www.instagram.com/${match[1]}/${match[2]}/embed/`;
 }
 
 export function getVideoEmbedUrl(value: string) {
@@ -32,8 +33,8 @@ export function getVideoEmbedUrl(value: string) {
   const tikTokId = getTikTokId(input);
   if (tikTokId) return `https://www.tiktok.com/player/v1/${tikTokId}?controls=1&description=0&music_info=0`;
 
-  const instagramId = getInstagramId(input);
-  if (instagramId) return `https://www.instagram.com/reel/${instagramId}/embed/`;
+  const instagramEmbed = getInstagramEmbed(input);
+  if (instagramEmbed) return instagramEmbed;
 
   if (input.includes("facebook.com/") || input.includes("fb.watch/")) {
     return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(input)}&show_text=false&autoplay=false`;
