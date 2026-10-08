@@ -202,32 +202,6 @@ export function Home() {
         </div>
       </section>
 
-      <section className="journey section">
-        <div className="container">
-          <div className="sectionIntro">
-            <Heading ey="The BSDA journey" title="From first controls to confident road decisions." text="The experience is designed around progression. You always know what you are learning, why it matters and what comes next." />
-            <span className="sectionNumber">01</span>
-          </div>
-          <div className="journeygrid">
-            {[
-              ["01","Assess","Start with your experience, confidence and goals."],
-              ["02","Learn","Build vehicle control and road awareness with your instructor."],
-              ["03","Practise","Repeat the right skills in real traffic and changing conditions."],
-              ["04","Perform","Refine test technique and become an independent road user."]
-            ].map((item, index) => (
-              <Reveal key={item[1]} delay={index * 80}>
-                <article className="journeycard">
-                  <span>{item[0]}</span>
-                  <h3>{item[1]}</h3>
-                  <p>{item[2]}</p>
-                  <i><Icon n="arrow" s={15} /></i>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="offerstrip">
         <div className="container offerin">
           <div><span className="ey">New learner offer</span><h2>Choose your pace. Keep your progress.</h2></div>
