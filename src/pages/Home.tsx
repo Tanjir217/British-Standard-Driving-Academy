@@ -7,6 +7,8 @@ import { VideoShowcase } from "../components/VideoShowcase";
 import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
+import { VideoEmbed } from "../components/VideoEmbed";
+import { getSiteContent } from "../services/siteContentService";
 import { packages, lessons, instructors } from "../data/site";
 
 function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string }) {
@@ -61,6 +63,7 @@ export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
+  const [reelUrls, setReelUrls] = useState<string[]>([]);
 
   const testimonialItems = [
     ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
@@ -108,7 +111,7 @@ export function Home() {
     return () => window.cancelAnimationFrame(frame);
   }, [testimonialResetting]);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
-  const reelItems = ["YouTube", "TikTok", "Facebook", "Instagram", "YouTube", "Instagram"];
+  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];\n\n  useEffect(() => {\n    let active = true;\n\n    getSiteContent()\n      .then((content) => {\n        if (!active) return;\n        setReelUrls(\n          Array.from({ length: 6 }, (_, index) => content[\`reel-\${index + 1}\`]?.url || ""),\n        );\n      })\n      .catch(() => {\n        if (active) setReelUrls([]);\n      });\n\n    return () => {\n      active = false;\n    };\n  }, []);
 
   const scrollReels = (direction: -1 | 1) => {
     const viewport = reelViewportRef.current;
@@ -381,10 +384,20 @@ export function Home() {
             onScroll={syncReelPage}
           >
             <div className="socialReelsGrid">
-              {reelItems.map((platform, index) => (
-                <article className="socialReelCard" key={platform + "-" + index}>
-                  <div className="socialReelFrame" aria-label={platform + " short video " + (index + 1)}>
-                    <div className="socialReelPlaceholder" aria-hidden="true" />
+              {reelItems.map((url, index) => (
+                <article className="socialReelCard" key={"reel-" + (index + 1)}>
+                  <div className="socialReelFrame" aria-label={"Short video " + (index + 1)}>
+                    {url ? (
+                      <VideoEmbed
+                        url={url}
+                        title={"BSDA short video " + (index + 1)}
+                        className="socialReelEmbed"
+                      />
+                    ) : (
+                      <div className="socialReelPlaceholder" aria-hidden="true">
+                        <span>REEL {String(index + 1).padStart(2, "0")}</span>
+                      </div>
+                    )}
                   </div>
                 </article>
               ))}
