@@ -40,7 +40,7 @@ export function Icon({ n, s = 20 }: { n: string; s?: number }) {
         <path d="M4 7h16M4 12h16M4 17h16" />
       </>
     ),
-    message: (
+    mail: (\n      <>\n        <rect x="3" y="5" width="18" height="14" rx="2" />\n        <path d="m3 7 9 6 9-6" />\n      </>\n    ),\n    message: (
       <>
         <path d="M4 5.5h16v11H8l-4 3v-14z" />
         <path d="M8 10h.01M12 10h.01M16 10h.01" />
