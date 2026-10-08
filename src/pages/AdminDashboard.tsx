@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "../components/Brand";
 import { Icon } from "../components/Icon";
+import { adminDashboardService, type AdminDashboardSnapshot } from "../services/adminDashboardService";
 import "./adminDashboard.css";
 
 type NavItem = [string, string, string];
@@ -81,7 +82,47 @@ export function AdminDashboard() {
   const [active, setActive] = useState("overview");
   const [period, setPeriod] = useState("month");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [liveData, setLiveData] = useState<AdminDashboardSnapshot | null>(null);
+  const [dataError, setDataError] = useState("");
+  const [loadingData, setLoadingData] = useState(true);
   const pageTitle = nav.find(([id]) => id === active)?.[1] ?? "Overview";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAdminData() {
+      setLoadingData(true);
+      setDataError("");
+
+      const now = new Date();
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      try {
+        const snapshot = await adminDashboardService.loadSnapshot(
+          from.toISOString(),
+          to.toISOString(),
+        );
+        if (!cancelled) setLiveData(snapshot);
+      } catch (error) {
+        if (!cancelled) {
+          setDataError(
+            error instanceof Error
+              ? error.message
+              : "Unable to connect to Wix dashboard data.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingData(false);
+      }
+    }
+
+    loadAdminData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const exportData = () => {
     const csv = [
@@ -185,6 +226,11 @@ export function AdminDashboard() {
               Manage students, lessons, instructors and bookings from one place.
               Your BSDA academy overview is ready for today's work.
             </p>
+            {loadingData && <span className="adminDataStatus">Connecting to Wix data…</span>}
+            {!loadingData && !dataError && liveData && (
+              <span className="adminDataStatus live">● Live Wix data</span>
+            )}
+            {dataError && <span className="adminDataStatus error">{dataError}</span>}
           </div>
 
           <div className="adminHeroSide">
@@ -204,7 +250,7 @@ export function AdminDashboard() {
         </section>
 
         {active === "overview" ? (
-          <Overview onNavigate={setActive} />
+          <Overview onNavigate={setActive} liveData={liveData} />
         ) : (
           <section className="adminPlaceholder">
             <span className="adminEyebrow">MODULE READY</span>
@@ -283,11 +329,65 @@ function CustomSelect({
   );
 }
 
-function Overview({ onNavigate }: { onNavigate: (id: string) => void }) {
+function Overview({
+  onNavigate,
+  liveData,
+}: {
+  onNavigate: (id: string) => void;
+  liveData: AdminDashboardSnapshot | null;
+}) {
+  const liveBookings = liveData?.bookings ?? [];
+  const pendingCount = liveBookings.filter((booking) =>
+    ["PENDING", "PENDING_APPROVAL", "PENDING_CHECKOUT"].includes(booking.status),
+  ).length;
+  const uniqueStudents = new Set(
+    liveBookings.map((booking) => booking.contactId).filter(Boolean),
+  ).size;
+
+  const dashboardStats = liveData
+    ? [
+        {
+          id: "students",
+          label: "Active Students",
+          value: String(uniqueStudents),
+          change: "Wix",
+          note: "students with bookings",
+          icon: "users",
+        },
+        {
+          id: "bookings",
+          label: "Lessons This Month",
+          value: String(liveBookings.length),
+          change: "Wix",
+          note: "scheduled bookings",
+          icon: "car",
+        },
+        {
+          id: "payments",
+          label: "Booking Value",
+          value: new Intl.NumberFormat("en-GB", {
+            style: "currency",
+            currency: liveData.currency || "GBP",
+            maximumFractionDigits: 0,
+          }).format(liveData.bookingValue),
+          change: "Wix",
+          note: "current service pricing",
+          icon: "wallet",
+        },
+        {
+          id: "bookings",
+          label: "Pending Bookings",
+          value: String(pendingCount),
+          change: "Wix",
+          note: "awaiting action",
+          icon: "calendar",
+        },
+      ]
+    : stats;
   return (
     <div className="adminContent">
       <section className="adminStats">
-        {stats.map((stat) => (
+        {dashboardStats.map((stat) => (
           <button
             className="adminStat"
             key={stat.label}
