@@ -6,7 +6,6 @@ import { Reveal } from "../components/Reveal";
 import { VideoShowcase } from "../components/VideoShowcase";
 import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
-import { InstructorCard } from "../components/InstructorCard";
 import { FAQSection } from "../components/FAQSection";
 import { packages, lessons, instructors } from "../data/site";
 
@@ -245,21 +244,6 @@ export function Home() {
             ))}
           </div>
           <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
-        </div>
-      </section>
-
-      <section className="section instructorsPreview">
-        <div className="container">
-          <div className="sectionIntro">
-            <Heading ey="Meet the instructors" title="The right coach can change the whole learning experience." text="Choose by teaching style, specialty and the kind of support you want from lesson one." />
-            <span className="sectionNumber">05</span>
-          </div>
-          <div className="instructorgrid preview">
-            {instructors.slice(0, 3).map((instructor, i) => (
-              <Reveal key={instructor.id} delay={i * 90}><InstructorCard instructor={instructor} /></Reveal>
-            ))}
-          </div>
-          <div className="centerlink"><Link className="btn light" to="/instructors">Meet all instructors <Icon n="arrow" /></Link></div>
         </div>
       </section>
 
