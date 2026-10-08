@@ -21,6 +21,25 @@ export interface AdminDashboardSnapshot {
   currency: string;
 }
 
+function getStudentName(booking: any) {
+  const details = booking?.contactDetails ?? {};
+
+  return (
+    [details.firstName, details.lastName].filter(Boolean).join(" ") ||
+    details.email ||
+    "Unknown student"
+  );
+}
+
+function getBookingSlot(booking: any) {
+  return (
+    booking?.bookedEntity?.slot ??
+    booking?.bookedEntity?.item?.slot ??
+    booking?.bookedEntity?.schedule ??
+    {}
+  );
+}
+
 export const adminDashboardService = {
   async loadSnapshot(
     fromDate: string,
@@ -34,61 +53,116 @@ export const adminDashboardService = {
       );
     }
 
-    let response: Response;
-
     try {
-      response = await fetch("/api/admin/dashboard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accessToken: tokens.accessToken,
-          fromDate,
-          toDate,
-        }),
+      // These calls run with the signed-in Wix member's permissions. Wix is
+      // the source of truth; there is no Vercel API proxy in this flow.
+      const [bookingResponse, serviceResponse, staffResponse] =
+        await Promise.all([
+          wixClient.extendedBookings.queryExtendedBookings(
+            {
+              filter: {
+                startDate: { $gte: fromDate },
+                endDate: { $lte: toDate },
+              },
+              sort: [{ fieldName: "startDate", order: "ASC" }],
+              cursorPaging: { limit: 100 },
+            },
+            {},
+          ),
+          wixClient.services.queryServices({
+            paging: { limit: 100, offset: 0 },
+          }),
+          wixClient.staffMembers.queryStaffMembers({
+            filter: { serviceProvider: true },
+            cursorPaging: { limit: 100 },
+          }),
+        ]);
+
+      const serviceItems =
+        (serviceResponse as any).services ??
+        (serviceResponse as any).items ??
+        [];
+
+      const serviceMap = new Map<
+        string,
+        { name: string; price: number; currency: string }
+      >();
+
+      serviceItems.forEach((service: any) => {
+        const id = service?._id ?? service?.id;
+        if (!id) return;
+
+        const fixedPrice = Number(
+          service?.payment?.fixed?.price?.value ?? 0,
+        );
+        const variedPrice = Number(
+          service?.payment?.varied?.defaultPrice?.value ?? 0,
+        );
+
+        serviceMap.set(id, {
+          name: service?.name ?? "Driving lesson",
+          price:
+            Number.isFinite(fixedPrice) && fixedPrice > 0
+              ? fixedPrice
+              : variedPrice,
+          currency: service?.payment?.fixed?.price?.currency ?? "GBP",
+        });
       });
+
+      const rawBookings =
+        (bookingResponse as any).extendedBookings ??
+        (bookingResponse as any).items ??
+        [];
+
+      const bookings = rawBookings
+        .map((entry: any): AdminBookingRecord => {
+          const booking = entry?.booking ?? entry;
+          const slot = getBookingSlot(booking);
+          const contactDetails = booking?.contactDetails ?? {};
+          const serviceId = slot?.serviceId ?? "";
+          const service = serviceMap.get(serviceId);
+
+          return {
+            id: booking?._id ?? booking?.id ?? "",
+            studentName: getStudentName(booking),
+            email: contactDetails.email ?? "",
+            serviceId,
+            serviceName: service?.name ?? "Driving lesson",
+            startDate: booking?.startDate ?? slot?.startDate ?? "",
+            endDate: booking?.endDate ?? slot?.endDate ?? "",
+            status: booking?.status ?? "UNKNOWN",
+            paymentStatus: booking?.paymentStatus ?? "UNKNOWN",
+            contactId: contactDetails.contactId ?? "",
+          };
+        })
+        .filter((booking: AdminBookingRecord) => booking.id);
+
+      const bookingValue = bookings.reduce((total, booking) => {
+        return total + (serviceMap.get(booking.serviceId)?.price ?? 0);
+      }, 0);
+
+      const staff =
+        (staffResponse as any).staffMembers ??
+        (staffResponse as any).items ??
+        [];
+
+      const currencies = [...serviceMap.values()]
+        .map((service) => service.currency)
+        .filter(Boolean);
+
+      return {
+        bookings,
+        serviceCount: serviceItems.length,
+        instructorCount: staff.length,
+        bookingValue,
+        currency: currencies[0] ?? "GBP",
+      };
     } catch (error) {
       throw new Error(
         error instanceof Error
           ? error.message
-          : "The browser could not reach the BSDA admin API.",
+          : "Unable to retrieve Wix admin dashboard data.",
       );
     }
-
-    const contentType = response.headers.get("content-type") ?? "";
-    const rawBody = await response.text();
-
-    if (!contentType.includes("application/json")) {
-      if (window.location.hostname === "localhost") {
-        throw new Error(
-          "The dashboard API is not running under plain Vite. Start this project with 'npm run dev' so the /api/admin/dashboard function is available locally.",
-        );
-      }
-
-      throw new Error("The admin dashboard API returned a non-JSON response.");
-    }
-
-    let payload: {
-      data?: AdminDashboardSnapshot;
-      error?: string;
-      debug?: { message?: string };
-    };
-
-    try {
-      payload = JSON.parse(rawBody) as typeof payload;
-    } catch {
-      throw new Error("The admin dashboard API returned invalid JSON.");
-    }
-
-    if (!response.ok || !payload.data) {
-      throw new Error(
-        payload.debug?.message ||
-          payload.error ||
-          "Unable to load the Wix admin dashboard data.",
-      );
-    }
-
-    return payload.data;
   },
 };
