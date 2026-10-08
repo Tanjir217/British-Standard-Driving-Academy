@@ -301,28 +301,22 @@ export function Home() {
 
           <div className="socialReelsGrid">
             {[
-              { platform: "YouTube", label: "Watch on YouTube" },
-              { platform: "TikTok", label: "Watch on TikTok" },
-              { platform: "Facebook", label: "Watch on Facebook" },
-              { platform: "Instagram", label: "Watch on Instagram" },
-            ].map((item) => (
-              <article className="socialReelCard" key={item.platform}>
-                <div className="socialReelFrame">
-                  <div className="socialReelPlaceholder">
-                    <span>{item.platform}</span>
-                    <strong>Short video</strong>
-                    <small>{item.label}</small>
-                    <button type="button" aria-label={item.label}>
-                      <span className="socialReelPlay" />
-                    </button>
-                  </div>
+              "YouTube",
+              "TikTok",
+              "Facebook",
+              "Instagram",
+              "YouTube",
+              "Instagram",
+            ].map((platform, index) => (
+              <article className="socialReelCard" key={`${platform}-${index}`}>
+                <div className="socialReelFrame" aria-label={`${platform} short video ${index + 1}`}>
+                  <div className="socialReelPlaceholder" aria-hidden="true" />
                 </div>
               </article>
             ))}
           </div>
         </div>
       </section>
-
       <section className="testimonials">
         <div className="container testimonialgrid">
           <div>
