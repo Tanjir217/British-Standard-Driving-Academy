@@ -1134,6 +1134,10 @@ nav .navbook:hover {
   will-change: transform;
 }
 
+.testimonialTrackReset {
+  transition: none !important;
+}
+
 .quoteCard {
   flex: 0 0 209px;
   min-height: 209px;
