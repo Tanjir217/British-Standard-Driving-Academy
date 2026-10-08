@@ -1503,3 +1503,27 @@
     min-height: 50px;
   }
 }
+
+.adminDataStatus {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: #aeb3bd;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.adminDataStatus.live {
+  color: #8fc79c;
+  background: rgba(79,145,91,.12);
+}
+
+.adminDataStatus.error {
+  max-width: 520px;
+  color: #e8a1a6;
+  background: rgba(213,31,42,.12);
+  line-height: 1.4;
+}
