@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
@@ -9,79 +8,9 @@ import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
 import { InstructorCard } from "../components/InstructorCard";
 import { FAQSection } from "../components/FAQSection";
-import { lessons, instructors } from "../data/site";
-import { packageService } from "../services/packages/packageService";
-import type { Package } from "../services/domain/types";
-
-const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
-  "10-hour block booking": {
-    eyebrow: "10 Hours",
-    description: "A discounted block booking for learners who want consistent progress over a structured period.",
-    features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-    popular: true,
-  },
-  "20-hour block booking": {
-    eyebrow: "20 Hours",
-    description: "A larger discounted block for learners who want more practice and continuity.",
-    features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-  },
-  "10-hour intensive programme": {
-    eyebrow: "10 Hours · Intensive",
-    description: "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
-  },
-  "20-hour intensive programme": {
-    eyebrow: "20 Hours · Intensive",
-    description: "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
-  },
-};
-
-function formatMoney(amountMinor: number, currency: string) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
-}
-
-function toPackageCard(plan: Package) {
-  const copy = packageCopy[plan.name.trim().toLowerCase()];
-  return {
-    id: plan.id,
-    name: plan.name,
-    price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow: copy?.eyebrow ?? (plan.lessonHours ? `${plan.lessonHours} Hours` : "Driving Programme"),
-    description:
-      copy?.description ??
-      "A structured BSDA driving programme managed through our booking and pricing system.",
-    features:
-      plan.features.length > 0
-        ? plan.features
-        : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
-    popular: copy?.popular,
-  };
-}
+import { packages, lessons, instructors } from "../data/site";
 
 export function Home() {
-  const [packages, setPackages] = useState<Package[]>([]);
-
-  useEffect(() => {
-    let active = true;
-
-    packageService.list().then((result) => {
-      if (active && result.ok) {
-        setPackages(result.data);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const packageCards = packages.map(toPackageCard);
-
   return (
     <>
       <section className="hero">
@@ -91,7 +20,7 @@ export function Home() {
             <h1>Learn to drive.<br /><em>Learn to live.</em></h1>
             <p>Confident drivers are built through patient coaching, purposeful practice and a learning path that makes every lesson count.</p>
             <div className="actions">
-              <Link className="btn red" to="/packages">Book your first lesson <Icon n="arrow" /></Link>
+              <Link className="btn red" to="/booking">Book your first lesson <Icon n="arrow" /></Link>
               <Link className="btn light" to="/instructors">Meet our instructors</Link>
             </div>
             <div className="heroTrust">
@@ -171,8 +100,8 @@ export function Home() {
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
             <span className="sectionNumber">02</span>
           </div>
-          <div className="cards package-home-grid">
-            {packageCards.map((p, i) => (
+          <div className="cards">
+            {packages.map((p, i) => (
               <Reveal key={p.id} delay={i * 90}><PackageCard p={p} /></Reveal>
             ))}
           </div>
