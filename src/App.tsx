@@ -12,10 +12,12 @@ import { Portal } from "./pages/Portal";
 import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
+import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
+import { AdminGate } from "./pages/AdminGate";
+import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 
 function Scroll() {
@@ -32,6 +34,10 @@ function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLoginRoute = pathname === "/admin/login";
+
+  if (isAdminLoginRoute) return <AdminLogin />;
+  if (isAdminRoute) return <AdminGate />;
 
   if (isAuthRoute) {
     return (
@@ -40,10 +46,6 @@ function AppRoutes() {
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     );
-  }
-
-  if (isAdminRoute) {
-    return <AdminDashboard />;
   }
 
   return (
@@ -60,6 +62,7 @@ function AppRoutes() {
         />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />
