@@ -111,7 +111,26 @@ export function Home() {
     return () => window.cancelAnimationFrame(frame);
   }, [testimonialResetting]);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
-  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];\n\n  useEffect(() => {\n    let active = true;\n\n    getSiteContent()\n      .then((content) => {\n        if (!active) return;\n        setReelUrls(\n          Array.from({ length: 6 }, (_, index) => content[\`reel-\${index + 1}\`]?.url || ""),\n        );\n      })\n      .catch(() => {\n        if (active) setReelUrls([]);\n      });\n\n    return () => {\n      active = false;\n    };\n  }, []);
+  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];
+
+  useEffect(() => {
+    let active = true;
+
+    getSiteContent()
+      .then((content) => {
+        if (!active) return;
+        setReelUrls(
+          Array.from({ length: 6 }, (_, index) => content[\`reel-\${index + 1}\`]?.url || ""),
+        );
+      })
+      .catch(() => {
+        if (active) setReelUrls([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const scrollReels = (direction: -1 | 1) => {
     const viewport = reelViewportRef.current;
