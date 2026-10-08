@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { Reveal } from "../components/Reveal";
-import { SocialFeed } from "../components/SocialFeed";
 import { VideoShowcase } from "../components/VideoShowcase";
 import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
@@ -221,20 +220,6 @@ export function Home() {
               <Reveal key={p.id} delay={i * 90}><PackageCard p={p} /></Reveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container split">
-          <Reveal>
-            <Heading ey="Why BSDA" title="A driving school should teach more than test manoeuvres." text="We combine vehicle control, road awareness, decision-making and calm feedback so learners can carry their skills into everyday driving." />
-            <div className="featureRows">
-              <div><b>01</b><span><strong>Learn at your level</strong><small>Beginner, refresher, intensive or test preparation.</small></span></div>
-              <div><b>02</b><span><strong>Train with purpose</strong><small>Each lesson has a clear target and a next-step recommendation.</small></span></div>
-              <div><b>03</b><span><strong>Build lasting confidence</strong><small>Feedback and repetition turn isolated skills into safe habits.</small></span></div>
-            </div>
-          </Reveal>
-          <Reveal delay={120}><SocialFeed /></Reveal>
         </div>
       </section>
 
