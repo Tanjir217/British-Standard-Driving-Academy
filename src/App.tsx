@@ -15,6 +15,7 @@ import { FAQ } from "./pages/FAQ";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { NotFound } from "./pages/NotFound";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import "./styles.css";
 
 function Scroll() {
@@ -30,6 +31,9 @@ function Scroll() {
 function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  if (isAdminRoute) return <AdminDashboard />;
 
   if (isAuthRoute) {
     return (
