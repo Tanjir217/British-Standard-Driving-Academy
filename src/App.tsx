@@ -16,7 +16,6 @@ import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
-import { DrivingJourneyPrototype } from "./pages/DrivingJourneyPrototype";
 import "./styles.css";
 
 function Scroll() {
@@ -33,10 +32,6 @@ function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
-
-  if (pathname === "/driving-journey") {
-    return <DrivingJourneyPrototype />;
-  }
 
   if (isAuthRoute) {
     return (
