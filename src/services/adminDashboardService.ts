@@ -17,88 +17,39 @@ export interface AdminDashboardSnapshot {
   bookings: AdminBookingRecord[];
   serviceCount: number;
   instructorCount: number;
-}
-
-function getBookingValue(booking: any) {
-  return (
-    booking?.booking ??
-    booking
-  );
-}
-
-function getStudentName(booking: any) {
-  const details = getBookingValue(booking)?.contactDetails ?? {};
-  const fullName = [details.firstName, details.lastName].filter(Boolean).join(" ");
-  return fullName || details.email || "Unknown student";
-}
-
-function getBookingSlot(booking: any) {
-  const value = getBookingValue(booking);
-  return value?.bookedEntity?.slot ?? value?.bookedEntity?.item?.slot ?? {};
+  bookingValue: number;
+  currency: string;
 }
 
 export const adminDashboardService = {
   async loadSnapshot(fromDate: string, toDate: string): Promise<AdminDashboardSnapshot> {
-    const [bookingResponse, serviceResponse, staffResponse] = await Promise.all([
-      wixClient.extendedBookings.queryExtendedBookings(
-        {
-          filter: {
-            startDate: { $gte: fromDate },
-            endDate: { $lte: toDate },
-          },
-          sort: [{ fieldName: "startDate", order: "ASC" }],
-          cursorPaging: { limit: 100 },
-        },
-        {},
-      ),
-      wixClient.services.queryServices({
-        paging: { limit: 100, offset: 0 },
-      }),
-      wixClient.staffMembers.queryStaffMembers({
-        filter: { serviceProvider: true },
-        cursorPaging: { limit: 100 },
-      }),
-    ]);
+    const tokens = wixClient.auth.getTokens();
 
-    const serviceMap = new Map<string, string>();
-    const services = (serviceResponse as any).services ?? (serviceResponse as any).items ?? [];
-    services.forEach((service: any) => {
-      const id = service?._id ?? service?.id;
-      if (id) serviceMap.set(id, service?.name ?? "Driving lesson");
+    if (!tokens?.accessToken?.value) {
+      throw new Error("Please sign in with an administrator account to open the dashboard.");
+    }
+
+    const response = await fetch("/api/admin/dashboard", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        accessToken: tokens.accessToken,
+        fromDate,
+        toDate,
+      }),
     });
 
-    const rawBookings =
-      (bookingResponse as any).extendedBookings ??
-      (bookingResponse as any).items ??
-      [];
-
-    const bookings = rawBookings
-      .map((entry: any): AdminBookingRecord => {
-        const booking = getBookingValue(entry);
-        const slot = getBookingSlot(entry);
-        const contactDetails = booking?.contactDetails ?? {};
-        const serviceId = slot?.serviceId ?? "";
-        return {
-          id: booking?._id ?? booking?.id ?? "",
-          studentName: getStudentName(entry),
-          email: contactDetails.email ?? "",
-          serviceId,
-          serviceName: serviceMap.get(serviceId) ?? "Driving lesson",
-          startDate: booking?.startDate ?? slot?.startDate ?? "",
-          endDate: booking?.endDate ?? slot?.endDate ?? "",
-          status: booking?.status ?? "UNKNOWN",
-          paymentStatus: booking?.paymentStatus ?? "UNKNOWN",
-          contactId: contactDetails.contactId ?? "",
-        };
-      })
-      .filter((booking: AdminBookingRecord) => booking.id);
-
-    const staff = (staffResponse as any).staffMembers ?? (staffResponse as any).items ?? [];
-
-    return {
-      bookings,
-      serviceCount: services.length,
-      instructorCount: staff.length,
+    const payload = (await response.json()) as {
+      data?: AdminDashboardSnapshot;
+      error?: string;
     };
+
+    if (!response.ok || !payload.data) {
+      throw new Error(payload.error ?? "Unable to load the Wix admin dashboard data.");
+    }
+
+    return payload.data;
   },
 };
