@@ -717,7 +717,7 @@ nav .navbook:hover {
 }
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(1fr);
   gap: 18px;
 }
 .card {
@@ -1456,38 +1456,38 @@ textarea:focus {
 }
 
 /* Homepage package grid: four equal cards on desktop. */
-.cards.package-home-grid {
+.package-home-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
 }
 
-.cards.package-home-grid > .reveal {
+.package-home-grid > .reveal {
   height: 100%;
 }
 
-.cards.package-home-grid .card {
+.package-home-grid .card {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 /* Keep the package descriptions on one shared baseline. */
-.cards.package-home-grid .card h3 {
+.package-home-grid .card h3 {
   min-height: 108px;
 }
 
-.cards.package-home-grid .card .textlink {
+.package-home-grid .card .textlink {
   margin-top: auto;
 }
 
 @media (max-width: 980px) {
-  .cards.package-home-grid {
+  .package-home-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 560px) {
-  .cards.package-home-grid {
+  .package-home-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -6193,8 +6193,8 @@ button {
   gap: 20px;
 }
 header {
-  position: relative;
-  top: auto;
+  position: sticky;
+  top: 3px;
   z-index: 20;
   background: rgba(255, 253, 250, 0.86);
   backdrop-filter: blur(18px);
@@ -9784,42 +9784,5 @@ nav .navbook {
 
   .bsdaProofItem small {
     font-size: 15px !important;
-  }
-}
-
-
-/* Home ticker and statistics: improved readability */
-.homeMotionTickerTrack span {
-  font-size: 18px;
-}
-
-.homeMotionTickerTrack i {
-  font-size: 15px;
-}
-
-.homeStatsGrid strong {
-  font-size: clamp(36px, 3.5vw, 52px);
-}
-
-.homeStatsGrid span {
-  font-size: 17px;
-}
-
-@media (max-width: 700px) {
-  .homeMotionTickerTrack span {
-    font-size: 14px;
-    letter-spacing: 1px;
-  }
-
-  .homeMotionTickerTrack i {
-    font-size: 13px;
-  }
-
-  .homeStatsGrid strong {
-    font-size: clamp(32px, 8vw, 42px);
-  }
-
-  .homeStatsGrid span {
-    font-size: 15px;
   }
 }
