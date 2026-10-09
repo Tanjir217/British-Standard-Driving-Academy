@@ -35,11 +35,17 @@ function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
-  const isAdminLoginRoute = pathname === "/admin/login";
 
-  // Temporary: bypass the admin login screen while the authentication flow is being completed.
-  // AdminLogin/AdminGate remain in the codebase and can be restored here later.
-  if (isAdminRoute || isAdminLoginRoute) return <AdminDashboard />;
+  // Keep admin routes outside the public site layout and always enforce the
+  // Wix-backed admin gate. The login page is the only unauthenticated admin route.
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<AdminGate />} />
+      </Routes>
+    );
+  }
 
   if (isAuthRoute) {
     return (
