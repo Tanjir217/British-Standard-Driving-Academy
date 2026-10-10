@@ -1,10 +1,8 @@
 /**
  * Wix-managed Headless Worker for BSDA's Vite frontend.
- *
- * Wix serves the built client as static files and does not provide the
- * Cloudflare-style ASSETS binding used by some worker hosts. The worker owns
- * API routes; admin deep links are redirected to the static root document
- * with a query-based route marker so React can render the correct screen.
+ * Wix serves the built client as static files and does not provide a worker
+ * ASSETS binding or automatic SPA fallback. Keep API handling here and route
+ * client-side admin/auth URLs through the static root document.
  */
 const ALLOWED_ORIGINS = new Set([
   "http://localhost:5173",
@@ -20,9 +18,7 @@ function corsHeaders(origin) {
     "Access-Control-Max-Age": "600",
     "Vary": "Origin",
   };
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-  }
+  if (origin && ALLOWED_ORIGINS.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
 
@@ -47,6 +43,20 @@ function getMemberId(payload) {
   return payload?.member?._id || payload?._id || payload?.member?.id || "";
 }
 
+function redirectToRoot(url, route, preserveQuery = false) {
+  const destination = new URL("/", url.origin);
+  if (route) destination.searchParams.set("bsdaAdmin", route);
+  if (preserveQuery) {
+    url.searchParams.forEach((value, key) => destination.searchParams.append(key, value));
+  } else if (url.searchParams.get("error") === "unauthorized") {
+    destination.searchParams.set("error", "unauthorized");
+  }
+  return new Response(null, {
+    status: 302,
+    headers: { Location: destination.toString(), "Cache-Control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -67,25 +77,15 @@ export default {
       return jsonResponse(200, { ok: true, service: "bsda-admin-api" }, origin);
     }
 
-    // Wix Headless static hosting does not supply an SPA fallback or an
-    // ASSETS binding. Route admin deep links through the static root document.
-    // The app reads bsdaAdmin from the query string; authorization remains in
-    // AdminGate and the protected API below.
-    if ((url.pathname === "/admin" || url.pathname.startsWith("/admin/")) && request.method === "GET") {
-      const destination = new URL("/", url.origin);
-      destination.searchParams.set(
-        "bsdaAdmin",
-        url.pathname === "/admin/login" ? "login" : "dashboard",
-      );
-      const error = url.searchParams.get("error");
-      if (error === "unauthorized") destination.searchParams.set("error", error);
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: destination.toString(),
-          "Cache-Control": "no-store",
-        },
-      });
+    if (request.method === "GET" &&
+        (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))) {
+      return redirectToRoot(url, url.pathname === "/admin/login" ? "login" : "dashboard");
+    }
+
+    // Wix OAuth must return its code/state parameters intact, but the callback
+    // also needs the static app entry because Wix does not provide SPA fallback.
+    if (request.method === "GET" && url.pathname === "/auth/callback") {
+      return redirectToRoot(url, "auth-callback", true);
     }
 
     if (url.pathname.startsWith("/api/")) {
@@ -98,7 +98,6 @@ export default {
         return jsonResponse(401, { authorized: false, code: "AUTH_REQUIRED" }, origin);
       }
 
-      // Server-side allowlist only. Never expose administrator IDs in browser code.
       const configuredIds = String(env?.BSDA_ADMIN_MEMBER_IDS || "")
         .split(",")
         .map((id) => id.trim())
@@ -106,19 +105,13 @@ export default {
 
       if (configuredIds.length === 0) {
         console.error("BSDA_ADMIN_MEMBER_IDS is not configured.");
-        return jsonResponse(503, {
-          authorized: false,
-          code: "ADMIN_ALLOWLIST_NOT_CONFIGURED",
-        }, origin);
+        return jsonResponse(503, { authorized: false, code: "ADMIN_ALLOWLIST_NOT_CONFIGURED" }, origin);
       }
 
       try {
         const wixResponse = await fetch("https://www.wixapis.com/members/v1/members/my", {
           method: "GET",
-          headers: {
-            Authorization: accessToken,
-            Accept: "application/json",
-          },
+          headers: { Authorization: accessToken, Accept: "application/json" },
         });
 
         if (wixResponse.status === 401 || wixResponse.status === 403) {
@@ -134,11 +127,9 @@ export default {
         if (!memberId) {
           return jsonResponse(401, { authorized: false, code: "WIX_MEMBER_NOT_FOUND" }, origin);
         }
-
         if (!configuredIds.includes(memberId)) {
           return jsonResponse(403, { authorized: false, code: "ADMIN_ACCESS_DENIED" }, origin);
         }
-
         return jsonResponse(200, { authorized: true }, origin);
       } catch (error) {
         console.error("BSDA admin authorization failed.", error);
