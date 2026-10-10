@@ -26,7 +26,14 @@ export function hasCompletedAdminLogin(): boolean {
 
 function markAdminLoginCompleted(returnTo: string): void {
   if (typeof sessionStorage === "undefined") return;
-  if (new URL(returnTo, window.location.origin).pathname.startsWith("/admin")) {
+
+  const destination = new URL(returnTo, window.location.origin);
+  const isAdminDestination =
+    destination.pathname.startsWith("/admin") ||
+    (destination.pathname === "/" &&
+      destination.searchParams.get("bsdaAdmin") === "dashboard");
+
+  if (isAdminDestination) {
     sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
   } else {
     sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
