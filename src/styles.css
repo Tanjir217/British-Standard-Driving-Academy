@@ -9914,3 +9914,153 @@ nav .navbook {
     height: 13px;
   }
 }
+
+/* Homepage package carousel: preserves the existing package card styling. */
+.package-home-carousel {
+  display: block;
+}
+.package-home-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  transition: transform .55s cubic-bezier(.22,.75,.25,1);
+}
+.package-home-slide {
+  min-width: 0;
+}
+.package-home-dots {
+  display: none;
+}
+@media (max-width: 700px) {
+  .package-home-carousel {
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  .package-home-track {
+    display: flex;
+    gap: 0;
+    width: 100%;
+  }
+  .package-home-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    padding: 0 1px;
+  }
+  .package-home-slide .card {
+    height: 100%;
+  }
+  .package-home-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .package-home-dots button {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #c9c6c0;
+    transition: width .2s ease, background .2s ease;
+  }
+  .package-home-dots button.is-active {
+    width: 24px;
+    border-radius: 8px;
+    background: var(--red);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .package-home-track,
+  .package-home-dots button {
+    transition: none;
+  }
+}
+
+/* Mobile reels carousel: one full reel card at a time, matching the package carousel behavior. */
+@media (max-width: 600px) {
+  .socialReels .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .socialReelsViewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+
+  .socialReelsViewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .socialReelsGrid {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .socialReelCard {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow: hidden;
+    border-radius: 9px;
+  }
+
+  .socialReelFrame {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    min-height: 0;
+    border-radius: 9px;
+    overflow: hidden;
+  }
+
+  .socialReelsControls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .socialReelArrow {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Compact footer navigation on smaller screens: two columns across two rows. */
+@media (max-width: 600px) {
+  .footgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 20px;
+    padding-top: 34px;
+  }
+
+  .footgrid > div {
+    min-width: 0;
+  }
+
+  .footgrid > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .footgrid p,
+  .footgrid span,
+  .footgrid a {
+    overflow-wrap: anywhere;
+  }
+
+  .footbottom {
+    flex-direction: column;
+    gap: 8px;
+    line-height: 1.5;
+  }
+}
