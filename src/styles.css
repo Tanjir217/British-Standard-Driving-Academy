@@ -9823,3 +9823,94 @@ nav .navbook {
     font-size: 15px;
   }
 }
+
+
+/* Mobile quick links: compact image-left, content-right cards matching the supplied reference. */
+@media (max-width: 600px) {
+  .quickLinks .container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .quickLinksGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .quickLinksGrid > * {
+    min-width: 0;
+  }
+
+  .quickLinkCard {
+    display: grid;
+    grid-template-columns: 41% minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 132px;
+    border: 1px solid rgba(16, 36, 58, .10);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(16, 36, 58, .10);
+  }
+
+  .quickLinkCard:hover {
+    transform: none;
+    box-shadow: 0 3px 10px rgba(16, 36, 58, .10);
+  }
+
+  .quickLinkImage {
+    aspect-ratio: auto;
+    min-height: 132px;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .quickLinkImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .quickLinkBody {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 10px 10px 10px 12px;
+  }
+
+  .quickLinkBody .ey {
+    display: none;
+  }
+
+  .quickLinkBody h2 {
+    margin: 0 0 5px;
+    font-size: clamp(16px, 4.2vw, 19px);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  .quickLinkBody p {
+    min-height: 0;
+    margin: 0 0 8px;
+    font-size: 12px !important;
+    line-height: 1.3;
+  }
+
+  .quickLinkBody .btn {
+    width: auto;
+    min-height: 30px;
+    margin-top: auto;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px !important;
+    line-height: 1.2;
+  }
+
+  .quickLinkBody .btn svg {
+    width: 13px;
+    height: 13px;
+  }
+}
