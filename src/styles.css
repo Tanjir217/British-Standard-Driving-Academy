@@ -10066,6 +10066,35 @@ nav .navbook {
 }
 
 
+
+
+/* Tighter vertical rhythm: reduce oversized gaps between the header, hero, and page sections. */
+.hero {
+  padding-top: 40px;
+}
+
+.hero .herogrid {
+  align-items: start;
+}
+
+.section,
+.page {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding-top: 32px;
+  }
+
+  .section,
+  .page {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+}
+
 /* Lesson system adopts the learner-feedback vertical carousel only on mobile. */
 .lessonMobileCarousel {
   display: contents;
