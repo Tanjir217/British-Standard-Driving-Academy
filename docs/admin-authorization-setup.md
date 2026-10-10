@@ -4,7 +4,7 @@
 
 The frontend previously treated a successful call to Wix Extended Bookings as proof of administrator access. That is not an explicit role or staff allowlist check. A sessionStorage marker is browser-controlled and is only a UX hint, not an authorization control.
 
-The React gate now calls the Wix site's `/_functions/adminAuthorization` endpoint and **fails closed**. A missing endpoint, non-2xx response, invalid response, or network error blocks access.
+The React gate calls Wix's authenticated HTTP Functions REST endpoint at `https://www.wixapis.com/velo/v1/http/invoke/adminAuthorization` using the signed-in member access token. This is the documented Wix REST route; calling `https://www.bsda.online/_functions/adminAuthorization` directly would hit the custom-domain frontend host and does not carry Wix member authentication context. The frontend **fails closed** on a missing endpoint, non-2xx response, invalid response, or network error.
 
 ## Required Wix site backend setup
 
@@ -28,5 +28,5 @@ This endpoint must be installed in the **existing Wix site's Velo backend**. It 
 
 - Never store passwords, API keys, client secrets, access tokens, or refresh tokens in frontend environment variables.
 - Do not rely on frontend route hiding as the only protection. Keep Wix CMS collections containing student profiles and lesson records Admin-only; keep all write operations protected by Wix permissions or backend authorization.
-- The endpoint uses the authenticated Wix request context. Do not accept an email or member ID from query parameters as proof of identity.
+- The endpoint uses the authenticated Wix request context supplied by the Wix HTTP Functions API. Do not accept an email or member ID from query parameters as proof of identity. The endpoint deliberately does not use CORS origin checks as authorization; the member identity and allowlist are the access controls.
 - This repository contains the Velo backend source as a handoff file. It must be copied into the existing Wix site's Velo code editor and published there; the current Vite project does not automatically deploy Velo site code.
