@@ -108,6 +108,7 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
+  const [reelsInteracted, setReelsInteracted] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
@@ -204,6 +205,24 @@ export function Home() {
       behavior: "smooth",
     });
   };
+
+  useEffect(() => {
+    if (reelsInteracted || reelItems.length < 2) return;
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (!isMobile) return;
+    const timer = window.setInterval(() => {
+      const viewport = reelViewportRef.current;
+      const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+      const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+      if (!viewport || !grid || !card) return;
+      const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+      const step = card.getBoundingClientRect().width + gap;
+      const maxPage = Math.max(0, reelItems.length - 1);
+      const nextPage = reelPage >= maxPage ? 0 : reelPage + 1;
+      viewport.scrollTo({ left: nextPage * step, behavior: "smooth" });
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [reelsInteracted, reelItems.length, reelPage]);
 
   const syncReelPage = () => {
     const viewport = reelViewportRef.current;
@@ -455,6 +474,8 @@ export function Home() {
             className="socialReelsViewport"
             ref={reelViewportRef}
             onScroll={syncReelPage}
+            onTouchStart={() => setReelsInteracted(true)}
+            onPointerDown={() => setReelsInteracted(true)}
           >
             <div className="socialReelsGrid">
               {reelItems.map((url, index) => (
@@ -481,7 +502,7 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => scrollReels(-1)}
+              onClick={() => { setReelsInteracted(true); scrollReels(-1); }}
               disabled={reelPage === 0}
               aria-label="Show previous short videos"
             >
@@ -490,7 +511,7 @@ export function Home() {
             <button
               type="button"
               className="socialReelArrow"
-              onClick={() => scrollReels(1)}
+              onClick={() => { setReelsInteracted(true); scrollReels(1); }}
               disabled={reelPage === reelItems.length - 4}
               aria-label="Show next short videos"
             >
