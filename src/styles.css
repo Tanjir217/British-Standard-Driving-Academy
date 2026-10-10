@@ -9823,3 +9823,33 @@ nav .navbook {
     font-size: 15px;
   }
 }
+
+
+/* Compact footer navigation on smaller screens: two columns across two rows. */
+@media (max-width: 600px) {
+  .footgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 20px;
+    padding-top: 34px;
+  }
+
+  .footgrid > div {
+    min-width: 0;
+  }
+
+  .footgrid > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .footgrid p,
+  .footgrid span,
+  .footgrid a {
+    overflow-wrap: anywhere;
+  }
+
+  .footbottom {
+    flex-direction: column;
+    gap: 8px;
+    line-height: 1.5;
+  }
+}
