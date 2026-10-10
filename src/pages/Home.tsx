@@ -114,6 +114,7 @@ export function Home() {
   const [reelUrls, setReelUrls] = useState<string[]>([]);
   const [packageActiveIndex, setPackageActiveIndex] = useState(0);
   const [packageInteracted, setPackageInteracted] = useState(false);
+  const packageTouchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     if (packageInteracted || packages.length < 2) return;
@@ -379,7 +380,21 @@ export function Home() {
           <div
             className="cards package-home-grid package-home-carousel"
             aria-label="Driving lesson packages"
-            onTouchStart={() => setPackageInteracted(true)}
+            onTouchStart={(event) => {
+              packageTouchStartX.current = event.changedTouches[0]?.clientX ?? null;
+              setPackageInteracted(true);
+            }}
+            onTouchEnd={(event) => {
+              const startX = packageTouchStartX.current;
+              const endX = event.changedTouches[0]?.clientX;
+              packageTouchStartX.current = null;
+              if (startX === null || endX === undefined) return;
+              const delta = startX - endX;
+              if (Math.abs(delta) < 40 || packages.length < 2) return;
+              setPackageActiveIndex((current) =>
+                delta > 0 ? (current + 1) % packages.length : (current - 1 + packages.length) % packages.length
+              );
+            }}
             onPointerDown={() => setPackageInteracted(true)}
             onWheel={() => setPackageInteracted(true)}
           >
