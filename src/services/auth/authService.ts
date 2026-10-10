@@ -17,6 +17,21 @@ import {
 } from "../wix";
 
 const CALLBACK_PATH = "/auth/callback";
+const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
+
+export function hasCompletedAdminLogin(): boolean {
+  return typeof sessionStorage !== "undefined" &&
+    sessionStorage.getItem(ADMIN_LOGIN_MARKER) === "true";
+}
+
+function markAdminLoginCompleted(returnTo: string): void {
+  if (typeof sessionStorage === "undefined") return;
+  if (new URL(returnTo, window.location.origin).pathname.startsWith("/admin")) {
+    sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
+  } else {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
+}
 
 function getCallbackUrl() {
   return new URL(CALLBACK_PATH, window.location.origin).toString();
@@ -151,7 +166,9 @@ export function completeMemberLogin(): Promise<string> {
         throw new Error("We could not complete the sign-in. Please try again.");
       }
 
-      return safeReturnPath(result.originalUrl);
+      const returnTo = safeReturnPath(result.originalUrl);
+      markAdminLoginCompleted(returnTo);
+      return returnTo;
     })();
   }
 
@@ -175,6 +192,9 @@ export async function getCurrentMember() {
 
 function clearLocalMemberSession() {
   clearWixTokens();
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
 
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem("bsda.wix.oauth");
