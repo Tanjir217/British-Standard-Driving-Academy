@@ -9823,3 +9823,63 @@ nav .navbook {
     font-size: 15px;
   }
 }
+
+
+/* Mobile reels carousel: one full reel card at a time, matching the package carousel behavior. */
+@media (max-width: 600px) {
+  .socialReels .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .socialReelsViewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+
+  .socialReelsViewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .socialReelsGrid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    grid-template-columns: none;
+    gap: 10px;
+  }
+
+  .socialReelCard {
+    width: 100%;
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow: hidden;
+    border-radius: 9px;
+  }
+
+  .socialReelFrame {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    min-height: 0;
+    border-radius: 9px;
+    overflow: hidden;
+  }
+
+  .socialReelsControls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .socialReelArrow {
+    width: 38px;
+    height: 38px;
+  }
+}
