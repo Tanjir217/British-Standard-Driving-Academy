@@ -6,7 +6,9 @@ import {
 import { beginMemberLogin } from "./auth/authService";
 
 const DEFAULT_WIX_SITE_ORIGIN = "https://www.bsda.online";
-const AUTHORIZATION_ENDPOINT = "/_functions/adminAuthorization";
+const AUTHORIZATION_ENDPOINT =
+  import.meta.env.VITE_ADMIN_AUTHORIZATION_ENDPOINT ||
+  "https://www.bsda.online/api/admin-authorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -102,7 +104,7 @@ export async function signInAdminWithEmail(
   }
 
   try {
-    return await beginMemberLogin("/admin", undefined, sessionToken);
+    return await beginMemberLogin("/?bsdaAdmin=dashboard", undefined, sessionToken);
   } catch (error) {
     throw new AdminAuthError(
       getErrorMessage(error, "Wix could not start the administrator session."),
