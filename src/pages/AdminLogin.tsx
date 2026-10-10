@@ -4,7 +4,6 @@ import { Icon } from "../components/Icon";
 import {
   AdminAuthError,
   signInAdminWithEmail,
-  validateAdminSession,
 } from "../services/adminAuthService";
 import "./adminLogin.css";
 
@@ -40,9 +39,10 @@ export function AdminLogin({ initialError = "" }: { initialError?: string }) {
     setBusy(true);
 
     try {
-      await signInAdminWithEmail(email.trim(), password);
-      await validateAdminSession();
-      navigate("/admin", { replace: true });
+      const authUrl = await signInAdminWithEmail(email.trim(), password);
+      // Wix must complete its browser-based session handoff before the admin
+      // gate can validate permissions. Do not navigate to /admin prematurely.
+      window.location.assign(authUrl);
     } catch (err) {
       if (err instanceof AdminAuthError) {
         setError(err.message);
