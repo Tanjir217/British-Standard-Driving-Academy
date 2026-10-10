@@ -17,7 +17,6 @@ import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { NotFound } from "./pages/NotFound";
 import { AdminGate } from "./pages/AdminGate";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 
@@ -35,13 +34,15 @@ function AppRoutes() {
   const { pathname, search } = useLocation();
   const query = new URLSearchParams(search);
   const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
+  const wixRoute = pathname === "/" ? query.get("bsdaRoute") : null;
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
 
   // Wix static hosting has no SPA fallback for clean deep links. The server
-  // redirects /admin URLs to /?bsdaAdmin=..., which loads this same app entry.
+  // redirects admin URLs to the static root with a route marker.
   if (wixAdminRoute === "login") return <AdminLogin />;
   if (wixAdminRoute === "dashboard") return <AdminGate />;
+  if (wixRoute === "auth-callback") return <AuthCallback />;
 
   // Keep direct/local admin routes working and enforce the same admin gate.
   if (isAdminRoute) {
@@ -70,10 +71,7 @@ function AppRoutes() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/lessons" element={<Lessons />} />
         <Route path="/instructors" element={<Instructors />} />
-        <Route
-          path="/instructors/:instructorId"
-          element={<InstructorDetail />}
-        />
+        <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/about" element={<About />} />
