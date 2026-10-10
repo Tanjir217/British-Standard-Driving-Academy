@@ -66,6 +66,25 @@ export default {
       return jsonResponse(200, { ok: true, service: "bsda-admin-api" }, origin);
     }
 
+    // The Wix-hosted React app uses client-side routing. Vite handles
+    // unknown page routes during development, but production needs the SPA
+    // entry document for routes such as /admin and /admin/login.
+    // If Wix exposes the static client output as an ASSETS binding, serve the
+    // requested asset first and fall back to index.html for client-side routes.
+    if (!url.pathname.startsWith("/api/")) {
+      if (env?.ASSETS && typeof env.ASSETS.fetch === "function") {
+        const assetResponse = await env.ASSETS.fetch(request);
+        if (assetResponse.status !== 404) return assetResponse;
+
+        const indexUrl = new URL("/index.html", request.url);
+        return env.ASSETS.fetch(new Request(indexUrl, request));
+      }
+      return jsonResponse(404, {
+        authorized: false,
+        code: "FRONTEND_ASSET_BINDING_UNAVAILABLE",
+      }, origin);
+    }
+
     if (url.pathname !== "/api/admin-authorization" || request.method !== "GET") {
       return jsonResponse(404, { authorized: false, code: "NOT_FOUND" }, origin);
     }
