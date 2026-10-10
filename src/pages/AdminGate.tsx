@@ -18,8 +18,6 @@ export function AdminGate() {
     let active = true;
 
     const check = async () => {
-      // A pre-existing Wix member session alone must not silently unlock the
-      // admin area. Require an explicit admin login flow in this tab first.
       if (!hasCompletedAdminLogin()) {
         if (active) setState("login");
         return;
@@ -42,7 +40,7 @@ export function AdminGate() {
 
         if (err instanceof AdminAuthError) {
           if (err.code === "ADMIN_ACCESS_DENIED") {
-            navigate("/admin/login?error=unauthorized", { replace: true });
+            navigate("/?bsdaAdmin=login&error=unauthorized", { replace: true });
             return;
           }
 

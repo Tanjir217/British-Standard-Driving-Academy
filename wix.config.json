@@ -3,6 +3,9 @@
   "appId": "1cd61212-b10b-4963-b374-8e90963d09d7",
   "siteId": "30f45408-24b5-43d7-adc4-d299da97466b",
   "site": {
-    "outputDirectory": "./dist"
+    "outputDirectory": {
+      "client": "./dist",
+      "server": "./server"
+    }
   }
 }
