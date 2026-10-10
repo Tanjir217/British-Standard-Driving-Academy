@@ -137,14 +137,25 @@ export async function requestPasswordReset(email: string) {
   );
 }
 
-export async function completeMemberLogin() {
-  const result = await completeWixLoginFromUrl();
+// Wix authorization codes are single-use. React StrictMode may mount the
+// callback effect twice during local development, so share one in-flight
+// exchange instead of attempting to redeem the same code twice.
+let memberLoginCompletion: Promise<string> | null = null;
 
-  if (!result.success) {
-    throw new Error("We could not complete the sign-in. Please try again.");
+export function completeMemberLogin(): Promise<string> {
+  if (!memberLoginCompletion) {
+    memberLoginCompletion = (async () => {
+      const result = await completeWixLoginFromUrl();
+
+      if (!result.success) {
+        throw new Error("We could not complete the sign-in. Please try again.");
+      }
+
+      return safeReturnPath(result.originalUrl);
+    })();
   }
 
-  return safeReturnPath(result.originalUrl);
+  return memberLoginCompletion;
 }
 
 export async function restoreMemberSession() {
