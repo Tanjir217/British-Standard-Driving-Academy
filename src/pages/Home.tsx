@@ -119,7 +119,7 @@ export function Home() {
   useEffect(() => {
     if (packageInteracted || packages.length < 2) return;
     const timer = window.setInterval(() => {
-      setPackageActiveIndex((current) => (current + 1) % packages.length);
+      setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
     }, 3000);
     return () => window.clearInterval(timer);
   }, [packageInteracted, packages.length]);
@@ -392,7 +392,7 @@ export function Home() {
               const delta = startX - endX;
               if (Math.abs(delta) < 40 || packages.length < 2) return;
               setPackageActiveIndex((current) =>
-                delta > 0 ? (current + 1) % packages.length : (current - 1 + packages.length) % packages.length
+                Math.max(0, Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)))
               );
             }}
             onPointerDown={() => setPackageInteracted(true)}
