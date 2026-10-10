@@ -34,7 +34,6 @@ function AppRoutes() {
   const { pathname, search } = useLocation();
   const query = new URLSearchParams(search);
   const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
-  const wixRoute = pathname === "/" ? query.get("bsdaRoute") : null;
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
 
@@ -42,7 +41,7 @@ function AppRoutes() {
   // redirects admin URLs to the static root with a route marker.
   if (wixAdminRoute === "login") return <AdminLogin />;
   if (wixAdminRoute === "dashboard") return <AdminGate />;
-  if (wixRoute === "auth-callback") return <AuthCallback />;
+  if (wixAdminRoute === "auth-callback") return <AuthCallback />;
 
   // Keep direct/local admin routes working and enforce the same admin gate.
   if (isAdminRoute) {
