@@ -5,8 +5,6 @@ import {
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
 
-// Wix-managed Headless Worker route configured in wix.config.json.
-// Override this URL for a preview/staging deployment if needed.
 const AUTHORIZATION_ENDPOINT =
   import.meta.env.VITE_ADMIN_AUTHORIZATION_ENDPOINT ||
   "https://www.bsda.online/api/admin-authorization";
@@ -63,7 +61,9 @@ export async function signInAdminWithEmail(email: string, password: string): Pro
   }
 
   try {
-    return await beginMemberLogin("/admin", undefined, sessionToken);
+    // Return through the static root document because Wix hosting does not
+    // resolve /admin as a client-side route on direct navigation.
+    return await beginMemberLogin("/?bsdaAdmin=dashboard", undefined, sessionToken);
   } catch (error) {
     throw new AdminAuthError(getErrorMessage(error, "Wix could not start the administrator session."), {
       stage: "WIX_AUTH_HANDOFF",
