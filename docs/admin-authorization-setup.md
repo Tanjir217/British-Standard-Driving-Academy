@@ -1,32 +1,47 @@
 # BSDA Admin Authorization — Wix setup
 
-## Why the previous check was unsafe
+## What the browser network log showed
 
-The frontend previously treated a successful call to Wix Extended Bookings as proof of administrator access. That is not an explicit role or staff allowlist check. A sessionStorage marker is browser-controlled and is only a UX hint, not an authorization control.
+The frontend previously called `https://www.wixapis.com/velo/v1/http/invoke/adminAuthorization`. In the reported Network log, that request returned **404**. For a Wix Site HTTP Function named `get_adminAuthorization`, the site endpoint format is:
 
-The React gate calls Wix's authenticated HTTP Functions REST endpoint at `https://www.wixapis.com/velo/v1/http/invoke/adminAuthorization` using the signed-in member access token. This is the documented Wix REST route; calling `https://www.bsda.online/_functions/adminAuthorization` directly would hit the custom-domain frontend host and does not carry Wix member authentication context. The frontend **fails closed** on a missing endpoint, non-2xx response, invalid response, or network error.
+`https://www.bsda.online/_functions/adminAuthorization`
 
-## Required Wix site backend setup
+The frontend service now targets that URL. A 404 from this URL means the function is not deployed/published at that site URL, the domain does not point to the Wix site hosting the function, or the function name does not match. A URL change alone cannot create or deploy the function.
 
-This endpoint must be installed in the **existing Wix site's Velo backend**. It is not a Vercel function and it is not deployed by the React/Vite build.
+The same log showed the Wix `login` request returning **401**. That is a separate member-authentication failure, not a redirect URL error. Use a valid Wix **site-member** email/password (the Wix dashboard/collaborator login is not automatically a site-member account). If necessary, reset the site-member password.
 
-1. Open the existing BSDA site in Wix and enable Dev Mode / Velo.
-2. Create `backend/http-functions.js` in the Wix site code editor and copy the contents of `wix-site-backend/backend/http-functions.js` into it.
-3. Create a CMS collection with collection ID **`AdminStaffAccess`**. Set collection permissions to **Admin only**. Add fields:
-   - `memberId` — Text; Wix site's member ID, not email.
-   - `enabled` — Boolean.
-   Add one item per explicitly approved staff member, with the exact Wix member ID and `enabled = true`. Set `enabled = false` or remove the item to revoke access.
-4. Publish the Wix site backend changes. The endpoint must be available at `https://www.bsda.online/_functions/adminAuthorization` (or the canonical domain you use).
-5. In the frontend's `.env.local`, set `VITE_WIX_SITE_ORIGIN=https://www.bsda.online` if your canonical Wix site origin differs from the default. This value is public configuration, **not a secret**.
-6. Test with three identities:
-   - Site owner / collaborator with Wix admin permissions: should receive `authorized: true`.
-   - Enabled staff member: should receive `authorized: true`.
-   - Ordinary member and signed-out visitor: must be denied.
-7. Run `npm run build` and test the flow on localhost and the published site.
+## OAuth redirect URLs
 
-## Important security notes
+The frontend's current code uses `/auth/callback`, so the exact authorization redirect URIs to allow in the Headless client are:
 
-- Never store passwords, API keys, client secrets, access tokens, or refresh tokens in frontend environment variables.
-- Do not rely on frontend route hiding as the only protection. Keep Wix CMS collections containing student profiles and lesson records Admin-only; keep all write operations protected by Wix permissions or backend authorization.
-- The endpoint uses the authenticated Wix request context supplied by the Wix HTTP Functions API. Do not accept an email or member ID from query parameters as proof of identity. The endpoint deliberately does not use CORS origin checks as authorization; the member identity and allowlist are the access controls.
-- This repository contains the Velo backend source as a handoff file. It must be copied into the existing Wix site's Velo code editor and published there; the current Vite project does not automatically deploy Velo site code.
+- `http://localhost:5173/auth/callback`
+- `https://www.bsda.online/auth/callback`
+- `https://bsda.online/auth/callback`
+
+Allowed redirect domains should include:
+
+- `http://localhost:5173`
+- `https://www.bsda.online`
+- `https://bsda.online`
+
+Add only the production domain(s) you actually use. Keep any other existing entries only if another active frontend flow still depends on them. Do not put `/auth/callback` into the Login URL field; it is an authorization redirect URI, not the custom login-page URL.
+
+## Backend deployment requirement
+
+The backend source in `wix-site-backend/backend/http-functions.js` is only a repository file until installed in a Wix site backend and published. It is not deployed by `npm run build`, and it is not a Vercel function.
+
+The current Wix dashboard access described by the project owner does not expose a Velo/site code editor. Therefore, do not claim the endpoint is live until a supported Wix backend deployment path has been established and the published endpoint returns the expected response. Wix documentation distinguishes site HTTP functions (`/_functions/`) from Wix-managed Headless HTTP endpoints; the endpoint type must match the actual Wix project development path.
+
+## Required authorization behavior
+
+Create a CMS collection with collection ID **`AdminStaffAccess`**, permissions set to **Admin only**, with:
+- `memberId` — Text; exact Wix site-member ID, not an email.
+- `enabled` — Boolean.
+
+Only an authenticated member with a Wix admin role or an enabled allowlist entry may receive `{ "authorized": true }`. Ordinary members and signed-out visitors must be denied. Never authorize based only on an email, a browser marker, or a frontend role flag.
+
+## Security
+
+- Never put API keys, client secrets, or admin tokens in frontend code or `.env.local`.
+- Keep student profiles and lesson records protected by Wix permissions/backend authorization, not merely hidden routes.
+- The current frontend fails closed if the endpoint is unavailable or returns an invalid/non-success response.
