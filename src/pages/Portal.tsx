@@ -42,6 +42,23 @@ export function Portal() {
           return;
         }
 
+        // Temporary development diagnostic: log only the member ID, never
+        // the full profile or authentication tokens. Removed from production builds.
+        if (import.meta.env.DEV) {
+          const memberRecord = currentMember as typeof currentMember & {
+            _id?: string;
+            id?: string;
+          };
+          const memberId = memberRecord._id ?? memberRecord.id;
+          if (memberId) {
+            console.info("[BSDA] Current Wix Site Member ID:", memberId);
+          } else {
+            console.warn(
+              "[BSDA] Current member was returned, but no _id/id field was found. Inspect the SDK response shape in development.",
+            );
+          }
+        }
+
         setMember({
           loginEmail: currentMember.loginEmail,
           contact: currentMember.contact
