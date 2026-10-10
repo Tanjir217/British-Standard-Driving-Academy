@@ -5,8 +5,7 @@ import {
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
 
-const DEFAULT_WIX_SITE_ORIGIN = "https://www.bsda.online";
-const AUTHORIZATION_ENDPOINT = "/_functions/adminAuthorization";
+const AUTHORIZATION_ENDPOINT = "https://www.wixapis.com/velo/v1/http/invoke/adminAuthorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -31,23 +30,6 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function getWixSiteOrigin(): string {
-  const configured = import.meta.env.VITE_WIX_SITE_ORIGIN?.trim();
-  const origin = configured || DEFAULT_WIX_SITE_ORIGIN;
-
-  try {
-    const parsed = new URL(origin);
-    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") {
-      throw new Error("The Wix site origin must use HTTPS.");
-    }
-    return parsed.origin;
-  } catch {
-    throw new AdminAuthError("The Wix authorization endpoint is not configured correctly.", {
-      stage: "AUTHORIZATION_CONFIGURATION",
-      code: "ADMIN_AUTH_CONFIGURATION_ERROR",
-    });
-  }
-}
 
 export async function signInAdminWithEmail(
   email: string,
@@ -137,7 +119,7 @@ export async function validateAdminSession(): Promise<void> {
 
   try {
     response = await fetch(
-      new URL(AUTHORIZATION_ENDPOINT, getWixSiteOrigin()).toString(),
+      AUTHORIZATION_ENDPOINT,
       {
         method: "GET",
         headers: {
