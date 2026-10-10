@@ -26,7 +26,10 @@ export function hasCompletedAdminLogin(): boolean {
 
 function markAdminLoginCompleted(returnTo: string): void {
   if (typeof sessionStorage === "undefined") return;
-  if (new URL(returnTo, window.location.origin).pathname.startsWith("/admin")) {
+  const returnUrl = new URL(returnTo, window.location.origin);
+  const isAdminReturn = returnUrl.pathname.startsWith("/admin") ||
+    returnUrl.searchParams.get("bsdaAdmin") === "dashboard";
+  if (isAdminReturn) {
     sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
   } else {
     sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
@@ -94,9 +97,6 @@ async function finishDirectAuthentication(
   returnTo = "/portal",
 ) {
   if ("data" in response && "sessionToken" in response.data) {
-    // Use Wix's full-page OAuth handoff instead of the hidden-iframe
-    // direct-login token exchange. This avoids indefinite "Please wait..."
-    // states when the browser blocks third-party iframe cookies.
     const authUrl = await beginMemberLogin(
       returnTo,
       undefined,
@@ -152,9 +152,6 @@ export async function requestPasswordReset(email: string) {
   );
 }
 
-// Wix authorization codes are single-use. React StrictMode may mount the
-// callback effect twice during local development, so share one in-flight
-// exchange instead of attempting to redeem the same code twice.
 let memberLoginCompletion: Promise<string> | null = null;
 
 export function completeMemberLogin(): Promise<string> {
@@ -194,9 +191,6 @@ function clearLocalMemberSession() {
   clearWixTokens();
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
-  }
-
-  if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem("bsda.wix.oauth");
   }
 }
@@ -210,16 +204,6 @@ function isLocalDevelopmentHost() {
 }
 
 export async function signOutMember() {
-  /*
-   * IMPORTANT:
-   * Wix's logout() returns a URL. The actual logout happens only after the
-   * browser navigates to that URL. Therefore a try/catch cannot catch Wix's
-   * "not a valid redirect domain" page after navigation.
-   *
-   * localhost is not an approved Wix redirect domain in this project, so
-   * local development must perform the local token logout directly. In
-   * production, Wix logout is used and redirects to /login.
-   */
   if (isLocalDevelopmentHost()) {
     clearLocalMemberSession();
     window.location.replace("/login");

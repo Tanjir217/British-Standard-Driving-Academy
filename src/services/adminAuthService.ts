@@ -5,8 +5,9 @@ import {
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
 
-const DEFAULT_WIX_SITE_ORIGIN = "https://www.bsda.online";
-const AUTHORIZATION_ENDPOINT = "/_functions/adminAuthorization";
+const AUTHORIZATION_ENDPOINT =
+  import.meta.env.VITE_ADMIN_AUTHORIZATION_ENDPOINT ||
+  "https://www.bsda.online/api/admin-authorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -14,10 +15,7 @@ export class AdminAuthError extends Error {
   readonly status?: number;
   readonly detail?: string;
 
-  constructor(
-    message: string,
-    options: { stage: string; code?: string; status?: number; detail?: string },
-  ) {
+  constructor(message: string, options: { stage: string; code?: string; status?: number; detail?: string }) {
     super(message);
     this.name = "AdminAuthError";
     this.stage = options.stage;
@@ -31,185 +29,109 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function getWixSiteOrigin(): string {
-  const configured = import.meta.env.VITE_WIX_SITE_ORIGIN?.trim();
-  const origin = configured || DEFAULT_WIX_SITE_ORIGIN;
+export async function signInAdminWithEmail(email: string, password: string): Promise<string> {
+  let response: Awaited<ReturnType<typeof loginWithEmail>>;
+  try {
+    response = await loginWithEmail(email, password);
+  } catch (error) {
+    throw new AdminAuthError(getErrorMessage(error, "Wix rejected the administrator login request."), {
+      stage: "WIX_LOGIN_REQUEST",
+      detail: error instanceof Error ? error.message : undefined,
+    });
+  }
+
+  if (String(response.loginState) !== "SUCCESS") {
+    const code = "errorCode" in response && response.errorCode ? String(response.errorCode) : undefined;
+    const message = code === "invalidPassword"
+      ? "Wix rejected this email or password. Confirm this is a Wix site-member account, then reset that member’s password if needed."
+      : code === "invalidEmail"
+        ? "The Wix email address is invalid."
+        : code === "resetPassword"
+          ? "This Wix member must reset their password before signing in."
+          : "Wix login did not succeed. State: " + String(response.loginState) + ".";
+    throw new AdminAuthError(message, { stage: "WIX_LOGIN_RESULT", code });
+  }
+
+  const responseData = "data" in response ? response.data : undefined;
+  const sessionToken = responseData && "sessionToken" in responseData ? responseData.sessionToken : undefined;
+  if (!sessionToken) {
+    throw new AdminAuthError("Wix reported a successful login but did not return a session token.", {
+      stage: "WIX_SESSION_TOKEN", code: String(response.loginState),
+    });
+  }
 
   try {
-    const parsed = new URL(origin);
-    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") {
-      throw new Error("The Wix site origin must use HTTPS.");
-    }
-    return parsed.origin;
-  } catch {
-    throw new AdminAuthError("The Wix authorization endpoint is not configured correctly.", {
-      stage: "AUTHORIZATION_CONFIGURATION",
-      code: "ADMIN_AUTH_CONFIGURATION_ERROR",
+    // Return through the static root document because Wix hosting does not
+    // resolve /admin as a client-side route on direct navigation.
+    return await beginMemberLogin("/?bsdaAdmin=dashboard", undefined, sessionToken);
+  } catch (error) {
+    throw new AdminAuthError(getErrorMessage(error, "Wix could not start the administrator session."), {
+      stage: "WIX_AUTH_HANDOFF",
+      detail: error instanceof Error ? error.message : undefined,
     });
   }
 }
 
-export async function signInAdminWithEmail(
-  email: string,
-  password: string,
-): Promise<string> {
-  let response: Awaited<ReturnType<typeof loginWithEmail>>;
-
-  try {
-    response = await loginWithEmail(email, password);
-  } catch (error) {
-    throw new AdminAuthError(
-      getErrorMessage(error, "Wix rejected the administrator login request."),
-      {
-        stage: "WIX_LOGIN_REQUEST",
-        detail: error instanceof Error ? error.message : undefined,
-      },
-    );
-  }
-
-  if (String(response.loginState) !== "SUCCESS") {
-    const code =
-      "errorCode" in response && response.errorCode
-        ? String(response.errorCode)
-        : undefined;
-    const detail =
-      "error" in response && response.error
-        ? String(response.error)
-        : undefined;
-
-    throw new AdminAuthError(
-      detail ||
-        (code === "invalidPassword"
-          ? "The Wix email or password is incorrect."
-          : code === "invalidEmail"
-            ? "The Wix email address is invalid."
-            : `Wix login did not succeed. State: ${String(response.loginState)}.`),
-      { stage: "WIX_LOGIN_RESULT", code, detail },
-    );
-  }
-
-  const responseData = "data" in response ? response.data : undefined;
-  const sessionToken =
-    responseData && "sessionToken" in responseData
-      ? responseData.sessionToken
-      : undefined;
-
-  if (!sessionToken) {
-    throw new AdminAuthError(
-      "Wix reported a successful login but did not return a session token.",
-      { stage: "WIX_SESSION_TOKEN", code: String(response.loginState) },
-    );
-  }
-
-  try {
-    return await beginMemberLogin("/admin", undefined, sessionToken);
-  } catch (error) {
-    throw new AdminAuthError(
-      getErrorMessage(error, "Wix could not start the administrator session."),
-      {
-        stage: "WIX_AUTH_HANDOFF",
-        detail: error instanceof Error ? error.message : undefined,
-      },
-    );
-  }
-}
-
-/**
- * Authorization must be decided by the Wix site's backend, never by a browser
- * marker or by probing an unrelated Wix API. The endpoint returns authorized
- * only after checking the caller's Wix identity and the AdminStaffAccess CMS
- * collection. Missing endpoints, network failures, malformed JSON, and all
- * non-2xx responses are denied.
- */
+/** Backend authorization is mandatory; missing endpoints and all failures deny access. */
 export async function validateAdminSession(): Promise<void> {
   const tokens = getWixTokens();
   const accessToken = tokens?.accessToken?.value;
-
   if (!accessToken) {
     throw new AdminAuthError("Please sign in with your Wix account first.", {
-      stage: "LOCAL_SESSION",
-      code: "ADMIN_AUTH_REQUIRED",
-      status: 401,
+      stage: "LOCAL_SESSION", code: "ADMIN_AUTH_REQUIRED", status: 401,
     });
   }
 
   let response: Response;
-
   try {
-    response = await fetch(
-      new URL(AUTHORIZATION_ENDPOINT, getWixSiteOrigin()).toString(),
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store",
-        credentials: "omit",
-      },
-    );
+    response = await fetch(AUTHORIZATION_ENDPOINT, {
+      method: "GET",
+      headers: { Accept: "application/json", Authorization: "Bearer " + accessToken },
+      cache: "no-store",
+      credentials: "omit",
+    });
   } catch (error) {
-    throw new AdminAuthError(
-      "The Wix authorization service could not be reached. Admin access is blocked until it is available.",
-      {
-        stage: "WIX_AUTHORIZATION_ENDPOINT",
-        code: "ADMIN_AUTH_SERVICE_UNAVAILABLE",
-        detail: getErrorMessage(error, "Network request failed."),
-      },
-    );
+    throw new AdminAuthError("The Wix authorization endpoint could not be reached. Check the published Wix endpoint and its CORS settings.", {
+      stage: "WIX_AUTHORIZATION_ENDPOINT",
+      code: "ADMIN_AUTH_SERVICE_UNAVAILABLE",
+      detail: getErrorMessage(error, "Network request failed."),
+    });
   }
 
   if (response.status === 401) {
     clearWixTokens();
     throw new AdminAuthError("Your Wix session has expired. Please sign in again.", {
-      stage: "WIX_AUTHORIZATION_ENDPOINT",
-      code: "ADMIN_AUTH_REQUIRED",
-      status: 401,
+      stage: "WIX_AUTHORIZATION_ENDPOINT", code: "ADMIN_AUTH_REQUIRED", status: 401,
     });
   }
-
   if (response.status === 403) {
     clearWixTokens();
     throw new AdminAuthError("This account is not authorised to access the BSDA admin portal.", {
-      stage: "WIX_AUTHORIZATION_ENDPOINT",
-      code: "ADMIN_ACCESS_DENIED",
-      status: 403,
+      stage: "WIX_AUTHORIZATION_ENDPOINT", code: "ADMIN_ACCESS_DENIED", status: 403,
     });
   }
-
+  if (response.status === 404) {
+    throw new AdminAuthError("The BSDA admin API route was not found. Confirm the Wix CLI server output was deployed and the route is available at /api/admin-authorization.", {
+      stage: "WIX_AUTHORIZATION_ENDPOINT", code: "ADMIN_AUTH_ENDPOINT_NOT_FOUND", status: 404,
+    });
+  }
   if (!response.ok) {
-    throw new AdminAuthError(
-      "Wix could not verify administrator access. Admin access is blocked.",
-      {
-        stage: "WIX_AUTHORIZATION_ENDPOINT",
-        code: "ADMIN_AUTH_SERVICE_UNAVAILABLE",
-        status: response.status,
-      },
-    );
+    throw new AdminAuthError("Wix could not verify administrator access. Admin access is blocked.", {
+      stage: "WIX_AUTHORIZATION_ENDPOINT", code: "ADMIN_AUTH_SERVICE_UNAVAILABLE", status: response.status,
+    });
   }
 
   let result: unknown;
-  try {
-    result = await response.json();
-  } catch {
+  try { result = await response.json(); } catch {
     throw new AdminAuthError("Wix returned an invalid authorization response. Admin access is blocked.", {
-      stage: "WIX_AUTHORIZATION_RESPONSE",
-      code: "ADMIN_AUTH_INVALID_RESPONSE",
-      status: response.status,
+      stage: "WIX_AUTHORIZATION_RESPONSE", code: "ADMIN_AUTH_INVALID_RESPONSE", status: response.status,
     });
   }
-
-  if (
-    !result ||
-    typeof result !== "object" ||
-    !("authorized" in result) ||
-    (result as { authorized?: unknown }).authorized !== true
-  ) {
+  if (!result || typeof result !== "object" || !("authorized" in result) ||
+      (result as { authorized?: unknown }).authorized !== true) {
     clearWixTokens();
     throw new AdminAuthError("This account is not authorised to access the BSDA admin portal.", {
-      stage: "WIX_AUTHORIZATION_RESPONSE",
-      code: "ADMIN_ACCESS_DENIED",
-      status: 403,
+      stage: "WIX_AUTHORIZATION_RESPONSE", code: "ADMIN_ACCESS_DENIED", status: 403,
     });
   }
 }
