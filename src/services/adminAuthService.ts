@@ -5,9 +5,11 @@ import {
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
 
-// Wix Site HTTP Functions are published under the site’s /_functions/ path.
-// This returns 404 until the function is installed in the Wix backend and published.
-const AUTHORIZATION_ENDPOINT = "https://www.bsda.online/_functions/adminAuthorization";
+// Wix-managed Headless Worker route configured in wix.config.json.
+// Override this URL for a preview/staging deployment if needed.
+const AUTHORIZATION_ENDPOINT =
+  import.meta.env.VITE_ADMIN_AUTHORIZATION_ENDPOINT ||
+  "https://www.bsda.online/api/admin-authorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -109,7 +111,7 @@ export async function validateAdminSession(): Promise<void> {
     });
   }
   if (response.status === 404) {
-    throw new AdminAuthError("The BSDA admin authorization function was not found on the Wix site. Install the backend function and publish the Wix site.", {
+    throw new AdminAuthError("The BSDA admin API route was not found. Confirm the Wix CLI server output was deployed and the route is available at /api/admin-authorization.", {
       stage: "WIX_AUTHORIZATION_ENDPOINT", code: "ADMIN_AUTH_ENDPOINT_NOT_FOUND", status: 404,
     });
   }
