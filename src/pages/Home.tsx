@@ -218,8 +218,8 @@ export function Home() {
       const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
       const step = card.getBoundingClientRect().width + gap;
       const maxPage = Math.max(0, reelItems.length - 1);
-      const nextPage = reelPage >= maxPage ? 0 : reelPage + 1;
-      viewport.scrollTo({ left: nextPage * step, behavior: "smooth" });
+      if (reelPage >= maxPage) return;
+      viewport.scrollTo({ left: (reelPage + 1) * step, behavior: "smooth" });
     }, 3000);
     return () => window.clearInterval(timer);
   }, [reelsInteracted, reelItems.length, reelPage]);
@@ -233,7 +233,7 @@ export function Home() {
     const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
     const step = card.getBoundingClientRect().width + gap;
     const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
-    setReelPage(Math.max(0, Math.min(reelItems.length - 4, page)));
+    setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
   };
   return (
     <>
