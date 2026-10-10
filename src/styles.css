@@ -9823,3 +9823,67 @@ nav .navbook {
     font-size: 15px;
   }
 }
+
+
+/* Homepage package carousel: preserves the existing package card styling. */
+.package-home-carousel {
+  display: block;
+}
+.package-home-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  transition: transform .55s cubic-bezier(.22,.75,.25,1);
+}
+.package-home-slide {
+  min-width: 0;
+}
+.package-home-dots {
+  display: none;
+}
+@media (max-width: 700px) {
+  .package-home-carousel {
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  .package-home-track {
+    display: flex;
+    gap: 0;
+    width: 100%;
+  }
+  .package-home-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    padding: 0 1px;
+  }
+  .package-home-slide .card {
+    height: 100%;
+  }
+  .package-home-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .package-home-dots button {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #c9c6c0;
+    transition: width .2s ease, background .2s ease;
+  }
+  .package-home-dots button.is-active {
+    width: 24px;
+    border-radius: 8px;
+    background: var(--red);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .package-home-track,
+  .package-home-dots button {
+    transition: none;
+  }
+}
