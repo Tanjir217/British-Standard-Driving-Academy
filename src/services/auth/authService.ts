@@ -41,7 +41,8 @@ function markAdminLoginCompleted(returnTo: string): void {
 }
 
 function getCallbackUrl() {
-  return new URL(CALLBACK_PATH, window.location.origin).toString();
+  // Return to the root document so Wix static hosting does not 404 the SPA route.
+  return new URL("/?bsdaAuth=callback", window.location.origin).toString();
 }
 
 function safeReturnPath(value?: string) {
