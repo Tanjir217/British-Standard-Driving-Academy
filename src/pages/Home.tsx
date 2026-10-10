@@ -112,6 +112,16 @@ export function Home() {
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
   const [reelUrls, setReelUrls] = useState<string[]>([]);
+  const [packageActiveIndex, setPackageActiveIndex] = useState(0);
+  const [packageInteracted, setPackageInteracted] = useState(false);
+
+  useEffect(() => {
+    if (packageInteracted || packages.length < 2) return;
+    const timer = window.setInterval(() => {
+      setPackageActiveIndex((current) => (current + 1) % packages.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [packageInteracted, packages.length]);
 
   useEffect(() => {
     let active = true;
@@ -366,10 +376,36 @@ export function Home() {
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
             <span className="sectionNumber">02</span>
           </div>
-          <div className="cards package-home-grid">
-            {packageCards.map((p, i) => (
-              <Reveal key={p.id} delay={i * 90}><PackageCard p={p} /></Reveal>
-            ))}
+          <div
+            className="cards package-home-grid package-home-carousel"
+            aria-label="Driving lesson packages"
+            onTouchStart={() => setPackageInteracted(true)}
+            onPointerDown={() => setPackageInteracted(true)}
+            onWheel={() => setPackageInteracted(true)}
+          >
+            <div className="package-home-track" style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}>
+              {packageCards.map((p, i) => (
+                <div
+                  className={"package-home-slide" + (packageActiveIndex === i ? " is-active" : "")}
+                  key={p.id}
+                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                >
+                  <Reveal delay={i * 90}><PackageCard p={p} /></Reveal>
+                </div>
+              ))}
+            </div>
+            <div className="package-home-dots" aria-label="Choose a package">
+              {packageCards.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={packageActiveIndex === i ? "is-active" : ""}
+                  aria-label={`Show ${p.name}`}
+                  aria-pressed={packageActiveIndex === i}
+                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
