@@ -9847,16 +9847,15 @@ nav .navbook {
   }
 
   .socialReelsGrid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 100%;
-    grid-template-columns: none;
+    display: flex;
     gap: 10px;
+    width: 100%;
   }
 
   .socialReelCard {
+    flex: 0 0 100%;
     width: 100%;
-    min-width: 0;
+    min-width: 100%;
     scroll-snap-align: start;
     scroll-snap-stop: always;
     overflow: hidden;
