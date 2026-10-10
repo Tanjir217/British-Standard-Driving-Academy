@@ -10133,3 +10133,11 @@ nav .navbook {
     cursor: pointer;
   }
 }
+
+
+@media (min-width: 601px) {
+  .lessoncards.lessonMobileTrack {
+    transform: none !important;
+    transition: none;
+  }
+}
