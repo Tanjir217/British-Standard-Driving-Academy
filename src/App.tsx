@@ -32,7 +32,15 @@ function Scroll() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const query = new URLSearchParams(search);
+  const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
+
+  // The Wix-hosted worker returns through the static root document with a
+  // query marker because Wix hosting does not provide SPA route fallback.
+  if (wixAdminRoute === "login") return <AdminLogin />;
+  if (wixAdminRoute === "dashboard") return <AdminGate />;
+  if (wixAdminRoute === "auth-callback") return <AuthCallback />;
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
 
