@@ -6,6 +6,7 @@ import {
   validateAdminSession,
 } from "../services/adminAuthService";
 import { isWixMemberLoggedIn, restoreWixTokens } from "../services/wix/client";
+import { hasCompletedAdminLogin } from "../services/auth/authService";
 import { AdminDashboard } from "./AdminDashboard";
 
 export function AdminGate() {
@@ -17,6 +18,13 @@ export function AdminGate() {
     let active = true;
 
     const check = async () => {
+      // A pre-existing Wix member session alone must not silently unlock the
+      // admin area. Require an explicit admin login flow in this tab first.
+      if (!hasCompletedAdminLogin()) {
+        if (active) setState("login");
+        return;
+      }
+
       if (!isWixMemberLoggedIn()) {
         restoreWixTokens();
       }
