@@ -1,21 +1,22 @@
+// @ts-ignore Node built-ins are available to Vite at config runtime; this project currently omits @types/node.
 import { copyFile, mkdir } from "node:fs/promises";
+// @ts-ignore Node built-ins are available to Vite at config runtime; this project currently omits @types/node.
 import { dirname, join } from "node:path";
+// @ts-ignore Node built-ins are available to Vite at config runtime; this project currently omits @types/node.
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Wix serves the root document but doesn't consistently apply an SPA fallback
- * to nested URLs. Publish physical copies of the built entry document for the
- * admin routes so direct navigation and refresh work on Wix static hosting.
- * React Router still selects the correct page from window.location.pathname.
+ * Publish entry-document copies for admin routes so direct navigation can load
+ * the React app on static hosts. React Router selects the page from the URL.
  */
-function wixAdminRouteDocuments() {
+function wixAdminRouteDocuments(): Plugin {
   return {
     name: "wix-admin-route-documents",
-    apply: "build",
+    apply: "build" as const,
     async closeBundle() {
       const dist = join(projectRoot, "dist");
       const source = join(dist, "index.html");
