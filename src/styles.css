@@ -10170,8 +10170,4 @@ nav .navbook {
     transition: none;
   }
 
-  /* Desktop shows the four unique lesson cards once; duplicates are for mobile looping only. */
-  .lessoncards.lessonMobileTrack > *:nth-child(n + 5) {
-    display: none;
-  }
 }
