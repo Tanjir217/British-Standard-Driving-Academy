@@ -32,12 +32,18 @@ function Scroll() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const query = new URLSearchParams(search);
+  const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
 
-  // Keep admin routes outside the public site layout and always enforce the
-  // Wix-backed admin gate. The login page is the only unauthenticated admin route.
+  // Wix static hosting has no SPA fallback for clean deep links. The server
+  // redirects /admin URLs to /?bsdaAdmin=..., which loads this same app entry.
+  if (wixAdminRoute === "login") return <AdminLogin />;
+  if (wixAdminRoute === "dashboard") return <AdminGate />;
+
+  // Keep direct/local admin routes working and enforce the same admin gate.
   if (isAdminRoute) {
     return (
       <Routes>
