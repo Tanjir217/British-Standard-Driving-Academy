@@ -2,9 +2,11 @@ import {
   clearWixTokens,
   getWixTokens,
   loginWithEmail,
-  wixClient,
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
+
+const DEFAULT_WIX_SITE_ORIGIN = "https://www.bsda.online";
+const AUTHORIZATION_ENDPOINT = "/_functions/adminAuthorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -29,14 +31,22 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function isPermissionError(error: unknown) {
-  const message = getErrorMessage(error, "");
-  return /403|forbidden|permission|unauthori[sz]ed|access denied/i.test(message);
-}
+function getWixSiteOrigin(): string {
+  const configured = import.meta.env.VITE_WIX_SITE_ORIGIN?.trim();
+  const origin = configured || DEFAULT_WIX_SITE_ORIGIN;
 
-function isAuthenticationError(error: unknown) {
-  const message = getErrorMessage(error, "");
-  return /401|invalid.*token|expired.*token|authentication/i.test(message);
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") {
+      throw new Error("The Wix site origin must use HTTPS.");
+    }
+    return parsed.origin;
+  } catch {
+    throw new AdminAuthError("The Wix authorization endpoint is not configured correctly.", {
+      stage: "AUTHORIZATION_CONFIGURATION",
+      code: "ADMIN_AUTH_CONFIGURATION_ERROR",
+    });
+  }
 }
 
 export async function signInAdminWithEmail(
@@ -91,8 +101,6 @@ export async function signInAdminWithEmail(
     );
   }
 
-  // Use the same full-page Wix authentication handoff as the member portal.
-  // This avoids the browser iframe/token-exchange path that can stall locally.
   try {
     return await beginMemberLogin("/admin", undefined, sessionToken);
   } catch (error) {
@@ -106,57 +114,102 @@ export async function signInAdminWithEmail(
   }
 }
 
+/**
+ * Authorization must be decided by the Wix site's backend, never by a browser
+ * marker or by probing an unrelated Wix API. The endpoint returns authorized
+ * only after checking the caller's Wix identity and the AdminStaffAccess CMS
+ * collection. Missing endpoints, network failures, malformed JSON, and all
+ * non-2xx responses are denied.
+ */
 export async function validateAdminSession(): Promise<void> {
   const tokens = getWixTokens();
+  const accessToken = tokens?.accessToken?.value;
 
-  if (!tokens?.accessToken?.value) {
-    throw new AdminAuthError("No Wix member session is available.", {
+  if (!accessToken) {
+    throw new AdminAuthError("Please sign in with your Wix account first.", {
       stage: "LOCAL_SESSION",
       code: "ADMIN_AUTH_REQUIRED",
+      status: 401,
     });
   }
 
+  let response: Response;
+
   try {
-    // Wix Bookings enforces the caller's actual permissions here. Ordinary
-    // members cannot read Extended Bookings; an authorized Wix administrator
-    // can. No Vercel/server proxy is required for this permission check.
-    await wixClient.extendedBookings.queryExtendedBookings(
-      { cursorPaging: { limit: 1 } },
-      {},
-    );
-  } catch (error) {
-    if (isPermissionError(error)) {
-      clearWixTokens();
-      throw new AdminAuthError(
-        "This Wix account does not have administrator access.",
-        {
-          stage: "WIX_ADMIN_PERMISSION_CHECK",
-          code: "ADMIN_ACCESS_DENIED",
-          status: 403,
-          detail: getErrorMessage(error, "Wix denied the admin operation."),
-        },
-      );
-    }
-
-    if (isAuthenticationError(error)) {
-      clearWixTokens();
-      throw new AdminAuthError(
-        "Your Wix administrator session has expired. Please sign in again.",
-        {
-          stage: "WIX_ADMIN_SESSION_CHECK",
-          code: "ADMIN_AUTH_REQUIRED",
-          status: 401,
-          detail: getErrorMessage(error, "Wix rejected the current session."),
-        },
-      );
-    }
-
-    throw new AdminAuthError(
-      getErrorMessage(error, "Wix could not verify administrator access."),
+    response = await fetch(
+      new URL(AUTHORIZATION_ENDPOINT, getWixSiteOrigin()).toString(),
       {
-        stage: "WIX_ADMIN_PERMISSION_CHECK",
-        detail: error instanceof Error ? error.message : undefined,
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+        credentials: "omit",
       },
     );
+  } catch (error) {
+    throw new AdminAuthError(
+      "The Wix authorization service could not be reached. Admin access is blocked until it is available.",
+      {
+        stage: "WIX_AUTHORIZATION_ENDPOINT",
+        code: "ADMIN_AUTH_SERVICE_UNAVAILABLE",
+        detail: getErrorMessage(error, "Network request failed."),
+      },
+    );
+  }
+
+  if (response.status === 401) {
+    clearWixTokens();
+    throw new AdminAuthError("Your Wix session has expired. Please sign in again.", {
+      stage: "WIX_AUTHORIZATION_ENDPOINT",
+      code: "ADMIN_AUTH_REQUIRED",
+      status: 401,
+    });
+  }
+
+  if (response.status === 403) {
+    clearWixTokens();
+    throw new AdminAuthError("This account is not authorised to access the BSDA admin portal.", {
+      stage: "WIX_AUTHORIZATION_ENDPOINT",
+      code: "ADMIN_ACCESS_DENIED",
+      status: 403,
+    });
+  }
+
+  if (!response.ok) {
+    throw new AdminAuthError(
+      "Wix could not verify administrator access. Admin access is blocked.",
+      {
+        stage: "WIX_AUTHORIZATION_ENDPOINT",
+        code: "ADMIN_AUTH_SERVICE_UNAVAILABLE",
+        status: response.status,
+      },
+    );
+  }
+
+  let result: unknown;
+  try {
+    result = await response.json();
+  } catch {
+    throw new AdminAuthError("Wix returned an invalid authorization response. Admin access is blocked.", {
+      stage: "WIX_AUTHORIZATION_RESPONSE",
+      code: "ADMIN_AUTH_INVALID_RESPONSE",
+      status: response.status,
+    });
+  }
+
+  if (
+    !result ||
+    typeof result !== "object" ||
+    !("authorized" in result) ||
+    (result as { authorized?: unknown }).authorized !== true
+  ) {
+    clearWixTokens();
+    throw new AdminAuthError("This account is not authorised to access the BSDA admin portal.", {
+      stage: "WIX_AUTHORIZATION_RESPONSE",
+      code: "ADMIN_ACCESS_DENIED",
+      status: 403,
+    });
   }
 }
