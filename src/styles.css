@@ -10170,4 +10170,9 @@ nav .navbook {
     transition: none;
   }
 
+  /* The lesson array is triplicated for the mobile looping carousel.
+     On desktop, show only the four unique lesson cards. */
+  .lessoncards.lessonMobileTrack > *:nth-child(n + 5) {
+    display: none;
+  }
 }
