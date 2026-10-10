@@ -1,10 +1,10 @@
 import {
   clearWixTokens,
-  exchangeDirectLoginSession,
   getWixTokens,
   loginWithEmail,
   wixClient,
 } from "./wix/client";
+import { beginMemberLogin } from "./auth/authService";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -42,7 +42,7 @@ function isAuthenticationError(error: unknown) {
 export async function signInAdminWithEmail(
   email: string,
   password: string,
-): Promise<void> {
+): Promise<string> {
   let response: Awaited<ReturnType<typeof loginWithEmail>>;
 
   try {
@@ -91,14 +91,15 @@ export async function signInAdminWithEmail(
     );
   }
 
+  // Use the same full-page Wix authentication handoff as the member portal.
+  // This avoids the browser iframe/token-exchange path that can stall locally.
   try {
-    await exchangeDirectLoginSession(sessionToken);
+    return await beginMemberLogin("/admin", undefined, sessionToken);
   } catch (error) {
-    clearWixTokens();
     throw new AdminAuthError(
-      getErrorMessage(error, "Wix could not create the administrator session."),
+      getErrorMessage(error, "Wix could not start the administrator session."),
       {
-        stage: "WIX_TOKEN_EXCHANGE",
+        stage: "WIX_AUTH_HANDOFF",
         detail: error instanceof Error ? error.message : undefined,
       },
     );
