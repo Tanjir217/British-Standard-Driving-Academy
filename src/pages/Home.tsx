@@ -111,6 +111,8 @@ export function Home() {
   const [reelsInteracted, setReelsInteracted] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
+  const [lessonIndex, setLessonIndex] = useState(4);
+  const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
   const [reelUrls, setReelUrls] = useState<string[]>([]);
   const [packageActiveIndex, setPackageActiveIndex] = useState(0);
@@ -136,6 +138,39 @@ export function Home() {
   }, []);
 
   const packageCards = packages.map(toPackageCard);
+
+
+  useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (!isMobile) return;
+    const timer = window.setInterval(() => {
+      setLessonIndex((current) => current + 1);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (lessonIndex === 8) {
+      const timer = window.setTimeout(() => {
+        setLessonResetting(true);
+        setLessonIndex(4);
+      }, 560);
+      return () => window.clearTimeout(timer);
+    }
+    if (lessonIndex === 3) {
+      const timer = window.setTimeout(() => {
+        setLessonResetting(true);
+        setLessonIndex(7);
+      }, 560);
+      return () => window.clearTimeout(timer);
+    }
+  }, [lessonIndex]);
+
+  useEffect(() => {
+    if (!lessonResetting) return;
+    const frame = window.requestAnimationFrame(() => setLessonResetting(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, [lessonResetting]);
 
   const testimonialItems = [
     ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
@@ -459,10 +494,21 @@ export function Home() {
             <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
             <span className="sectionNumber lightNumber">03</span>
           </div>
-          <div className="lessoncards">
-            {lessons.map((l, i) => (
-              <Reveal key={l[0]} delay={i * 80}><LessonCard lesson={l} index={i} /></Reveal>
-            ))}
+          <div className="lessonMobileCarousel">
+            <div className="lessonMobileViewport">
+              <div
+                className={"lessoncards lessonMobileTrack" + (lessonResetting ? " testimonialTrackReset" : "")}
+                style={{ transform: `translateY(-${lessonIndex * 221}px)` }}
+              >
+                {[...lessons, ...lessons, ...lessons].map((l, index) => (
+                  <Reveal key={`${l[0]}-${index}`}><LessonCard lesson={l} index={index % lessons.length} /></Reveal>
+                ))}
+              </div>
+            </div>
+            <div className="lessonMobileControls" aria-label="Lesson system navigation">
+              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current - 1)} aria-label="Show previous lesson"><span>↑</span></button>
+              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current + 1)} aria-label="Show next lesson"><span>↓</span></button>
+            </div>
           </div>
           <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
         </div>
