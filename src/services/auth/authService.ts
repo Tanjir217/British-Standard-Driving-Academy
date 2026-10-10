@@ -16,7 +16,6 @@ import {
   wixClient,
 } from "../wix";
 
-const CALLBACK_PATH = "/auth/callback";
 const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
 
 export function hasCompletedAdminLogin(): boolean {
