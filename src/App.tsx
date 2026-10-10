@@ -12,10 +12,13 @@ import { Portal } from "./pages/Portal";
 import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
+import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { NotFound } from "./pages/NotFound";
+import { AdminGate } from "./pages/AdminGate";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 
 function Scroll() {
@@ -33,6 +36,17 @@ function AppRoutes() {
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
   const isAdminRoute = pathname.startsWith("/admin");
 
+  // Keep admin routes outside the public site layout and always enforce the
+  // Wix-backed admin gate. The login page is the only unauthenticated admin route.
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<AdminGate />} />
+      </Routes>
+    );
+  }
+
   if (isAuthRoute) {
     return (
       <Routes>
@@ -40,10 +54,6 @@ function AppRoutes() {
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     );
-  }
-
-  if (isAdminRoute) {
-    return <AdminDashboard />;
   }
 
   return (
@@ -60,6 +70,7 @@ function AppRoutes() {
         />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />

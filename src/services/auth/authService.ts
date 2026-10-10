@@ -17,6 +17,21 @@ import {
 } from "../wix";
 
 const CALLBACK_PATH = "/auth/callback";
+const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
+
+export function hasCompletedAdminLogin(): boolean {
+  return typeof sessionStorage !== "undefined" &&
+    sessionStorage.getItem(ADMIN_LOGIN_MARKER) === "true";
+}
+
+function markAdminLoginCompleted(returnTo: string): void {
+  if (typeof sessionStorage === "undefined") return;
+  if (new URL(returnTo, window.location.origin).pathname.startsWith("/admin")) {
+    sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
+  } else {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
+}
 
 function getCallbackUrl() {
   return new URL(CALLBACK_PATH, window.location.origin).toString();
@@ -137,14 +152,27 @@ export async function requestPasswordReset(email: string) {
   );
 }
 
-export async function completeMemberLogin() {
-  const result = await completeWixLoginFromUrl();
+// Wix authorization codes are single-use. React StrictMode may mount the
+// callback effect twice during local development, so share one in-flight
+// exchange instead of attempting to redeem the same code twice.
+let memberLoginCompletion: Promise<string> | null = null;
 
-  if (!result.success) {
-    throw new Error("We could not complete the sign-in. Please try again.");
+export function completeMemberLogin(): Promise<string> {
+  if (!memberLoginCompletion) {
+    memberLoginCompletion = (async () => {
+      const result = await completeWixLoginFromUrl();
+
+      if (!result.success) {
+        throw new Error("We could not complete the sign-in. Please try again.");
+      }
+
+      const returnTo = safeReturnPath(result.originalUrl);
+      markAdminLoginCompleted(returnTo);
+      return returnTo;
+    })();
   }
 
-  return safeReturnPath(result.originalUrl);
+  return memberLoginCompletion;
 }
 
 export async function restoreMemberSession() {
@@ -164,6 +192,9 @@ export async function getCurrentMember() {
 
 function clearLocalMemberSession() {
   clearWixTokens();
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
 
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem("bsda.wix.oauth");
