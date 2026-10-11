@@ -5,10 +5,10 @@ import {
 } from "./wix/client";
 import { beginMemberLogin } from "./auth/authService";
 
-const DEFAULT_WIX_SITE_ORIGIN = "https://www.bsda.online";
+// This matches get_adminAuthorization in wix-site-backend/backend/http-functions.js.
+// Wix's authenticated HTTP Functions REST API supplies the member auth context.
 const AUTHORIZATION_ENDPOINT =
-  import.meta.env.VITE_ADMIN_AUTHORIZATION_ENDPOINT ||
-  "https://www.bsda.online/api/admin-authorization";
+  "https://www.wixapis.com/velo/v1/http/invoke/adminAuthorization";
 
 export class AdminAuthError extends Error {
   readonly stage: string;
@@ -31,24 +31,6 @@ export class AdminAuthError extends Error {
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
-}
-
-function getWixSiteOrigin(): string {
-  const configured = import.meta.env.VITE_WIX_SITE_ORIGIN?.trim();
-  const origin = configured || DEFAULT_WIX_SITE_ORIGIN;
-
-  try {
-    const parsed = new URL(origin);
-    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") {
-      throw new Error("The Wix site origin must use HTTPS.");
-    }
-    return parsed.origin;
-  } catch {
-    throw new AdminAuthError("The Wix authorization endpoint is not configured correctly.", {
-      stage: "AUTHORIZATION_CONFIGURATION",
-      code: "ADMIN_AUTH_CONFIGURATION_ERROR",
-    });
-  }
 }
 
 export async function signInAdminWithEmail(
@@ -138,18 +120,15 @@ export async function validateAdminSession(): Promise<void> {
   let response: Response;
 
   try {
-    response = await fetch(
-      new URL(AUTHORIZATION_ENDPOINT, getWixSiteOrigin()).toString(),
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store",
-        credentials: "omit",
+    response = await fetch(AUTHORIZATION_ENDPOINT, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`,
       },
-    );
+      cache: "no-store",
+      credentials: "omit",
+    });
   } catch (error) {
     throw new AdminAuthError(
       "The Wix authorization service could not be reached. Admin access is blocked until it is available.",
@@ -190,15 +169,59 @@ export async function validateAdminSession(): Promise<void> {
     );
   }
 
-  let result: unknown;
+  let payload: unknown;
   try {
-    result = await response.json();
+    payload = await response.json();
   } catch {
     throw new AdminAuthError("Wix returned an invalid authorization response. Admin access is blocked.", {
       stage: "WIX_AUTHORIZATION_RESPONSE",
       code: "ADMIN_AUTH_INVALID_RESPONSE",
       status: response.status,
     });
+  }
+
+  // The HTTP Functions REST API can return the function response as
+  // { status, headers, body }, where body is a JSON string.
+  let result: unknown = payload;
+  if (payload && typeof payload === "object" && "body" in payload) {
+    const body = (payload as { body?: unknown }).body;
+    if (typeof body === "string") {
+      try {
+        result = JSON.parse(body);
+      } catch {
+        result = null;
+      }
+    } else {
+      result = body;
+    }
+  }
+
+  const functionStatus =
+    payload && typeof payload === "object" && "status" in payload &&
+    typeof (payload as { status?: unknown }).status === "number"
+      ? (payload as { status: number }).status
+      : response.status;
+
+  if (functionStatus < 200 || functionStatus >= 300) {
+    if (functionStatus === 401 || functionStatus === 403) {
+      clearWixTokens();
+    }
+    throw new AdminAuthError(
+      functionStatus === 401
+        ? "Your Wix session has expired. Please sign in again."
+        : functionStatus === 403
+          ? "This account is not authorised to access the BSDA admin portal."
+          : "Wix could not verify administrator access. Admin access is blocked.",
+      {
+        stage: "WIX_AUTHORIZATION_ENDPOINT",
+        code: functionStatus === 401
+          ? "ADMIN_AUTH_REQUIRED"
+          : functionStatus === 403
+            ? "ADMIN_ACCESS_DENIED"
+            : "ADMIN_AUTH_SERVICE_UNAVAILABLE",
+        status: functionStatus,
+      },
+    );
   }
 
   if (
