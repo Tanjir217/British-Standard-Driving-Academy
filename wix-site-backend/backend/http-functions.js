@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = new Set([
 function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGINS.has(origin) ? origin : "https://bsda.online",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Accept, Content-Type",
     "Access-Control-Max-Age": "600",
     "Cache-Control": "no-store",
@@ -86,5 +86,100 @@ export async function get_adminAuthorization(request) {
     // Missing identity/collection, API errors, and configuration mistakes deny.
     console.error("BSDA admin authorization failed closed.", error);
     return jsonResponse(403, { authorized: false }, headers);
+  }
+}
+
+
+/**
+ * Creates the current authenticated member's Student Profiles CMS record.
+ *
+ * IMPORTANT: This file must also be installed in the Wix site's
+ * backend/http-functions.js and the Wix site must be published. A GitHub
+ * commit or "wix release" of the static frontend does not deploy Velo code.
+ */
+const STUDENT_PROFILES_COLLECTION = "StudentProfiles";
+
+export async function options_createStudentProfile(request) {
+  const origin = request.headers.origin || "";
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, corsHeaders(origin));
+  }
+  return jsonResponse(200, { ok: true }, corsHeaders(origin));
+}
+
+export async function post_createStudentProfile(request) {
+  const origin = request.headers.origin || "";
+  const headers = corsHeaders(origin);
+
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, headers);
+  }
+
+  try {
+    // The Wix HTTP Functions SDK forwards the signed-in member's auth context.
+    // Never accept a member ID or profile identity from the request body.
+    const member = await currentMember.getMember({ fieldsets: ["FULL"] });
+    const memberId = member && member._id;
+
+    if (!memberId) {
+      return jsonResponse(401, { ok: false, message: "A signed-in Wix member is required." }, headers);
+    }
+
+    const existing = await wixData
+      .query(STUDENT_PROFILES_COLLECTION)
+      .eq("memberId", memberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+
+    if (existing.items && existing.items.length > 0) {
+      return jsonResponse(200, { ok: true, created: false }, headers);
+    }
+
+    const contact = member.contact || {};
+    const firstName = String(contact.firstName || "").trim();
+    const lastName = String(contact.lastName || "").trim();
+    const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
+      String(member.profile?.nickname || "").trim();
+
+    const email = String(
+      member.loginEmail || contact.emails?.[0]?.email || ""
+    ).trim().toLowerCase();
+    const phone = String(
+      contact.phones?.[0]?.e164Formatted ||
+      contact.phones?.[0]?.formatted ||
+      contact.phones?.[0]?.phone ||
+      ""
+    ).trim();
+
+    if (!fullName || !email) {
+      return jsonResponse(422, {
+        ok: false,
+        message: "The Wix member profile is missing a full name or email address.",
+      }, headers);
+    }
+
+    const profile = {
+      title: fullName,
+      memberId,
+      fullName,
+      email,
+      phone,
+      transmission: "Not selected",
+      lessonsCompleted: 0,
+      status: "Active",
+      joinedDate: new Date(),
+    };
+
+    await wixData.insert(STUDENT_PROFILES_COLLECTION, profile, {
+      suppressAuth: true,
+    });
+
+    return jsonResponse(201, { ok: true, created: true }, headers);
+  } catch (error) {
+    console.error("BSDA Student Profile provisioning failed.", error);
+    return jsonResponse(500, {
+      ok: false,
+      message: "Student profile could not be created. Check the CMS collection ID and field IDs in the Wix backend.",
+    }, headers);
   }
 }
