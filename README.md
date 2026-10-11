@@ -42,3 +42,9 @@ npm run build
 
 ## Branching rule
 The initial demo is committed directly to main as requested. Future feature work should be developed on separate branches and merged into main only after testing.
+
+## BSDA backend development rule
+
+The Wix site editor is unavailable for this project; development work must be done from the repository. Wix-hosted HTTP Functions source is maintained at `src/backend/http-functions.js`, with a mirrored copy at `wix-site-backend/backend/http-functions.js`. Do not add Vercel backend routes or expose privileged CMS operations in the frontend.
+
+See [BSDA local-first Wix backend workflow](docs/BSDA-LOCAL-FIRST-WIX-BACKEND.md) for deployment and verification requirements for both `localhost:5173` and `https://bsda.online`.
