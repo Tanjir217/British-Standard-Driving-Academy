@@ -42,7 +42,6 @@ export const studentService: StudentService = {
       // The admin Students view must read StudentProfiles CMS records, not the
       // Wix Members directory. The backend enforces administrator/staff access.
       const endpoint =
-        import.meta.env.VITE_STUDENT_PROFILES_LIST_ENDPOINT ||
         "https://www.wixapis.com/velo/v1/http/invoke/studentProfiles";
       const response = await fetch(endpoint, {
         method: "GET",
