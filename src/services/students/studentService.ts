@@ -172,7 +172,9 @@ export const studentService: StudentService = {
             code,
             message:
               result?.message ||
-              "Your student profile could not be loaded. Please sign in again or contact BSDA support.",
+              payload?.message ||
+              payload?.error?.message ||
+              "Student profile endpoint failed (HTTP " + functionStatus + "). Check the deployed Wix function and StudentProfiles collection configuration.",
           },
         };
       }

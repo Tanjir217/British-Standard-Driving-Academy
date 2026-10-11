@@ -186,7 +186,17 @@ export function completeMemberLogin(): Promise<string> {
           destination.searchParams.get("bsdaAdmin") === "dashboard");
 
       if (!isAdminDestination) {
-        await ensureCurrentStudentProfile();
+        try {
+          await ensureCurrentStudentProfile();
+        } catch (provisioningError) {
+          // A profile provisioning failure must not strand a signed-in member on the callback page.
+          // The portal performs its own protected profile lookup and reports its result in development.
+          if (import.meta.env.DEV) {
+            console.warn("[BSDA] Student profile provisioning failed after sign-in", {
+              message: provisioningError instanceof Error ? provisioningError.message : String(provisioningError),
+            });
+          }
+        }
       }
 
       return returnTo;

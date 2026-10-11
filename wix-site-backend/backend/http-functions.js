@@ -1,7 +1,7 @@
 /**
  * BSDA admin authorization endpoint for the EXISTING Wix site's Velo backend.
  * Canonical Wix Sites backend source is src/backend/http-functions.js.
- * Keep this file synchronized as a mirrored source copy.
+ * Keep wix-site-backend/backend/http-functions.js as a mirrored source copy.
  * Do not put this in the Vite frontend bundle or a Vercel function.
  */
 import { currentMember } from "wix-members-backend";
@@ -147,11 +147,11 @@ export async function post_createStudentProfile(request) {
     const firstPhone = Array.isArray(contact.phones) ? contact.phones[0] : "";
     const email = String(
       member.loginEmail ||
-      (typeof firstEmail === "Email" ? firstEmail : firstEmail?.email) ||
+      (typeof firstEmail === "string" ? firstEmail : firstEmail?.email) ||
       ""
     ).trim().toLowerCase();
     const phone = String(
-      typeof firstPhone === "Number"
+      typeof firstPhone === "string"
         ? firstPhone
         : firstPhone?.e164Formatted || firstPhone?.formatted || firstPhone?.phone || ""
     ).trim();
@@ -257,7 +257,8 @@ export async function get_studentProfiles(request) {
 
 /**
  * Returns only the signed-in member's own StudentProfiles CMS record.
- * Never accepts a member ID from the browser or exposes the full directory.
+ * This endpoint is safe for the student portal; it does not expose the full
+ * student directory and does not trust a member ID supplied by the browser.
  */
 export async function options_currentStudentProfile(request) {
   const origin = request.headers.origin || "";
@@ -270,6 +271,7 @@ export async function options_currentStudentProfile(request) {
 export async function get_currentStudentProfile(request) {
   const origin = request.headers.origin || "";
   const headers = corsHeaders(origin);
+
   if (!ALLOWED_ORIGINS.has(origin)) {
     return jsonResponse(403, { ok: false, message: "Origin not allowed." }, headers);
   }
@@ -277,6 +279,7 @@ export async function get_currentStudentProfile(request) {
   try {
     const member = await currentMember.getMember({ fieldsets: ["BASIC"] });
     const memberId = member && member._id;
+
     if (!memberId) {
       return jsonResponse(401, { ok: false, message: "A signed-in Wix member is required." }, headers);
     }
@@ -286,8 +289,8 @@ export async function get_currentStudentProfile(request) {
       .eq("memberId", memberId)
       .limit(1)
       .find({ suppressAuth: true });
-    const profile = match.items && match.items[0];
 
+    const profile = match.items && match.items[0];
     if (!profile) {
       return jsonResponse(404, {
         ok: false,
