@@ -141,14 +141,17 @@ export async function post_createStudentProfile(request) {
     const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
       String(member.profile?.nickname || "").trim();
 
+    const firstEmail = Array.isArray(contact.emails) ? contact.emails[0] : "";
+    const firstPhone = Array.isArray(contact.phones) ? contact.phones[0] : "";
     const email = String(
-      member.loginEmail || contact.emails?.[0]?.email || ""
+      member.loginEmail ||
+      (typeof firstEmail === "string" ? firstEmail : firstEmail?.email) ||
+      ""
     ).trim().toLowerCase();
     const phone = String(
-      contact.phones?.[0]?.e164Formatted ||
-      contact.phones?.[0]?.formatted ||
-      contact.phones?.[0]?.phone ||
-      ""
+      typeof firstPhone === "string"
+        ? firstPhone
+        : firstPhone?.e164Formatted || firstPhone?.formatted || firstPhone?.phone || ""
     ).trim();
 
     if (!fullName || !email) {
