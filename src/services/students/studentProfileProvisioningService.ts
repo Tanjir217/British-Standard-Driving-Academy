@@ -44,17 +44,34 @@ export async function ensureCurrentStudentProfile(): Promise<void> {
     );
   }
 
-  let result: { ok?: boolean; message?: string } = {};
+  let payload: any = {};
   try {
-    result = await response.json();
+    payload = await response.json();
   } catch {
     // A non-JSON response is handled by the status check below.
   }
 
-  if (!response.ok || result.ok !== true) {
+  // Wix's HTTP Functions REST API returns the HTTP function response object
+  // (status/headers/body), rather than always flattening its JSON body.
+  // Support both the wrapped REST shape and a direct JSON response.
+  let result: { ok?: boolean; message?: string } = payload;
+  if (payload && typeof payload.body === "string") {
+    try {
+      result = JSON.parse(payload.body);
+    } catch {
+      result = { message: payload.body };
+    }
+  } else if (payload && payload.body && typeof payload.body === "object") {
+    result = payload.body;
+  }
+
+  const functionStatus = typeof payload?.status === "number" ? payload.status : response.status;
+  if (!response.ok || functionStatus < 200 || functionStatus >= 300 || result.ok !== true) {
+    const detail = result.message || payload?.message || payload?.error?.message;
     throw new Error(
-      result.message ||
-        "Your account was created, but your student profile could not be saved. Please contact BSDA support.",
+      detail
+        ? `Student profile could not be saved: ${detail}`
+        : `Student profile service returned HTTP ${functionStatus}. Check the Wix backend publication and StudentProfiles collection configuration.`,
     );
   }
 }

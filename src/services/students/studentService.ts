@@ -51,8 +51,22 @@ export const studentService: StudentService = {
         },
       });
 
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.ok !== true || !Array.isArray(result.students)) {
+      const payload = await response.json().catch(() => ({}));
+      // The Wix HTTP Functions REST API may wrap the custom function's JSON
+      // body in { status, headers, body }. Accept that shape and direct JSON.
+      let result: any = payload;
+      if (payload && typeof payload.body === "string") {
+        try {
+          result = JSON.parse(payload.body);
+        } catch {
+          result = { message: payload.body };
+        }
+      } else if (payload && payload.body && typeof payload.body === "object") {
+        result = payload.body;
+      }
+
+      const functionStatus = typeof payload?.status === "number" ? payload.status : response.status;
+      if (!response.ok || functionStatus < 200 || functionStatus >= 300 || result.ok !== true || !Array.isArray(result.students)) {
         return {
           ok: false,
           error: {
