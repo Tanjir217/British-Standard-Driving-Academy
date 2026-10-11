@@ -70,7 +70,7 @@ export const studentService: StudentService = {
         return {
           ok: false,
           error: {
-            code: response.status === 401 || response.status === 403 ? "UNAUTHORIZED" : "SERVER_ERROR",
+            code: response.status === 401 ? "UNAUTHENTICATED" : response.status === 403 ? "FORBIDDEN" : "SERVER_ERROR",
             message: result.message || "Student Profiles CMS data could not be loaded. Confirm the Wix backend endpoint is published.",
           },
         };
@@ -164,7 +164,7 @@ export const studentService: StudentService = {
       ) {
         const code =
           functionStatus === 401 ? "UNAUTHENTICATED" :
-          functionStatus === 403 ? "UNAUTHORIZED" :
+          functionStatus === 403 ? "FORBIDDEN" :
           "SERVER_ERROR";
         return {
           ok: false,
