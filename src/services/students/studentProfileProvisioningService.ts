@@ -1,7 +1,6 @@
 import { getWixTokens, restoreWixTokens } from "../wix/client";
 
 const STUDENT_PROFILE_ENDPOINT =
-  import.meta.env.VITE_STUDENT_PROFILE_ENDPOINT ||
   "https://www.wixapis.com/velo/v1/http/invoke/createStudentProfile";
 
 /**
