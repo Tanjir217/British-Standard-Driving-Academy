@@ -147,11 +147,11 @@ export async function post_createStudentProfile(request) {
     const firstPhone = Array.isArray(contact.phones) ? contact.phones[0] : "";
     const email = String(
       member.loginEmail ||
-      (typeof firstEmail === "string" ? firstEmail : firstEmail?.email) ||
+      (typeof firstEmail === "Email" ? firstEmail : firstEmail?.email) ||
       ""
     ).trim().toLowerCase();
     const phone = String(
-      typeof firstPhone === "string"
+      typeof firstPhone === "Number"
         ? firstPhone
         : firstPhone?.e164Formatted || firstPhone?.formatted || firstPhone?.phone || ""
     ).trim();
