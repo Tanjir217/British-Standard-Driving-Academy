@@ -26,7 +26,7 @@ export async function ensureCurrentStudentProfile(): Promise<void> {
   const response = await fetch(STUDENT_PROFILE_ENDPOINT, {
     method: "POST",
     headers: {
-      Authorization: accessToken,
+      Authorization: `Bearer ${accessToken}`,
       Accept: "application/json",
       "Content-Type": "application/json",
     },
