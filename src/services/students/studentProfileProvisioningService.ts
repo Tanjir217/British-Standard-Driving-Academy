@@ -1,8 +1,7 @@
 import { getWixTokens, restoreWixTokens } from "../wix/client";
 
 const STUDENT_PROFILE_ENDPOINT =
-  import.meta.env.VITE_STUDENT_PROFILE_ENDPOINT ||
-  "https://www.bsda.online/_functions/createStudentProfile";
+  "https://www.wixapis.com/velo/v1/http/invoke/createStudentProfile";
 
 /**
  * Ensures the authenticated Wix member has a Student Profiles CMS record.
@@ -23,15 +22,27 @@ export async function ensureCurrentStudentProfile(): Promise<void> {
     throw new Error("Your Wix session is missing. Please sign in again.");
   }
 
-  const response = await fetch(STUDENT_PROFILE_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  });
+  let response: Response;
+  try {
+    // Use Wix's authenticated HTTP Functions API, not the public /_functions
+    // URL. The REST endpoint forwards the member token as authentication
+    // context so currentMember.getMember() works in Velo backend code.
+    response = await fetch(STUDENT_PROFILE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+      cache: "no-store",
+    });
+  } catch (error) {
+    throw new Error(
+      `Could not reach Wix Student Profiles service (${new URL(STUDENT_PROFILE_ENDPOINT).host}). ` +
+      (error instanceof Error ? error.message : "Network request failed."),
+    );
+  }
 
   let result: { ok?: boolean; message?: string } = {};
   try {
