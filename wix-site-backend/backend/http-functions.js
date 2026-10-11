@@ -135,7 +135,8 @@ export async function post_createStudentProfile(request) {
       return jsonResponse(200, { ok: true, created: false }, headers);
     }
 
-    const contact = member.contact || {};
+    // Wix Members returns contactDetails (not `contact`) on the Member object.
+    const contact = member.contactDetails || member.contact || {};
     const firstName = String(contact.firstName || "").trim();
     const lastName = String(contact.lastName || "").trim();
     const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
