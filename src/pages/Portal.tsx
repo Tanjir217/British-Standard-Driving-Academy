@@ -7,6 +7,8 @@ import {
   getCurrentMember,
   signOutMember,
 } from "../services/auth/authService";
+import { studentService } from "../services/students/studentService";
+import type { Student } from "../services/domain/types";
 
 type MemberSummary = {
   loginEmail?: string | null;
@@ -19,6 +21,7 @@ type MemberSummary = {
 export function Portal() {
   const navigate = useNavigate();
   const [member, setMember] = useState<MemberSummary | null>(null);
+  const [studentProfile, setStudentProfile] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [learningVideos, setLearningVideos] = useState<string[]>([]);
@@ -29,8 +32,9 @@ export function Portal() {
     Promise.all([
       getCurrentMember(),
       getSiteContent().catch(() => ({} as SiteContentMap)),
+      studentService.getCurrent(),
     ])
-      .then(([currentMember, content]) => {
+      .then(([currentMember, content, studentResult]) => {
         if (!active) return;
 
         if (!currentMember) {
@@ -51,6 +55,30 @@ export function Portal() {
               }
             : undefined,
         });
+
+        if (studentResult.ok) {
+          setStudentProfile(studentResult.data);
+
+          // Log only in development, after the protected Wix endpoint returns
+          // the current member's own profile. Avoid logging contact details.
+          if (import.meta.env.DEV) {
+            console.info("[BSDA] Backend student profile loaded", {
+              id: studentResult.data.id,
+              memberId: studentResult.data.memberId,
+              fullName: studentResult.data.fullName,
+              status: studentResult.data.status,
+              transmission: studentResult.data.transmission,
+              lessonsCompleted: studentResult.data.lessonsCompleted,
+              lessonsRemaining: studentResult.data.lessonsRemaining,
+              progressPercent: studentResult.data.progressPercent,
+            });
+          }
+        } else if (import.meta.env.DEV) {
+          console.warn("[BSDA] Backend student profile unavailable", {
+            code: studentResult.error.code,
+            message: studentResult.error.message,
+          });
+        }
         setLearningVideos(
           Array.from(
             { length: 6 },
@@ -103,7 +131,7 @@ export function Portal() {
   }
 
   const firstName = member?.contact?.firstName?.trim();
-  const displayName = firstName || "learner";
+  const displayName = studentProfile?.fullName?.trim() || firstName || "learner";
 
   return (
     <section className="page portal">
