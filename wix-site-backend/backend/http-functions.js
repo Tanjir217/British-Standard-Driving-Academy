@@ -186,3 +186,68 @@ export async function post_createStudentProfile(request) {
     }, headers);
   }
 }
+
+
+/**
+ * Lists CMS student profiles for Wix admins or explicitly approved staff.
+ * This deliberately never reads the Wix Members directory as the student list.
+ */
+export async function options_studentProfiles(request) {
+  const origin = request.headers.origin || "";
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, corsHeaders(origin));
+  }
+  return jsonResponse(200, { ok: true }, corsHeaders(origin));
+}
+
+export async function get_studentProfiles(request) {
+  const origin = request.headers.origin || "";
+  const headers = corsHeaders(origin);
+
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, headers);
+  }
+
+  try {
+    const [member, roles] = await Promise.all([
+      currentMember.getMember({ fieldsets: ["BASIC"] }),
+      currentMember.getRoles(),
+    ]);
+    const memberId = member && member._id;
+    if (!memberId) {
+      return jsonResponse(401, { ok: false, message: "Sign in with an authorized BSDA staff account." }, headers);
+    }
+
+    const isWixAdmin = Array.isArray(roles) &&
+      roles.some((role) => role && role.name === "Admin");
+
+    let isApprovedStaff = false;
+    if (!isWixAdmin) {
+      const staffMatch = await wixData
+        .query(STAFF_COLLECTION)
+        .eq("memberId", memberId)
+        .eq("enabled", true)
+        .limit(1)
+        .find({ suppressAuth: true });
+      isApprovedStaff = Boolean(staffMatch.items && staffMatch.items.length > 0);
+    }
+
+    if (!isWixAdmin && !isApprovedStaff) {
+      return jsonResponse(403, { ok: false, message: "You are not authorized to view Student Profiles." }, headers);
+    }
+
+    const result = await wixData
+      .query(STUDENT_PROFILES_COLLECTION)
+      .limit(1000)
+      .descending("_createdDate")
+      .find({ suppressAuth: true });
+
+    return jsonResponse(200, { ok: true, students: result.items || [] }, headers);
+  } catch (error) {
+    console.error("BSDA Student Profiles listing failed.", error);
+    return jsonResponse(500, {
+      ok: false,
+      message: "Student Profiles could not be loaded. Check Wix backend publication and CMS collection permissions.",
+    }, headers);
+  }
+}
