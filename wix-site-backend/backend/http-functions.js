@@ -1,6 +1,7 @@
 /**
  * BSDA admin authorization endpoint for the EXISTING Wix site's Velo backend.
- * Install as backend/http-functions.js in the Wix site code editor.
+ * Canonical Wix Sites backend source is src/backend/http-functions.js.
+ * Keep this file synchronized as a mirrored source copy.
  * Do not put this in the Vite frontend bundle or a Vercel function.
  */
 import { currentMember } from "wix-members-backend";
@@ -249,6 +250,57 @@ export async function get_studentProfiles(request) {
     return jsonResponse(500, {
       ok: false,
       message: "Student Profiles could not be loaded. Check Wix backend publication and CMS collection permissions.",
+    }, headers);
+  }
+}
+
+
+/**
+ * Returns only the signed-in member's own StudentProfiles CMS record.
+ * Never accepts a member ID from the browser or exposes the full directory.
+ */
+export async function options_currentStudentProfile(request) {
+  const origin = request.headers.origin || "";
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, corsHeaders(origin));
+  }
+  return jsonResponse(200, { ok: true }, corsHeaders(origin));
+}
+
+export async function get_currentStudentProfile(request) {
+  const origin = request.headers.origin || "";
+  const headers = corsHeaders(origin);
+  if (!ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, message: "Origin not allowed." }, headers);
+  }
+
+  try {
+    const member = await currentMember.getMember({ fieldsets: ["BASIC"] });
+    const memberId = member && member._id;
+    if (!memberId) {
+      return jsonResponse(401, { ok: false, message: "A signed-in Wix member is required." }, headers);
+    }
+
+    const match = await wixData
+      .query(STUDENT_PROFILES_COLLECTION)
+      .eq("memberId", memberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+    const profile = match.items && match.items[0];
+
+    if (!profile) {
+      return jsonResponse(404, {
+        ok: false,
+        message: "No student profile exists for this account yet. Sign in again to retry profile setup.",
+      }, headers);
+    }
+
+    return jsonResponse(200, { ok: true, student: profile }, headers);
+  } catch (error) {
+    console.error("BSDA current Student Profile lookup failed.", error);
+    return jsonResponse(500, {
+      ok: false,
+      message: "Your student profile could not be loaded. Check the Wix backend publication and StudentProfiles collection configuration.",
     }, headers);
   }
 }
