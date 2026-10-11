@@ -185,9 +185,31 @@ export async function completeWixLoginFromUrl(): Promise<{
   type WixOAuthData = Parameters<typeof wixClient.auth.getMemberTokens>[2];
 
   const oauthData = JSON.parse(raw) as WixOAuthData;
-  const { code, state, error } = wixClient.auth.parseFromUrl();
 
-  if (error || !code || !state) {
+  // Wix may return OAuth values in the URL fragment (as seen in local Vite
+  // callbacks: /?bsdaAuth=callback#code=...&state=...). The SDK parser can
+  // return empty values for that shape in some runtime versions, so prefer
+  // its values but fall back to the fragment and query string explicitly.
+  const parsed = wixClient.auth.parseFromUrl();
+  const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(window.location.search);
+  const code = parsed.code || fragment.get("code") || query.get("code");
+  const state = parsed.state || fragment.get("state") || query.get("state");
+  const error = parsed.error || fragment.get("error") || query.get("error");
+
+  if (error) {
+    sessionStorage.removeItem("bsda.wix.oauth");
+    console.error("Wix OAuth returned an error:", error);
+    return { success: false };
+  }
+
+  if (!code || !state) {
+    console.error("Wix OAuth callback is missing code/state.", {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasOAuthData: Boolean(raw),
+      callbackPath: window.location.pathname,
+    });
     return { success: false };
   }
 

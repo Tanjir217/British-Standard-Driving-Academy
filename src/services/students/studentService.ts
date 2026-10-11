@@ -27,51 +27,55 @@ export const studentService: StudentService = {
   async list() {
     try {
       const tokens = wixClient.auth.getTokens();
+      const accessToken = tokens?.accessToken?.value;
 
-      if (!tokens?.accessToken?.value) {
+      if (!accessToken) {
         return {
           ok: false,
           error: {
             code: "UNAUTHENTICATED",
-            message: "Please sign in with a Wix member account to load students.",
+            message: "Please sign in with an authorized Wix administrator account to load CMS student profiles.",
           },
         };
       }
 
-      const response = await wixClient.members
-        .queryMembers({ fieldsets: ["FULL"] })
-        .limit(100)
-        .find();
+      // The admin Students view must read StudentProfiles CMS records, not the
+      // Wix Members directory. The backend enforces administrator/staff access.
+      const endpoint =
+        import.meta.env.VITE_STUDENT_PROFILES_LIST_ENDPOINT ||
+        "https://www.bsda.online/_functions/studentProfiles";
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
+      });
 
-      const members = response.items ?? [];
-      const students: WixStudentSummary[] = members
-        .map((member: any) => {
-          const firstName = member?.contact?.firstName ?? "";
-          const lastName = member?.contact?.lastName ?? "";
-          const nickname = member?.profile?.nickname ?? "";
-          const name = [firstName, lastName].filter(Boolean).join(" ") || nickname || "Unnamed member";
-          const phone =
-            member?.contact?.phones?.[0]?.e164Formatted ??
-            member?.contact?.phones?.[0]?.formatted ??
-            member?.contact?.phones?.[0]?.phone ??
-            "";
-          const email = member?.loginEmail ?? member?.contact?.emails?.[0]?.email ?? "";
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true || !Array.isArray(result.students)) {
+        return {
+          ok: false,
+          error: {
+            code: response.status === 401 || response.status === 403 ? "UNAUTHORIZED" : "SERVER_ERROR",
+            message: result.message || "Student Profiles CMS data could not be loaded. Confirm the Wix backend endpoint is published.",
+          },
+        };
+      }
 
-          return {
-            id: member?._id ?? "",
-            contactId: member?.contactId ?? member?.contact?.contactId ?? "",
-            name,
-            email,
-            phone,
-            status: member?.status ?? "UNKNOWN",
-            activityStatus: member?.activityStatus ?? "UNKNOWN",
-            privacyStatus: member?.privacyStatus ?? "UNKNOWN",
-            createdDate: member?._createdDate ?? "",
-            lastLoginDate: member?.lastLoginDate ?? "",
-            profilePhotoUrl: member?.profile?.photo?.url ?? "",
-          };
-        })
-        .filter((student: WixStudentSummary) => student.id);
+      const students: WixStudentSummary[] = result.students.map((record: any) => ({
+        id: String(record?._id || record?.id || ""),
+        contactId: String(record?.memberId || ""),
+        name: String(record?.fullName || record?.title || "Unnamed student"),
+        email: String(record?.email || ""),
+        phone: String(record?.phone || ""),
+        status: String(record?.status || "Active"),
+        activityStatus: String(record?.status || "Active"),
+        privacyStatus: "PRIVATE",
+        createdDate: String(record?._createdDate || record?.joinedDate || ""),
+        lastLoginDate: "",
+        profilePhotoUrl: String(record?.profilePhotoUrl || ""),
+      })).filter((student: WixStudentSummary) => student.id);
 
       return { ok: true, data: students };
     } catch (error) {
@@ -79,7 +83,7 @@ export const studentService: StudentService = {
         ok: false,
         error: {
           code: "NETWORK_ERROR",
-          message: error instanceof Error ? error.message : "Unable to load Wix members.",
+          message: error instanceof Error ? error.message : "Unable to load Student Profiles CMS records.",
         },
       };
     }
