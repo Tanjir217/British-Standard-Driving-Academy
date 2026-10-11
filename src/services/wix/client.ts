@@ -42,6 +42,18 @@ export const wixClient = createClient({
   }),
 });
 
+/**
+ * Keep public authentication requests isolated from the application client's
+ * member session. A revoked/stale access token on the application client must
+ * not be attached to a new registration or login request.
+ */
+const wixAuthClient = createClient({
+  modules: { members },
+  auth: OAuthStrategy({
+    clientId: WIX_CLIENT_ID,
+  }),
+});
+
 export function getWixClientId(): string {
   return WIX_CLIENT_ID;
 }
@@ -112,13 +124,13 @@ export async function getWixLoginUrl(
   idp?: "google" | "facebook",
   sessionToken?: string,
 ): Promise<string> {
-  const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
+  const oauthData = wixAuthClient.auth.generateOAuthData(redirectUri, originalUri);
   const key = "bsda.wix.oauth";
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.setItem(key, JSON.stringify(oauthData));
   }
 
-  const { authUrl } = await wixClient.auth.getAuthUrl(
+  const { authUrl } = await wixAuthClient.auth.getAuthUrl(
     oauthData,
     {
       ...(idp ? { idp } : {}),
@@ -129,7 +141,7 @@ export async function getWixLoginUrl(
 }
 
 export async function loginWithEmail(email: string, password: string) {
-  return wixClient.auth.login({
+  return wixAuthClient.auth.login({
     email,
     password,
   });
@@ -144,7 +156,7 @@ export async function registerWithEmail(
     phones?: string[];
   },
 ) {
-  return wixClient.auth.register({
+  return wixAuthClient.auth.register({
     email,
     password,
     profile,
@@ -152,7 +164,7 @@ export async function registerWithEmail(
 }
 
 export async function verifyMemberEmail(verificationCode: string) {
-  return wixClient.auth.processVerification({ verificationCode });
+  return wixAuthClient.auth.processVerification({ verificationCode });
 }
 
 export async function exchangeDirectLoginSession(sessionToken: string): Promise<WixTokens> {
@@ -166,7 +178,7 @@ export async function sendWixPasswordResetEmail(
   email: string,
   redirectUri: string,
 ): Promise<void> {
-  await wixClient.auth.sendPasswordResetEmail(email, redirectUri);
+  await wixAuthClient.auth.sendPasswordResetEmail(email, redirectUri);
 }
 
 export async function completeWixLoginFromUrl(): Promise<{
@@ -213,7 +225,7 @@ export async function completeWixLoginFromUrl(): Promise<{
     return { success: false };
   }
 
-  const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
+  const tokens = await wixAuthClient.auth.getMemberTokens(code, state, oauthData);
   wixClient.auth.setTokens(tokens);
   persistWixTokens(tokens);
   sessionStorage.removeItem("bsda.wix.oauth");
