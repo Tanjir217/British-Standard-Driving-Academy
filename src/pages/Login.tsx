@@ -20,6 +20,8 @@ export function Login() {
   const [notice, setNotice] = useState("");
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const params = new URLSearchParams(location.search);
   const returnTo = params.get("returnTo") || "/portal";
@@ -316,35 +318,68 @@ export function Login() {
                       <div className="authfields two authpasswordfields">
                         <label>
                           Password
-                          <input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) => update("password", e.target.value)}
-                            autoComplete="new-password"
-                            required
-                          />
+                          <span className="auth-password-input">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={form.password}
+                              onChange={(e) => update("password", e.target.value)}
+                              autoComplete="new-password"
+                              required
+                            />
+                            <button
+                              type="button"
+                              className="auth-password-toggle"
+                              onClick={() => setShowPassword((visible) => !visible)}
+                              aria-label={showPassword ? "Hide password" : "Show password"}
+                              aria-pressed={showPassword}
+                            >
+                              <Icon n={showPassword ? "eye-off" : "eye"} s={17} />
+                            </button>
+                          </span>
                         </label>
                         <label>
                           Confirm password
-                          <input
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={(e) => update("confirmPassword", e.target.value)}
-                            autoComplete="new-password"
-                            required
-                          />
+                          <span className="auth-password-input">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={form.confirmPassword}
+                              onChange={(e) => update("confirmPassword", e.target.value)}
+                              autoComplete="new-password"
+                              required
+                            />
+                            <button
+                              type="button"
+                              className="auth-password-toggle"
+                              onClick={() => setShowConfirmPassword((visible) => !visible)}
+                              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                              aria-pressed={showConfirmPassword}
+                            >
+                              <Icon n={showConfirmPassword ? "eye-off" : "eye"} s={17} />
+                            </button>
+                          </span>
                         </label>
                       </div>
                     ) : (
                       <label>
                         Password
-                        <input
-                          type="password"
-                          value={form.password}
-                          onChange={(e) => update("password", e.target.value)}
-                          autoComplete="current-password"
-                          required
-                        />
+                        <span className="auth-password-input">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={form.password}
+                            onChange={(e) => update("password", e.target.value)}
+                            autoComplete="current-password"
+                            required
+                          />
+                          <button
+                            type="button"
+                            className="auth-password-toggle"
+                            onClick={() => setShowPassword((visible) => !visible)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            aria-pressed={showPassword}
+                          >
+                            <Icon n={showPassword ? "eye-off" : "eye"} s={17} />
+                          </button>
+                        </span>
                       </label>
                     )
                   )}
