@@ -1,3 +1,4 @@
+import { ensureCurrentStudentProfile } from "../students/studentProfileProvisioningService";
 import {
   clearWixTokens,
   completeWixLoginFromUrl,
@@ -175,6 +176,19 @@ export function completeMemberLogin(): Promise<string> {
 
       const returnTo = safeReturnPath(result.originalUrl);
       markAdminLoginCompleted(returnTo);
+
+      // Student CMS writes are performed by the Wix-hosted backend only.
+      // Never provision an admin dashboard session as a student profile.
+      const destination = new URL(returnTo, window.location.origin);
+      const isAdminDestination =
+        destination.pathname.startsWith("/admin") ||
+        (destination.pathname === "/" &&
+          destination.searchParams.get("bsdaAdmin") === "dashboard");
+
+      if (!isAdminDestination) {
+        await ensureCurrentStudentProfile();
+      }
+
       return returnTo;
     })();
   }
