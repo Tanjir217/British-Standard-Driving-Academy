@@ -456,7 +456,7 @@ export function Login() {
 
             <div className="authsecure">
               <Icon n="lock" s={15} />
-              <span>Your password is authenticated by Wix. BSDA does not store your password.</span>
+              <span>Your account is securely managed by Supabase Auth. BSDA does not store your password.</span>
             </div>
           </div>
         </section>
