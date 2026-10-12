@@ -28,7 +28,6 @@ jobs:
           node-version: 22
       - name: Regenerate dependencies from package.json for validation
         run: |
-          rm -f package-lock.json
           npm install --ignore-scripts --no-audit --no-fund
       - name: Commit regenerated lockfile
         run: |
