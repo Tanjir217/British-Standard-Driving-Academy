@@ -19,3 +19,17 @@
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
+
+.dashboardpanelactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .dashboardpanelactions {
+    justify-content: flex-start;
+  }
+}
