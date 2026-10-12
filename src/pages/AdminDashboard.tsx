@@ -54,6 +54,7 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [bookingError, setBookingError] = useState("");
   const [query, setQuery] = useState("");
   const [updatingStudentId, setUpdatingStudentId] = useState("");
 
@@ -101,13 +102,17 @@ export function AdminDashboard() {
       if (!lessonResponse.ok || lessonResult?.ok !== true) {
         throw new Error(lessonResult?.message || "Lesson records could not be loaded.");
       }
-      if (!bookingResponse.ok || bookingResult?.ok !== true) {
-        throw new Error(bookingResult?.message || "Booking records could not be loaded.");
-      }
-
       setStudents(Array.isArray(studentResult.students) ? studentResult.students : []);
       setLessons(Array.isArray(lessonResult.lessons) ? lessonResult.lessons : []);
-      setBookings(Array.isArray(bookingResult.bookings) ? bookingResult.bookings : []);
+      if (bookingResponse.ok && bookingResult?.ok === true) {
+        setBookings(Array.isArray(bookingResult.bookings) ? bookingResult.bookings : []);
+        setBookingError("");
+      } else {
+        // Booking API schema/runtime failures should not hide student and
+        // lesson records from staff; surface the booking module error locally.
+        setBookings([]);
+        setBookingError(bookingResult?.message || "Booking records could not be loaded.");
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "The admin dashboard could not load.");
     } finally {
@@ -258,7 +263,7 @@ export function AdminDashboard() {
               </section>
               <section className="adminLivePanel">
                 <div className="adminLivePanelHead"><div><span className="adminEyebrow">WIX BOOKINGS</span><h2>Recent bookings</h2></div><button type="button" onClick={() => setTab("bookings")}>View all <Icon n="arrow" s={13} /></button></div>
-                {bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
+                {bookingError ? <p className="adminLiveEmpty">{bookingError}</p> : bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
                   <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Customer</th><th>Start</th><th>Status</th></tr></thead><tbody>
                     {bookings.slice(0, 6).map((booking) => <tr key={booking.id}><td>{[booking.firstName, booking.lastName].filter(Boolean).join(" ") || booking.email || "Booking"}<small>{booking.serviceId}</small></td><td>{booking.startDate ? new Date(booking.startDate).toLocaleString("en-GB") : "—"}</td><td><span className="adminLiveStatus">{booking.status.toLowerCase().replaceAll("_", " ")}</span></td></tr>)}
                   </tbody></table></div>
