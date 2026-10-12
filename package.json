@@ -26,7 +26,8 @@
     "@wix/astro": "^3.0.1",
     "@wix/essentials": "^1.0.0",
     "astro": "^5.14.1",
-    "@wix/cloud-provider-fetch-adapter": "^1.0.5"
+    "@wix/cloud-provider-fetch-adapter": "^1.0.5",
+    "@wix/astro-pages": "^2.0.5"
   },
   "devDependencies": {
     "@types/react": "^19.1.12",
