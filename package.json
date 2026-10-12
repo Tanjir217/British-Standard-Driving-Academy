@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "wix dev",
+    "build": "wix build",
+    "preview": "wix preview",
+    "release": "wix release",
+    "check": "astro check"
   },
   "dependencies": {
     "@wix/bookings": "^1.0.1699",
@@ -16,13 +18,18 @@
     "@wix/sdk": "^1.21.16",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.4"
+    "react-router-dom": "^7.9.4",
+    "@astrojs/react": "^4.3.0",
+    "@wix/astro": "^3.0.1",
+    "@wix/essentials": "^1.0.0",
+    "astro": "^5.14.1"
   },
   "devDependencies": {
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
     "typescript": "^5.9.2",
-    "vite": "^7.1.9"
+    "vite": "^7.1.9",
+    "@wix/cli": "^1.0.0"
   }
 }
