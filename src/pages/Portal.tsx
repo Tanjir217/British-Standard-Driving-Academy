@@ -54,6 +54,8 @@ export function Portal() {
     ok: boolean;
     collectionId?: string;
     returnedRecords?: number;
+    matchedBy?: string | null;
+    matched?: boolean;
     records?: Array<Record<string, unknown>>;
     message?: string;
     errorMessage?: string;
@@ -91,6 +93,47 @@ export function Portal() {
           },
         };
         setMember(summary);
+
+        // Temporary local diagnostic: use the contactId attached to the current
+        // Wix member profile. This path deliberately does not use member IDs.
+        const memberWithContactId = currentMember as typeof currentMember & {
+          contactId?: string | null;
+          contact?: { contactId?: string | null; firstName?: string; lastName?: string; phones?: string[] } | null;
+        };
+        const contactId = String(
+          memberWithContactId.contactId ?? memberWithContactId.contact?.contactId ?? "",
+        ).trim();
+
+        if (import.meta.env.DEV) {
+          setFullDataDebugLoading(true);
+          if (!contactId) {
+            setFullDataDebug({
+              ok: false,
+              errorMessage: "The current Wix member response does not contain contactId. No member ID or email fallback was used.",
+              message: "CONTACT_ID_MISSING",
+            });
+            setFullDataDebugLoading(false);
+          } else {
+            fetch("/api/debug/full-data?contactId=" + encodeURIComponent(contactId), {
+              cache: "no-store",
+            })
+              .then(async (response) => {
+                const data = await response.json();
+                if (active) setFullDataDebug(data);
+              })
+              .catch((debugError) => {
+                if (active) {
+                  setFullDataDebug({
+                    ok: false,
+                    errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
+                  });
+                }
+              })
+              .finally(() => {
+                if (active) setFullDataDebugLoading(false);
+              });
+          }
+        }
 
         // Profile data comes only from the protected server endpoint. If no
         // profile exists, provision it from the authenticated member's contact
@@ -132,28 +175,6 @@ export function Portal() {
       } finally {
         if (active) setLoading(false);
       }
-    }
-
-    // Temporary local-only panel: fetch only the FullData row matched server-side
-    // to the currently authenticated Wix member, independently of profile API.
-    if (import.meta.env.DEV) {
-      setFullDataDebugLoading(true);
-      fetch("/api/debug/full-data?showValues=1", { cache: "no-store" })
-        .then(async (response) => {
-          const data = await response.json();
-          if (active) setFullDataDebug(data);
-        })
-        .catch((debugError) => {
-          if (active) {
-            setFullDataDebug({
-              ok: false,
-              errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
-            });
-          }
-        })
-        .finally(() => {
-          if (active) setFullDataDebugLoading(false);
-        });
     }
 
     void loadPortal();
@@ -234,7 +255,7 @@ export function Portal() {
                 onClick={() => {
                   setFullDataDebug(null);
                   setFullDataDebugLoading(true);
-                  fetch("/api/debug/full-data?showValues=1", { cache: "no-store" })
+                  fetch("/api/debug/full-data?contactId=" + encodeURIComponent(String((member as (MemberSummary & { contactId?: string | null; contact?: { contactId?: string | null } })?.contactId ?? member?.contact?.contactId ?? "")), { cache: "no-store" })
                     .then(async (response) => {
                       const data = await response.json();
                       setFullDataDebug(data);
