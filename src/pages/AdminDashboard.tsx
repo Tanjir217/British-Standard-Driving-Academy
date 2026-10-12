@@ -152,7 +152,7 @@ export function AdminDashboard() {
           </nav>
           <div className="adminTopActions">
             <button type="button" onClick={() => void loadDashboard(true)} aria-label="Refresh data" title="Refresh data">
-              <Icon n="refresh-cw" s={18} />
+              <Icon n="arrow" s={18} />
             </button>
             <div className="adminUserMini">
               <span>BS</span>
@@ -174,7 +174,7 @@ export function AdminDashboard() {
             <span className="adminDate">Wix-managed data</span>
             <div className="adminHeroActions">
               <button type="button" className="adminExport" disabled={refreshing} onClick={() => void loadDashboard(true)}>
-                <Icon n="refresh-cw" s={15} /> {refreshing ? "Refreshing..." : "Refresh data"}
+                <Icon n="arrow" s={15} /> {refreshing ? "Refreshing..." : "Refresh data"}
               </button>
             </div>
           </div>
