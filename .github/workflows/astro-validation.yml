@@ -19,6 +19,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Inspect Wix integration peer requirements
+        run: |
+          npm view @wix/astro@2.3.2 peerDependencies --json
+          npm view @wix/astro@3.0.1 peerDependencies --json
+          npm view @wix/astro-pages@2.0.5 peerDependencies --json
+          npm view @wix/cloud-provider-fetch-adapter@1.0.5 peerDependencies --json
+          npm view @astrojs/check@0.9.4 peerDependencies --json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Astro type check
