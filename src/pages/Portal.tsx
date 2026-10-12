@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import "../styles/portal-profile.css";
 import {
   getCurrentMember,
   signOutMember,
