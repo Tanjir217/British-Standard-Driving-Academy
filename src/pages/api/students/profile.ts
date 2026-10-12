@@ -121,6 +121,7 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  let authenticatedMemberId = "";
   if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
     return json({ ok: false, code: "UNSUPPORTED_MEDIA_TYPE", message: "Send a JSON request body." }, 415);
   }
@@ -156,6 +157,7 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before creating your student profile." }, 401);
     }
 
+    authenticatedMemberId = member._id;
     const existing = await findProfileByMemberId(member._id);
     if (existing) {
       return json({ ok: true, profileState: "ready", profile: safeProfile(existing), created: false }, 200);
@@ -163,7 +165,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const email = typeof member.loginEmail === "string" ? member.loginEmail : "";
     const record = {
-      _id: crypto.randomUUID(),
+      // Deterministic item ID makes concurrent retries idempotent even when\n      // the collection does not enforce a unique memberId field.\n      _id: member._id,
       title: fullName,
       memberId: member._id,
       fullName,
@@ -185,6 +187,19 @@ export const POST: APIRoute = async ({ request }) => {
     console.error("[BSDA profile] POST failed:", reason);
     if (reason === "DUPLICATE_MEMBER_PROFILE") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your profile needs academy support." }, 409);
+    }
+
+    // A second concurrent request can collide on the deterministic _id after
+    // the first insert wins. Re-read by authenticated member before failing.
+    if (authenticatedMemberId) {
+      try {
+        const winner = await findProfileByMemberId(authenticatedMemberId);
+        if (winner) {
+          return json({ ok: true, profileState: "ready", profile: safeProfile(winner), created: false }, 200);
+        }
+      } catch {
+        // Preserve the generic failure response if the recovery lookup fails.
+      }
     }
     return json({ ok: false, code: "PROFILE_PROVISION_FAILED", message: "We could not save your student profile. Please try again." }, 500);
   }
