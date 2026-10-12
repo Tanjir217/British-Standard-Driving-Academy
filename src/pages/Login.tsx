@@ -83,6 +83,20 @@ export function Login() {
 
     setBusy(true);
 
+    // Keep only non-sensitive identity fields as a temporary display fallback
+    // across the Wix OAuth redirect. Never store passwords or use this value
+    // for authorization; the authenticated Wix member remains authoritative.
+    try {
+      sessionStorage.setItem("bsda.pending.member.identity", JSON.stringify({
+        email: form.email.trim(),
+        firstName: mode === "register" ? form.firstName.trim() : "",
+        lastName: mode === "register" ? form.lastName.trim() : "",
+        phone: mode === "register" ? form.phone.trim() : "",
+      }));
+    } catch {
+      // Storage can be disabled; login must still proceed.
+    }
+
     try {
       const result =
         mode === "signin"
