@@ -240,8 +240,10 @@ export const PATCH: APIRoute = async ({ request }) => {
     }
 
     const currentName = String(existing.fullName ?? existing.title ?? "").trim().split(/\s+/);
-    const firstName = typeof body.firstName === "string" ? body.firstName.trim() : currentName.shift() || "";
-    const lastName = typeof body.lastName === "string" ? body.lastName.trim() : currentName.join(" ");
+    const existingFirstName = currentName.shift() || "";
+    const existingLastName = currentName.join(" ");
+    const firstName = typeof body.firstName === "string" ? body.firstName.trim() : existingFirstName;
+    const lastName = typeof body.lastName === "string" ? body.lastName.trim() : existingLastName;
     if (!firstName || firstName.length > 60 || lastName.length > 60) {
       return json({ ok: false, code: "VALIDATION_ERROR", message: "Enter a valid first and last name." }, 400);
     }
