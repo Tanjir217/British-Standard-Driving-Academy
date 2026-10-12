@@ -37,3 +37,31 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 - Call the traditional Velo HTTP Functions API.
 - Introduce Supabase, Vercel Functions, Express, or another backend.
 - publish to `bsda.online` or merge to `main` before approval.
+
+
+## Implemented endpoint source files on this branch
+
+- `GET /api/students/profile`: authenticated member's profile or a structured missing-profile state.
+- `POST /api/students/profile`: validates name fields, derives member ID from the Wix session, returns an existing profile on repeat calls, and uses a deterministic item ID to reduce duplicate creation races.
+- `PATCH /api/students/profile`: member-owned updates limited to name, phone, and transmission fields.
+- `GET /api/admin/authorization`: fail-closed authorization against the protected `AdminStaffAccess` collection (`memberId`, `enabled` fields currently assumed from earlier repository work).
+- `GET /api/admin/students`: protected StudentProfiles listing.
+- `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons`: protected lesson record operations.
+- `GET /api/bookings/availability`: reads current Wix Bookings slots.
+- `POST /api/bookings`: rechecks the requested slot against Wix availability before calling Wix Bookings create.
+
+The public booking form now requires a live slot and a Wix booking reference before showing success. It explicitly does not claim that payment was collected or verified.
+
+## Admin identity limitation
+
+The current endpoint authorizes explicitly approved site-member staff records only. It does **not** yet grant access to Wix site owners or dashboard collaborators, because the Astro site-member session does not by itself prove a dashboard collaborator's Wix role. Do not treat the current admin authorization endpoint as satisfying the full owner/collaborator requirement. Verify the supported Wix identity model and implement that authorization path before production use.
+
+## Login/session compatibility
+
+The login page now offers the Wix Astro integration's built-in `/api/auth/login` flow in addition to the existing custom OAuth/email flow. The protected endpoints rely on the managed Wix session. The legacy custom login flow remains for compatibility but is not assumed to establish the Astro integration's cookie-backed session. Test both paths explicitly; use the managed flow for validating the new endpoints.
+
+## Dependency lockfile and test status
+
+`package.json` now declares Astro, React integration, Wix Astro integration, Wix essentials, the Wix fetch adapter, and Wix CLI scripts. The existing `package-lock.json` has **not yet been regenerated** because the working environment could not clone the repository or reach npm. Run `npm install` in the working clone and commit the resulting lockfile before relying on `npm ci`.
+
+No local build, Wix CLI dev session, CMS read/write, authentication, or deployed-preview test has been claimed as passing in this branch. These checks require installing the dependencies and testing against a confirmed non-production Wix project with the real collection schemas.
