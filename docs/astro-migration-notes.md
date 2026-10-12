@@ -63,7 +63,7 @@ The login page now offers the Wix Astro integration's built-in `/api/auth/login`
 
 ## Dependency lockfile and test status
 
-`package.json` now declares Astro, React integration, Wix Astro integration, Wix essentials, the Wix fetch adapter, and Wix CLI scripts. The existing `package-lock.json` has **not yet been regenerated** because the working environment could not clone the repository or reach npm. Run `npm install` in the working clone and commit the resulting lockfile before relying on `npm ci`.
+`package.json` now declares Astro, React integration, Wix Astro integration, Wix essentials, the Wix fetch adapter, and Wix CLI scripts. The existing `package-lock.json` was regenerated from `package.json` in GitHub Actions and committed to this branch. Dependency resolution and `astro check` completed successfully in CI.
 
 No local build, Wix CLI dev session, CMS read/write, authentication, or deployed-preview test has been claimed as passing in this branch. These checks require installing the dependencies and testing against a confirmed non-production Wix project with the real collection schemas.
 
@@ -77,3 +77,12 @@ GitHub Actions successfully resolved the pinned integration metadata from npm:
 - `@astrojs/react@4.3.0` supports React 18 and React 19, but the Wix integration requires React 18.3.1.
 
 The migration therefore pins the Wix Astro 2.x integration with Astro 5 and downgrades React 19 to React 18.3.1 to satisfy the Wix integration's peer requirements. This is a deliberate compatibility change and must be covered by the build and UI regression checks.
+
+## Latest CI results and deployment blocker
+
+- Dependency resolution: passed using the pinned Wix Astro 2.x + Astro 5 + React 18 toolchain.
+- `npm run check`: passed with 0 errors. Remaining hints are an unused import in InstructorDetail and an unused legacy auth helper; Astro also warns that legacy React route components still live under `src/pages/`.
+- `npm run build`: **blocked**. The installed CLI reports `error: unknown command 'build'` for the current repository configuration. This indicates the current `wix.config.json` project is not recognized as a Wix-managed Astro CLI project.
+- `npm run build:astro`: not a valid substitute for release verification; the Wix Pages integration uses a `cloudflare:` runtime module that is only available through the expected Wix build runtime.
+
+The official Wix docs for linking an existing Astro project state that `headless link` requires a project without `wix.config.json` and provisions a new Wix business/site. This repo already contains `wix.config.json`, the target site ID still needs reconciliation, and the operating guardrails prohibit creating a new Wix site. Therefore, **do not run `headless link`, overwrite site IDs, or publish**. The supported in-place path for this existing site must be established before the managed build, preview, endpoint integration tests, or production release can be completed.
