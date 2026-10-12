@@ -12,6 +12,7 @@ import { Login } from "../pages/Login";
 import { AuthCallback } from "../pages/AuthCallback";
 import { FAQ } from "../pages/FAQ";
 import { NotFound } from "../pages/NotFound";
+import { AdminDashboard } from "../pages/AdminDashboard";
 import "../styles.css";
 
 function ScrollToTop() {
@@ -27,6 +28,16 @@ function ScrollToTop() {
 function AppRoutes() {
   const { pathname } = useLocation();
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/*" element={<AdminDashboard />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    );
+  }
 
   if (isAuthRoute) {
     return (
