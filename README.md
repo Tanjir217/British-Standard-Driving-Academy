@@ -5,7 +5,7 @@ BSDA is the existing multi-page driving academy application. The `main` branch r
 ## Architecture
 
 - Astro with the official Wix Astro integration (dependency versions must match the published Wix package peer requirements), Wix page registry, and Wix fetch adapter.
-- React 19 + TypeScript + React Router for the existing interactive page experience.
+- React 18.3.1 + TypeScript + React Router (required by the pinned Wix Astro integration) for the existing interactive page experience.
 - Wix Members for identity, Wix CMS for academy-specific student/lesson data, Wix Bookings for live services/availability/bookings, and Wix Pricing Plans for commercial plans.
 - Protected server endpoints under `src/pages/api/`; private CMS operations are not performed directly by browser code.
 - Existing navy, red, cream, and white design system and current React page components remain the presentation source of truth.
