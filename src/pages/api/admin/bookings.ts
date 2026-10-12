@@ -24,8 +24,9 @@ export const GET: APIRoute = async () => {
 
   try {
     const result = await extendedBookings.queryExtendedBookings({}, {});
-    const rawItems = result && typeof result === "object"
-      ? (result.items ?? result.bookings ?? result.extendedBookings)
+    const response = result as any;
+    const rawItems = response && typeof response === "object"
+      ? (response.items ?? response.bookings ?? response.extendedBookings)
       : null;
     if (!Array.isArray(rawItems)) {
       return json({ ok: false, code: "INVALID_BOOKINGS_RESPONSE", message: "Booking records could not be read." }, 502);
