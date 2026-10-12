@@ -376,6 +376,17 @@ export function Home() {
                     <span className="ey">{item.eyebrow}</span>
                     <h2>{item.title}</h2>
                     <p>{item.text}</p>
+                    {item.title === "Driving Lessons" && (
+                      <ul className="quickLinkLessonList" aria-label="Driving lesson options">
+                        <li>Automatic / manual</li>
+                        <li>Beginner</li>
+                        <li>Partly trained</li>
+                        <li>Refresher</li>
+                        <li>Full experience</li>
+                        <li>Motorway training</li>
+                        <li>PDI and ADI training</li>
+                      </ul>
+                    )}
                     <Link className="btn light" to={item.to}>
                       {item.label}
                       <Icon n="arrow" />
