@@ -134,8 +134,8 @@ export function Portal() {
       }
     }
 
-    // Temporary local-only panel: show raw FullData CMS values independently
-    // of the student profile endpoint so we can compare the two data paths.
+    // Temporary local-only panel: fetch only the FullData row matched server-side
+    // to the currently authenticated Wix member, independently of profile API.
     if (import.meta.env.DEV) {
       setFullDataDebugLoading(true);
       fetch("/api/debug/full-data?showValues=1", { cache: "no-store" })
@@ -226,7 +226,7 @@ export function Portal() {
                 <span className="ey" style={{ color: "#92400e" }}>Temporary developer diagnostic</span>
                 <h2 style={{ margin: "6px 0" }}>Raw Wix FullData CMS values</h2>
                 <p style={{ margin: 0, fontSize: 14 }}>
-                  Local development only. This panel shows up to five CMS records independently of the student profile API.
+                  Local development only. This panel independently queries FullData and displays only the row matched to your signed-in Wix account.
                 </p>
               </div>
               <button
@@ -254,7 +254,7 @@ export function Portal() {
             ) : fullDataDebug?.ok ? (
               <>
                 <p style={{ margin: "12px 0", fontSize: 13 }}>
-                  Collection: <strong>{fullDataDebug.collectionId}</strong> · Records returned: <strong>{fullDataDebug.returnedRecords}</strong>
+                  Collection: <strong>{fullDataDebug.collectionId}</strong> · Your matching records: <strong>{fullDataDebug.returnedRecords}</strong> · Matched by: <strong>{String((fullDataDebug as typeof fullDataDebug & { matchedBy?: string | null })?.matchedBy || "not found")}</strong>
                 </p>
                 <pre
                   style={{
@@ -272,7 +272,7 @@ export function Portal() {
                   }}
                 >{JSON.stringify(fullDataDebug.records ?? [], null, 2)}</pre>
                 <p style={{ margin: "10px 0 0", fontSize: 12, color: "#92400e" }}>
-                  This may include other members’ personal data. Keep this panel local and remove it after diagnosis.
+                  This temporary panel is local-development-only and returns only the matched record for your authenticated account. Remove it after diagnosis.
                 </p>
               </>
             ) : (
