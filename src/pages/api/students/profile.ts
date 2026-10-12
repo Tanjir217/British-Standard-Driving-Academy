@@ -71,7 +71,7 @@ function safeProfile(record: WixRecord) {
   };
 }
 
-type AuthenticatedMember = { _id: string; loginEmail?: string | null };
+type AuthenticatedMember = { _id: string; loginEmail?: string | null; contactId?: string | null };
 
 async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
   // The Wix Astro integration binds SDK calls to the request's authenticated
@@ -160,8 +160,9 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     if (byEmail[0]) return byEmail[0];
   }
 
+  const contactId = typeof member.contactId === "string" && member.contactId ? member.contactId : member._id;
   const byContact = recordsFromQuery(
-    await elevatedQuery(collectionId).eq("contactId", member._id).limit(2).find(),
+    await elevatedQuery(collectionId).eq("contactId", contactId).limit(2).find(),
   );
   if (byContact.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
   return byContact[0] ?? null;
