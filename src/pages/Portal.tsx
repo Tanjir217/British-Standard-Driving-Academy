@@ -255,7 +255,23 @@ export function Portal() {
                 onClick={() => {
                   setFullDataDebug(null);
                   setFullDataDebugLoading(true);
-                  fetch("/api/debug/full-data?contactId=" + encodeURIComponent(String((member as (MemberSummary & { contactId?: string | null; contact?: { contactId?: string | null } })?.contactId ?? member?.contact?.contactId ?? "")), { cache: "no-store" })
+                  const currentContactId = String(
+                    (member as MemberSummary & {
+                      contactId?: string | null;
+                      contact?: { contactId?: string | null };
+                    } | null)?.contactId ?? member?.contact?.contactId ?? "",
+                  ).trim();
+                  if (!currentContactId) {
+                    setFullDataDebug({
+                      ok: false,
+                      errorMessage: "The current Wix member response does not contain contactId.",
+                    });
+                    setFullDataDebugLoading(false);
+                    return;
+                  }
+                  fetch("/api/debug/full-data?contactId=" + encodeURIComponent(currentContactId), {
+                    cache: "no-store",
+                  })
                     .then(async (response) => {
                       const data = await response.json();
                       setFullDataDebug(data);
