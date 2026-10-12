@@ -66,3 +66,14 @@ The login page now offers the Wix Astro integration's built-in `/api/auth/login`
 `package.json` now declares Astro, React integration, Wix Astro integration, Wix essentials, the Wix fetch adapter, and Wix CLI scripts. The existing `package-lock.json` has **not yet been regenerated** because the working environment could not clone the repository or reach npm. Run `npm install` in the working clone and commit the resulting lockfile before relying on `npm ci`.
 
 No local build, Wix CLI dev session, CMS read/write, authentication, or deployed-preview test has been claimed as passing in this branch. These checks require installing the dependencies and testing against a confirmed non-production Wix project with the real collection schemas.
+
+
+## Verified dependency compatibility
+
+GitHub Actions successfully resolved the pinned integration metadata from npm:
+
+- `@wix/astro@2.75.2` requires Astro `^5.0.0` and React/React DOM `^18.3.1`.
+- `@wix/astro-pages@2.0.8` requires Astro `^5.0.0`.
+- `@astrojs/react@4.3.0` supports React 18 and React 19, but the Wix integration requires React 18.3.1.
+
+The migration therefore pins the Wix Astro 2.x integration with Astro 5 and downgrades React 19 to React 18.3.1 to satisfy the Wix integration's peer requirements. This is a deliberate compatibility change and must be covered by the build and UI regression checks.
