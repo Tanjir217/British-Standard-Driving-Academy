@@ -220,7 +220,10 @@ export const GET: APIRoute = async () => {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
     console.error("[BSDA FullData profile] GET failed:", reason);
-    if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {\n      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix authenticated the session but did not provide contactId or loginEmail. Check the server log for the available member fields." }, 422);\n    }\n    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
+    if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
+      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix authenticated the session but did not provide contactId or loginEmail. Check the server log for the available member fields." }, 422);
+    }
+    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
     }
     return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from Members/FullData. Check the server log for the Wix error code and verify the site binding." }, 500);
