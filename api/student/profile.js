@@ -62,6 +62,8 @@ export default async function handler(req, res) {
       phone: Array.isArray(contact.phones) ? String(contact.phones[0] || "") : "",
       transmission: "Not selected",
       lessonsCompleted: 0,
+      lessonsRemaining: 0,
+      progressPercent: 0,
       status: "Active",
       joinedDate: new Date().toISOString(),
     };
@@ -75,14 +77,24 @@ export default async function handler(req, res) {
       });
       const student = inserted?.dataItem?.data || data;
       return json(res, 201, { ok: true, created: true, student });
-    } catch {
+    } catch (insertError) {
+      // Log only safe diagnostic metadata; never log tokens, PII, or raw Wix responses.
+      console.error("[BSDA] Student profile insert failed", {
+        status: insertError?.status || "unknown",
+        collection: COLLECTION,
+      });
       // A concurrent request may have inserted the same stable ID. Re-query
       // before returning an error; do not create a second arbitrary record.
       const raced = await findProfile(auth.member.id).catch(() => null);
       if (raced) return json(res, 200, { ok: true, created: false, student: raced.data });
       return json(res, 502, { ok: false, error: "Student profile could not be saved. Verify Wix CMS permissions and field IDs." });
     }
-  } catch {
+  } catch (serviceError) {
+    // Log only safe diagnostic metadata; never log tokens, PII, or raw Wix responses.
+    console.error("[BSDA] Student profile service failed", {
+      status: serviceError?.status || "unknown",
+      collection: COLLECTION,
+    });
     return json(res, 502, { ok: false, error: "Student profile service is unavailable. Verify server-side Wix configuration." });
   }
 }
