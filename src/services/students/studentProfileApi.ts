@@ -80,3 +80,20 @@ export async function createStudentProfile(input: {
   });
   return readResponse(response);
 }
+
+export async function updateStudentProfile(input: {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  transmission?: "manual" | "automatic" | "either";
+}): Promise<ProfileResponse> {
+  const response = await httpClient.fetchWithAuth("/api/students/profile", {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+  return readResponse(response);
+}
