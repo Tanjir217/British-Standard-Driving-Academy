@@ -165,7 +165,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     const email = typeof member.loginEmail === "string" ? member.loginEmail : "";
     const record = {
-      // Deterministic item ID makes concurrent retries idempotent even when\n      // the collection does not enforce a unique memberId field.\n      _id: member._id,
+      // Deterministic item ID makes concurrent retries idempotent even when
+      // the collection does not enforce a unique memberId field.\n      _id: member._id,
       title: fullName,
       memberId: member._id,
       fullName,
