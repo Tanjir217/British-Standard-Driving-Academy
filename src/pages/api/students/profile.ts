@@ -99,6 +99,74 @@ async function findProfileByMemberId(memberId: string): Promise<WixRecord | null
   return records[0] ?? null;
 }
 
+function imageUrl(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+  const image = value as Record<string, unknown>;
+  for (const candidate of [image.url, image.src, image.imageUrl, image.uri]) {
+    if (typeof candidate === "string" && candidate) return candidate;
+  }
+  return "";
+}
+
+function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
+  const firstName = typeof record.firstName === "string" ? record.firstName.trim() : "";
+  const lastName = typeof record.lastName === "string" ? record.lastName.trim() : "";
+  const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
+  const email = typeof record.loginEmail === "string" ? record.loginEmail : (member.loginEmail || "");
+  const activity = String(record.activityStatus ?? record.status ?? "").toLowerCase();
+  const status = ["active", "paused", "completed", "inactive"].includes(activity)
+    ? activity
+    : "active";
+  return {
+    id: String(record._id ?? ""),
+    memberId: member._id,
+    fullName,
+    firstName,
+    lastName,
+    nickname,
+    email,
+    phone: typeof record.phone === "string" ? record.phone : "",
+    profilePhotoUrl: imageUrl(record.profilePhoto),
+    coverPhotoUrl: imageUrl(record.coverPhoto),
+    slug: typeof record.slug === "string" ? record.slug : "",
+    privacyStatus: typeof record.privacyStatus === "string" ? record.privacyStatus : "",
+    activityStatus: typeof record.activityStatus === "string" ? record.activityStatus : "",
+    status,
+    contactId: typeof record.contactId === "string" ? record.contactId : "",
+    lastLoginDate: record.lastLoginDate ?? null,
+    createdDate: record._createdDate ?? null,
+    updatedDate: record._updatedDate ?? null,
+    transmission: "either" as const,
+    lessonsCompleted: 0,
+    lessonsRemaining: 0,
+    progressPercent: 0,
+  };
+}
+
+async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecord | null> {
+  const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
+  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "FullData";
+  const email = typeof member.loginEmail === "string" ? member.loginEmail.trim() : "";
+
+  // Query only by values derived from the current Wix-authenticated member.
+  // Never accept email, contact ID, or member ID from browser input.
+  if (email) {
+    const byEmail = recordsFromQuery(
+      await elevatedQuery(collectionId).eq("loginEmail", email).limit(2).find(),
+    );
+    if (byEmail.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    if (byEmail[0]) return byEmail[0];
+  }
+
+  const byContact = recordsFromQuery(
+    await elevatedQuery(collectionId).eq("contactId", member._id).limit(2).find(),
+  );
+  if (byContact.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+  return byContact[0] ?? null;
+}
+
 export const GET: APIRoute = async () => {
   try {
     const member = await getAuthenticatedMember();
@@ -106,19 +174,24 @@ export const GET: APIRoute = async () => {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
     }
 
-    const record = await findProfileByMemberId(member._id);
+    const record = await findFullDataMember(member);
     if (!record) {
-      return json({ ok: true, profileState: "missing", profile: null }, 200);
+      return json({ ok: true, profileState: "missing", profile: null, source: "FullData" }, 200);
     }
 
-    return json({ ok: true, profileState: "ready", profile: safeProfile(record) });
+    return json({
+      ok: true,
+      profileState: "ready",
+      profile: fullDataProfile(record, member),
+      source: "FullData",
+    });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA profile] GET failed:", reason);
-    if (reason === "DUPLICATE_MEMBER_PROFILE") {
-      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your profile needs academy support." }, 409);
+    console.error("[BSDA FullData profile] GET failed:", reason);
+    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
+      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
     }
-    return json({ ok: false, code: "PROFILE_LOOKUP_FAILED", message: "We could not load your student profile. Please try again." }, 500);
+    return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from FullData. Please verify the collection permissions and field IDs." }, 500);
   }
 };
 
