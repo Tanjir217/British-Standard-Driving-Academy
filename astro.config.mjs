@@ -1,11 +1,18 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import wix from "@wix/astro";
+import wixCloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 
-// Wix's Astro integration supplies the Wix-managed runtime and authentication
-// integration. Do not run "wix headless link" against this repository until
-// the existing bsda.online site binding has been explicitly verified.
+const isProductionBuild = process.env.NODE_ENV === "production";
+
+// The Wix adapter is used for production builds. The Wix CLI owns the local
+// development/preview runtime. Do not link or release until the intended
+// existing bsda.online site binding is verified.
 export default defineConfig({
+  site: "https://bsda.online",
   output: "server",
-  integrations: [react(), wix()],
+  integrations: [wix(), react()],
+  ...(isProductionBuild && {
+    adapter: wixCloudProviderFetchAdapter({}),
+  }),
 });
