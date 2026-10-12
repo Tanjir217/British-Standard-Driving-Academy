@@ -192,7 +192,7 @@ export const GET: APIRoute = async () => {
       ok: true,
       profileState: "ready",
       profile: fullDataProfile(record, member),
-      source: "FullData",
+      source: "Members/FullData",
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
