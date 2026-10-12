@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import wix from "@wix/astro";
+import wixPages from "@wix/astro-pages";
 import wixCloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 
 const isProductionBuild = process.env.NODE_ENV === "production";
@@ -11,7 +12,7 @@ const isProductionBuild = process.env.NODE_ENV === "production";
 export default defineConfig({
   site: "https://bsda.online",
   output: "server",
-  integrations: [wix(), react()],
+  integrations: [wix(), wixPages(), react()],
   ...(isProductionBuild && {
     adapter: wixCloudProviderFetchAdapter({}),
   }),
