@@ -28,7 +28,7 @@ jobs:
           node-version: 22
       - name: Regenerate dependencies from package.json for validation
         run: |
-          npm install --ignore-scripts --no-audit --no-fund
+          npm install --include=dev --ignore-scripts --no-audit --no-fund
       - name: Commit regenerated lockfile
         run: |
           git add package-lock.json
