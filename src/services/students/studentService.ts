@@ -1,5 +1,6 @@
 import type { Student } from "../domain/types";
 import type { ServiceResult } from "../api/types";
+import { members as managedMembers } from "@wix/members";
 import { wixClient } from "../wix/client";
 import { getStudentProfile } from "./studentProfileApi";
 
@@ -61,16 +62,18 @@ export const studentService: StudentService = {
 
   async getCurrentMemberId() {
     try {
+      const managedResponse = await managedMembers.getCurrentMember();
+      const managedId = managedResponse.member?._id;
+      if (managedId) return { ok: true, data: managedId };
+
       const response = await wixClient.members.getCurrentMember();
       const memberId = response.member?._id;
-
       if (!memberId) {
         return {
           ok: false,
           error: { code: "UNAUTHENTICATED", message: "No signed-in Wix member." },
         };
       }
-
       return { ok: true, data: memberId };
     } catch {
       return {
