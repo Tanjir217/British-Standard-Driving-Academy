@@ -1,14 +1,12 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
+import { members } from "@wix/members";
 
 /**
- * Temporary local-only diagnostic for the Wix Members/FullData system collection.
- *
- * Full records may contain personal data. By default they are logged to the
- * local Wix dev server terminal only. Add ?showValues=1 to opt in to displaying
- * up to five raw records in the local development HTTP response. Remove this
- * route after diagnosis.
+ * Temporary local-only diagnostic for the signed-in student's FullData row.
+ * It never returns the whole collection. Only the record matched to the
+ * server-authenticated Wix member may be returned to the browser.
  */
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body, null, 2), {
@@ -36,67 +34,114 @@ function extractRecords(value: unknown): Record<string, unknown>[] {
   });
 }
 
-export const GET: APIRoute = async ({ url }) => {
-  // Never enable a collection dump on a deployed environment.
+type CurrentMember = {
+  _id: string;
+  contactId?: string | null;
+  loginEmail?: string | null;
+  email?: string | null;
+};
+
+export const GET: APIRoute = async () => {
   if (!import.meta.env.DEV) {
     return json({ ok: false, code: "LOCAL_DIAGNOSTICS_ONLY" }, 404);
   }
 
-  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
-  console.info("[BSDA FullData diagnostic] Starting CMS query", {
-    collectionId,
-    limit: 5,
-    environment: "development",
-  });
-
   try {
+    // Resolve identity from the Wix session on the server. Never accept a
+    // member ID or email from the browser as proof of account ownership.
+    const response = await members.getCurrentMember();
+    const member = response.member as CurrentMember | null | undefined;
+    if (!member || typeof member._id !== "string" || !member._id) {
+      return json({
+        ok: false,
+        code: "UNAUTHENTICATED",
+        message: "Sign in with the Wix-managed member session to inspect your own FullData record.",
+      }, 401);
+    }
+
+    const contactId = typeof member.contactId === "string" ? member.contactId.trim() : "";
+    const email = String(member.loginEmail ?? member.email ?? "").trim().toLowerCase();
+    if (!contactId && !email) {
+      console.error("[BSDA FullData own-record diagnostic] Authenticated member has no contactId/loginEmail.", {
+        memberFields: Object.keys(member),
+      });
+      return json({
+        ok: false,
+        code: "MEMBER_IDENTIFIERS_MISSING",
+        message: "The Wix session did not provide contactId or email, so the account cannot safely be matched to a FullData row.",
+      }, 422);
+    }
+
+    const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
     const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-    const result = await elevatedQuery(collectionId).limit(5).find();
+
+    // The unfiltered query has already been confirmed to work in this project.
+    // Filter its result on the server and never send other members' rows to
+    // the client. Keep the limit bounded for this temporary diagnostic.
+    const result = await elevatedQuery(collectionId).limit(100).find();
     const records = extractRecords(result);
 
-    // Intentionally log the raw rows only to the local server terminal.
-    // Do not return raw member data in the HTTP response/browser console.
-    console.info("[BSDA FullData diagnostic] Raw CMS query response:", result);
-    console.info("[BSDA FullData diagnostic] Extracted FullData records:", records);
-    console.info("[BSDA FullData diagnostic] Query summary:", {
-      collectionId,
-      returnedRecords: records.length,
-      fieldNames: records.map((record) => Object.keys(record)),
-    });
+    const contactMatches = contactId
+      ? records.filter((record) => String(record.contactId ?? "").trim() === contactId)
+      : [];
+    const emailMatches = email
+      ? records.filter((record) =>
+          String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email,
+        )
+      : [];
 
-    const showValues = url.searchParams.get("showValues") === "1";
+    let ownRecord: Record<string, unknown> | null = null;
+    let matchedBy: "contactId" | "email" | null = null;
+
+    if (contactMatches.length > 1 || (!contactMatches.length && emailMatches.length > 1)) {
+      return json({
+        ok: false,
+        code: "DUPLICATE_FULLDATA_MATCH",
+        message: "More than one FullData row matches this account. No rows were returned.",
+      }, 409);
+    }
+
+    if (contactMatches.length === 1) {
+      ownRecord = contactMatches[0];
+      matchedBy = "contactId";
+    } else if (emailMatches.length === 1) {
+      ownRecord = emailMatches[0];
+      matchedBy = "email";
+    }
+
+    console.info("[BSDA FullData own-record diagnostic]", {
+      collectionId,
+      authenticated: true,
+      matched: Boolean(ownRecord),
+      matchedBy,
+      scannedRecords: records.length,
+      returnedOwnRecordOnly: Boolean(ownRecord),
+    });
 
     return json({
       ok: true,
       collectionId,
-      returnedRecords: records.length,
-      fieldNames: records.map((record) => Object.keys(record)),
-      ...(showValues ? { records } : {}),
-      message: showValues
-        ? "Raw CMS values are included below for local development only. Do not share this response publicly."
-        : "Field values are logged in the local Wix dev server terminal. Add ?showValues=1 to include up to five raw records in this local response.",
+      matched: Boolean(ownRecord),
+      matchedBy,
+      returnedRecords: ownRecord ? 1 : 0,
+      records: ownRecord ? [ownRecord] : [],
+      message: ownRecord
+        ? "Only the FullData row matched to your signed-in Wix account is shown."
+        : "The query worked, but none of the first 100 rows matched this account's contactId or email.",
     });
   } catch (error) {
-    const err = error as { message?: unknown; code?: unknown; status?: unknown; details?: unknown };
-    console.error("[BSDA FullData diagnostic] CMS query failed:", {
-      collectionId,
+    const err = error as { message?: unknown; code?: unknown; status?: unknown };
+    console.error("[BSDA FullData own-record diagnostic] Query failed:", {
       name: error instanceof Error ? error.name : typeof error,
       message: typeof err?.message === "string" ? err.message : "Unknown error",
       code: err?.code ?? null,
       status: err?.status ?? null,
-      details: err?.details ?? null,
-      error,
     });
-
     return json({
       ok: false,
       code: "FULLDATA_DIAGNOSTIC_QUERY_FAILED",
-      collectionId,
-      errorName: error instanceof Error ? error.name : typeof error,
       errorMessage: typeof err?.message === "string" ? err.message : "Unknown error",
-      errorCode: err?.code ?? null,
-      errorStatus: err?.status ?? null,
-      message: "See the local Wix dev server terminal for the detailed error.",
+      message: "Could not load the signed-in member's FullData record. See the local dev server terminal.",
     }, 500);
   }
 };
