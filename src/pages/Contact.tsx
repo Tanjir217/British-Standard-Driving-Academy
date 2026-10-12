@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { submitContactEnquiry } from "../services/contactService";
