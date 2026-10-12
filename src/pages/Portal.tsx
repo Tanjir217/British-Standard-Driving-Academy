@@ -50,6 +50,15 @@ export function Portal() {
   const [managedLoginRequired, setManagedLoginRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [fullDataDebug, setFullDataDebug] = useState<{
+    ok: boolean;
+    collectionId?: string;
+    returnedRecords?: number;
+    records?: Array<Record<string, unknown>>;
+    message?: string;
+    errorMessage?: string;
+  } | null>(null);
+  const [fullDataDebugLoading, setFullDataDebugLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -125,6 +134,28 @@ export function Portal() {
       }
     }
 
+    // Temporary local-only panel: show raw FullData CMS values independently
+    // of the student profile endpoint so we can compare the two data paths.
+    if (import.meta.env.DEV) {
+      setFullDataDebugLoading(true);
+      fetch("/api/debug/full-data?showValues=1", { cache: "no-store" })
+        .then(async (response) => {
+          const data = await response.json();
+          if (active) setFullDataDebug(data);
+        })
+        .catch((debugError) => {
+          if (active) {
+            setFullDataDebug({
+              ok: false,
+              errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
+            });
+          }
+        })
+        .finally(() => {
+          if (active) setFullDataDebugLoading(false);
+        });
+    }
+
     void loadPortal();
     return () => {
       active = false;
@@ -176,6 +207,81 @@ export function Portal() {
             Sign out
           </button>
         </div>
+
+        {import.meta.env.DEV && (
+          <section
+            aria-label="Temporary FullData CMS diagnostic"
+            style={{
+              marginTop: 24,
+              padding: 20,
+              border: "2px dashed #d97706",
+              borderRadius: 12,
+              background: "#fffaf0",
+              color: "#1f2937",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <span className="ey" style={{ color: "#92400e" }}>Temporary developer diagnostic</span>
+                <h2 style={{ margin: "6px 0" }}>Raw Wix FullData CMS values</h2>
+                <p style={{ margin: 0, fontSize: 14 }}>
+                  Local development only. This panel shows up to five CMS records independently of the student profile API.
+                </p>
+              </div>
+              <button
+                className="btn light"
+                onClick={() => {
+                  setFullDataDebug(null);
+                  setFullDataDebugLoading(true);
+                  fetch("/api/debug/full-data?showValues=1", { cache: "no-store" })
+                    .then(async (response) => {
+                      const data = await response.json();
+                      setFullDataDebug(data);
+                    })
+                    .catch((debugError) => setFullDataDebug({
+                      ok: false,
+                      errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
+                    }))
+                    .finally(() => setFullDataDebugLoading(false));
+                }}
+              >
+                Refresh CMS data
+              </button>
+            </div>
+            {fullDataDebugLoading ? (
+              <p>Loading FullData CMS records…</p>
+            ) : fullDataDebug?.ok ? (
+              <>
+                <p style={{ margin: "12px 0", fontSize: 13 }}>
+                  Collection: <strong>{fullDataDebug.collectionId}</strong> · Records returned: <strong>{fullDataDebug.returnedRecords}</strong>
+                </p>
+                <pre
+                  style={{
+                    margin: 0,
+                    padding: 16,
+                    maxHeight: 520,
+                    overflow: "auto",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    background: "#111827",
+                    color: "#e5e7eb",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >{JSON.stringify(fullDataDebug.records ?? [], null, 2)}</pre>
+                <p style={{ margin: "10px 0 0", fontSize: 12, color: "#92400e" }}>
+                  This may include other members’ personal data. Keep this panel local and remove it after diagnosis.
+                </p>
+              </>
+            ) : (
+              <p role="alert" style={{ color: "#b91c1c" }}>
+                {fullDataDebug?.errorMessage || fullDataDebug?.message || "Could not load the FullData diagnostic response."}
+              </p>
+            )}
+          </section>
+        )}
 
         <div className="dashgrid">
           <div className="dash darkdash">
