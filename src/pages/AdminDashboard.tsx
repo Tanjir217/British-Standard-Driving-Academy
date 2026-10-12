@@ -29,13 +29,28 @@ type LessonRecord = {
   progressScore?: number | null;
 };
 
-type Tab = "overview" | "students" | "lessons";
+type BookingRecord = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  serviceId: string;
+  instructorId: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  paymentStatus: string;
+};
+
+type Tab = "overview" | "students" | "lessons" | "bookings";
 
 export function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +74,7 @@ export function AdminDashboard() {
         setAuthorized(false);
         setStudents([]);
         setLessons([]);
+        setBookings([]);
         setError(
           authResult?.code === "UNAUTHENTICATED"
             ? "Sign in with an approved academy staff account to continue."
@@ -68,13 +84,15 @@ export function AdminDashboard() {
       }
 
       setAuthorized(true);
-      const [studentResponse, lessonResponse] = await Promise.all([
+      const [studentResponse, lessonResponse, bookingResponse] = await Promise.all([
         httpClient.fetchWithAuth("/api/admin/students", { headers: { Accept: "application/json" } }),
         httpClient.fetchWithAuth("/api/admin/lessons", { headers: { Accept: "application/json" } }),
+        httpClient.fetchWithAuth("/api/admin/bookings", { headers: { Accept: "application/json" } }),
       ]);
-      const [studentResult, lessonResult] = await Promise.all([
+      const [studentResult, lessonResult, bookingResult] = await Promise.all([
         studentResponse.json().catch(() => null) as Promise<{ ok?: boolean; students?: StudentRecord[]; message?: string } | null>,
         lessonResponse.json().catch(() => null) as Promise<{ ok?: boolean; lessons?: LessonRecord[]; message?: string } | null>,
+        bookingResponse.json().catch(() => null) as Promise<{ ok?: boolean; bookings?: BookingRecord[]; message?: string } | null>,
       ]);
 
       if (!studentResponse.ok || studentResult?.ok !== true) {
@@ -83,9 +101,13 @@ export function AdminDashboard() {
       if (!lessonResponse.ok || lessonResult?.ok !== true) {
         throw new Error(lessonResult?.message || "Lesson records could not be loaded.");
       }
+      if (!bookingResponse.ok || bookingResult?.ok !== true) {
+        throw new Error(bookingResult?.message || "Booking records could not be loaded.");
+      }
 
       setStudents(Array.isArray(studentResult.students) ? studentResult.students : []);
       setLessons(Array.isArray(lessonResult.lessons) ? lessonResult.lessons : []);
+      setBookings(Array.isArray(bookingResult.bookings) ? bookingResult.bookings : []);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "The admin dashboard could not load.");
     } finally {
@@ -132,7 +154,7 @@ export function AdminDashboard() {
     );
   }, [students, query]);
 
-  const pageTitle = tab === "overview" ? "Overview" : tab === "students" ? "Students" : "Lessons";
+  const pageTitle = tab === "overview" ? "Overview" : tab === "students" ? "Students" : tab === "lessons" ? "Lessons" : "Bookings";
 
   if (loading) {
     return (
@@ -170,9 +192,9 @@ export function AdminDashboard() {
         <div className="adminTopbarInner">
           <Link className="adminBrand" to="/" aria-label="Back to public BSDA website"><Brand /></Link>
           <nav className="adminNav" aria-label="Admin navigation">
-            {(["overview", "students", "lessons"] as Tab[]).map((item) => (
+            {(["overview", "students", "lessons", "bookings"] as Tab[]).map((item) => (
               <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)} type="button">
-                <span>{item === "overview" ? "Overview" : item === "students" ? "Students" : "Lessons"}</span>
+                <span>{item === "overview" ? "Overview" : item === "students" ? "Students" : item === "lessons" ? "Lessons" : "Bookings"}</span>
               </button>
             ))}
           </nav>
@@ -213,6 +235,7 @@ export function AdminDashboard() {
             <div className="adminLiveStats">
               <article className="adminLiveStat"><span>Student profiles loaded</span><strong>{students.length}</strong><small>Maximum 100 records per request</small></article>
               <article className="adminLiveStat"><span>Lesson records loaded</span><strong>{lessons.length}</strong><small>Maximum 100 records per request</small></article>
+              <article className="adminLiveStat"><span>Booking records loaded</span><strong>{bookings.length}</strong><small>Live Wix Bookings response</small></article>
               <article className="adminLiveStat"><span>Active profiles</span><strong>{students.filter((student) => student.status.toLowerCase() === "active").length}</strong><small>Based on CMS status field</small></article>
               <article className="adminLiveStat"><span>Lessons with progress scores</span><strong>{lessons.filter((lesson) => lesson.progressScore !== null && lesson.progressScore !== undefined).length}</strong><small>Based on saved lesson records</small></article>
             </div>
@@ -230,6 +253,14 @@ export function AdminDashboard() {
                 {lessons.length === 0 ? <p className="adminLiveEmpty">No lesson records were returned.</p> : (
                   <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Lesson</th><th>Start time</th><th>Duration</th></tr></thead><tbody>
                     {lessons.slice(0, 6).map((lesson) => <tr key={lesson.id}><td>{lesson.lessonType || "Lesson"}<small>{lesson.studentId}</small></td><td>{lesson.startedAt ? new Date(lesson.startedAt).toLocaleString("en-GB") : "—"}</td><td>{lesson.durationMinutes || 0} min</td></tr>)}
+                  </tbody></table></div>
+                )}
+              </section>
+              <section className="adminLivePanel">
+                <div className="adminLivePanelHead"><div><span className="adminEyebrow">WIX BOOKINGS</span><h2>Recent bookings</h2></div><button type="button" onClick={() => setTab("bookings")}>View all <Icon n="arrow" s={13} /></button></div>
+                {bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
+                  <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Customer</th><th>Start</th><th>Status</th></tr></thead><tbody>
+                    {bookings.slice(0, 6).map((booking) => <tr key={booking.id}><td>{[booking.firstName, booking.lastName].filter(Boolean).join(" ") || booking.email || "Booking"}<small>{booking.serviceId}</small></td><td>{booking.startDate ? new Date(booking.startDate).toLocaleString("en-GB") : "—"}</td><td><span className="adminLiveStatus">{booking.status.toLowerCase().replaceAll("_", " ")}</span></td></tr>)}
                   </tbody></table></div>
                 )}
               </section>
@@ -258,6 +289,19 @@ export function AdminDashboard() {
               {lessons.length === 0 ? <p className="adminLiveEmpty">No lesson records were returned.</p> : (
                 <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Lesson</th><th>Student</th><th>Instructor</th><th>Started</th><th>Duration</th><th>Progress</th></tr></thead><tbody>
                   {lessons.map((lesson) => <tr key={lesson.id}><td>{lesson.lessonType || "Lesson"}</td><td>{lesson.studentId || "—"}</td><td>{lesson.instructorId || "—"}</td><td>{lesson.startedAt ? new Date(lesson.startedAt).toLocaleString("en-GB") : "—"}</td><td>{lesson.durationMinutes || 0} min</td><td>{lesson.progressScore ?? "—"}</td></tr>)}
+                </tbody></table></div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {tab === "bookings" && (
+          <section className="adminLiveContent">
+            <div className="adminLivePanel">
+              <div className="adminLivePanelHead"><div><span className="adminEyebrow">WIX BOOKINGS</span><h2>Booking records</h2></div><span>{bookings.length} loaded</span></div>
+              {bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
+                <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Customer</th><th>Email</th><th>Service</th><th>Start</th><th>Status</th><th>Payment</th></tr></thead><tbody>
+                  {bookings.map((booking) => <tr key={booking.id}><td>{[booking.firstName, booking.lastName].filter(Boolean).join(" ") || "Booking"}<small>{booking.id}</small></td><td>{booking.email || "—"}</td><td>{booking.serviceId || "—"}</td><td>{booking.startDate ? new Date(booking.startDate).toLocaleString("en-GB") : "—"}</td><td><span className="adminLiveStatus">{booking.status.toLowerCase().replaceAll("_", " ")}</span></td><td>{booking.paymentStatus.toLowerCase().replaceAll("_", " ")}</td></tr>)}
                 </tbody></table></div>
               )}
             </div>
