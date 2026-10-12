@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import {
+  beginManagedMemberLogin,
   beginMemberLogin,
   completeMemberVerification,
   createMemberAccount,
@@ -375,6 +376,14 @@ export function Login() {
                     >
                       <span className="googlemark">G</span>
                       Continue with Google
+                    </button>
+                    <button
+                      type="button"
+                      className="authprovider"
+                      disabled={busy}
+                      onClick={() => beginManagedMemberLogin(returnTo)}
+                    >
+                      Continue with Wix secure sign-in
                     </button>
                   </>
                 )}
