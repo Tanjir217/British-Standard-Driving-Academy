@@ -8,7 +8,6 @@ import {
   beginManagedMemberLogin,
 } from "../services/auth/authService";
 import {
-  createStudentProfile,
   getStudentProfile,
   type StudentProfileApiRecord,
   StudentProfileApiError,
@@ -88,25 +87,17 @@ export function Portal() {
         // profile exists, provision it from the authenticated member's contact
         // details; the endpoint derives the actual member ID from the session.
         try {
-          let response = await getStudentProfile();
-          if (response.profileState === "missing" || !response.profile) {
-            const firstName = summary.contact?.firstName?.trim() || "";
-            const lastName = summary.contact?.lastName?.trim() || "";
-            if (firstName && lastName) {
-              response = await createStudentProfile({
-                firstName,
-                lastName,
-                phone: summary.contact?.phones?.[0] || "",
-              });
-            }
-          }
+          // The profile endpoint reads the authenticated member's matching
+          // record from Wix CMS FullData. Do not create or mutate records in
+          // this member-data collection from the student portal.
+          const response = await getStudentProfile();
 
           if (!active) return;
           if (response.profile) {
             setStudentProfile(response.profile);
-            setProfileMessage("Your student profile is saved in the academy system.");
+            setProfileMessage("Your Wix member profile was loaded from FullData.");
           } else {
-            setProfileMessage("Your account is signed in, but profile setup is pending. Please contact the academy if this continues.");
+            setProfileMessage("Your Wix account is signed in, but no matching FullData record was found. Please check the CMS collection and the loginEmail/contactId field values.");
           }
         } catch (profileError) {
           if (!active) return;
