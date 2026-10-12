@@ -44,5 +44,5 @@ jobs:
         run: npm ls astro @wix/astro @wix/astro-pages @astrojs/react @wix/cloud-provider-fetch-adapter
       - name: Astro type check
         run: npm run check
-      - name: Astro production build
-        run: npm run build:astro
+      - name: Wix-managed production build
+        run: npm run build
