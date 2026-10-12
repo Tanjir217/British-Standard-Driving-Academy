@@ -19,8 +19,8 @@
     "@wix/members": "^1.0.525",
     "@wix/pricing-plans": "^1.0.409",
     "@wix/sdk": "^1.21.16",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.4",
     "@astrojs/react": "^7.0.1",
     "@wix/astro": "^3.0.1",
@@ -30,8 +30,8 @@
     "@wix/astro-pages": "^2.0.5"
   },
   "devDependencies": {
-    "@types/react": "^19.1.12",
-    "@types/react-dom": "^19.1.9",
+    "@types/react": "^18.3.24",
+    "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^5.0.4",
     "typescript": "^5.9.2",
     "vite": "^7.1.9",
