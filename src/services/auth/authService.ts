@@ -1,23 +1,12 @@
-import { ensureCurrentStudentProfile } from "../students/studentProfileProvisioningService";
-import {
-  clearWixTokens,
-  completeWixLoginFromUrl,
-  getWixLoginUrl,
-  loginWithEmail,
-  registerWithEmail,
-  verifyMemberEmail,
-  exchangeDirectLoginSession,
-  sendWixPasswordResetEmail,
-  getWixLogoutUrl,
-  getWixTokens,
-  isWixMemberLoggedIn,
-  persistWixTokens,
-  restoreWixTokens,
-  setWixTokens,
-  wixClient,
-} from "../wix";
+import { getSupabaseClient } from "../supabase/client";
 
 const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
+const PENDING_VERIFICATION_EMAIL = "bsda.supabase.pending-verification-email";
+
+type AuthResult =
+  | { state: "REDIRECT"; authUrl: string }
+  | { state: "EMAIL_VERIFICATION_REQUIRED" }
+  | { state: "OWNER_APPROVAL_REQUIRED" };
 
 export function hasCompletedAdminLogin(): boolean {
   return typeof sessionStorage !== "undefined" &&
@@ -26,28 +15,17 @@ export function hasCompletedAdminLogin(): boolean {
 
 function markAdminLoginCompleted(returnTo: string): void {
   if (typeof sessionStorage === "undefined") return;
-
   const destination = new URL(returnTo, window.location.origin);
   const isAdminDestination =
     destination.pathname.startsWith("/admin") ||
     (destination.pathname === "/" &&
       destination.searchParams.get("bsdaAdmin") === "dashboard");
-
-  if (isAdminDestination) {
-    sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
-  } else {
-    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
-  }
-}
-
-function getCallbackUrl() {
-  // Return to the root document so Wix static hosting does not 404 the SPA route.
-  return new URL("/?bsdaAuth=callback", window.location.origin).toString();
+  if (isAdminDestination) sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
+  else sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
 }
 
 function safeReturnPath(value?: string) {
   if (!value) return "/portal";
-
   try {
     const url = new URL(value, window.location.origin);
     if (url.origin !== window.location.origin) return "/portal";
@@ -57,220 +35,186 @@ function safeReturnPath(value?: string) {
   }
 }
 
+function getCallbackUrl() {
+  return new URL("/?bsdaAuth=callback", window.location.origin).toString();
+}
+
+function friendlyAuthError(message: string): string {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("invalid login credentials")) return "The email or password is incorrect.";
+  if (normalized.includes("already registered") || normalized.includes("already exists")) {
+    return "An account with this email already exists. Please sign in instead.";
+  }
+  if (normalized.includes("email not confirmed")) return "Please verify your email before signing in.";
+  if (normalized.includes("password")) return message;
+  return message || "We could not complete that request. Please try again.";
+}
+
 export async function beginMemberLogin(
   returnTo = "/portal",
   provider?: "google" | "facebook",
-  sessionToken?: string,
-) {
-  const callbackUrl = getCallbackUrl();
-
-  return getWixLoginUrl(
-    callbackUrl,
-    new URL(safeReturnPath(returnTo), window.location.origin).toString(),
+  _sessionToken?: string,
+): Promise<string> {
+  if (!provider) {
+    throw new Error("Email sign-in is handled directly by Supabase. Select a supported social provider to continue.");
+  }
+  const { data, error } = await getSupabaseClient().auth.signInWithOAuth({
     provider,
-    sessionToken,
-  );
-}
-
-type DirectAuthResponse = Awaited<ReturnType<typeof loginWithEmail>>;
-
-function authFailureMessage(response: DirectAuthResponse) {
-  if ("errorCode" in response) {
-    if (response.errorCode === "invalidEmail") {
-      return "Please enter a valid email address.";
-    }
-    if (response.errorCode === "invalidPassword") {
-      return "The email or password is incorrect.";
-    }
-    if (response.errorCode === "emailAlreadyExists") {
-      return "An account with this email already exists. Please sign in instead.";
-    }
-    if (response.errorCode === "resetPassword") {
-      return "Please reset your password before signing in.";
-    }
+    options: {
+      redirectTo: getCallbackUrl(),
+      queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
+      skipBrowserRedirect: true,
+    },
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+  if (!data.url) throw new Error("The social sign-in provider did not return an authorization URL.");
+  try {
+    sessionStorage.setItem("bsda.supabase.return-to", safeReturnPath(returnTo));
+  } catch {
+    // Navigation can still proceed without preserving a custom return path.
   }
-
-  if ("error" in response && response.error) {
-    return response.error;
-  }
-
-  return "We could not complete that request. Please try again.";
-}
-
-async function finishDirectAuthentication(
-  response: DirectAuthResponse,
-  returnTo = "/portal",
-) {
-  if ("data" in response && "sessionToken" in response.data) {
-    // Use Wix's full-page OAuth handoff instead of the hidden-iframe
-    // direct-login token exchange. This avoids indefinite "Please wait..."
-    // states when the browser blocks third-party iframe cookies.
-    const authUrl = await beginMemberLogin(
-      returnTo,
-      undefined,
-      response.data.sessionToken,
-    );
-    return { state: "REDIRECT" as const, authUrl };
-  }
-
-  if (String(response.loginState) === "EMAIL_VERIFICATION_REQUIRED") {
-    return { state: "EMAIL_VERIFICATION_REQUIRED" as const };
-  }
-
-  if (String(response.loginState) === "OWNER_APPROVAL_REQUIRED") {
-    return { state: "OWNER_APPROVAL_REQUIRED" as const };
-  }
-
-  throw new Error(authFailureMessage(response));
+  return data.url;
 }
 
 export async function signInWithEmail(
   email: string,
   password: string,
   returnTo = "/portal",
-) {
-  return finishDirectAuthentication(
-    await loginWithEmail(email, password),
-    returnTo,
-  );
+): Promise<AuthResult> {
+  const { data, error } = await getSupabaseClient().auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+  if (!data.session || !data.user.email_confirmed_at) {
+    try { sessionStorage.setItem(PENDING_VERIFICATION_EMAIL, email.trim()); } catch {}
+    return { state: "EMAIL_VERIFICATION_REQUIRED" };
+  }
+  markAdminLoginCompleted(safeReturnPath(returnTo));
+  return { state: "REDIRECT", authUrl: new URL(safeReturnPath(returnTo), window.location.origin).toString() };
 }
 
 export async function createMemberAccount(
   email: string,
   password: string,
   profile: { firstName: string; lastName: string; phones?: string[] },
-) {
-  return finishDirectAuthentication(
-    await registerWithEmail(email, password, profile),
-    "/portal",
-  );
+): Promise<AuthResult> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const { data, error } = await getSupabaseClient().auth.signUp({
+    email: normalizedEmail,
+    password,
+    options: {
+      emailRedirectTo: getCallbackUrl(),
+      data: {
+        full_name: [profile.firstName.trim(), profile.lastName.trim()].filter(Boolean).join(" "),
+        phone: profile.phones?.[0] || "",
+      },
+    },
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+
+  if (data.session && data.user?.email_confirmed_at) {
+    return { state: "REDIRECT", authUrl: new URL("/portal", window.location.origin).toString() };
+  }
+
+  try { sessionStorage.setItem(PENDING_VERIFICATION_EMAIL, normalizedEmail); } catch {}
+  return { state: "EMAIL_VERIFICATION_REQUIRED" };
 }
 
-export async function completeMemberVerification(verificationCode: string) {
-  return finishDirectAuthentication(
-    await verifyMemberEmail(verificationCode),
-    "/portal",
-  );
+export async function completeMemberVerification(verificationCode: string): Promise<AuthResult> {
+  let email = "";
+  try { email = sessionStorage.getItem(PENDING_VERIFICATION_EMAIL) || ""; } catch {}
+  if (!email) throw new Error("Your verification session has expired. Please create your account again or request a new verification email.");
+
+  const { data, error } = await getSupabaseClient().auth.verifyOtp({
+    email,
+    token: verificationCode.trim(),
+    type: "signup",
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+  if (!data.session || !data.user) {
+    throw new Error("Email verification did not create a signed-in session. Please sign in.");
+  }
+  try { sessionStorage.removeItem(PENDING_VERIFICATION_EMAIL); } catch {}
+  return { state: "REDIRECT", authUrl: new URL("/portal", window.location.origin).toString() };
 }
 
 export async function requestPasswordReset(email: string) {
-  await sendWixPasswordResetEmail(
-    email,
-    new URL("/login", window.location.origin).toString(),
-  );
+  const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: new URL("/login?resetPassword=1", window.location.origin).toString(),
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
 }
 
-// Wix authorization codes are single-use. React StrictMode may mount the
-// callback effect twice during local development, so share one in-flight
-// exchange instead of attempting to redeem the same code twice.
+// Called by the existing root callback route after Supabase OAuth redirects back.
 let memberLoginCompletion: Promise<string> | null = null;
-
 export function completeMemberLogin(): Promise<string> {
   if (!memberLoginCompletion) {
     memberLoginCompletion = (async () => {
-      const result = await completeWixLoginFromUrl();
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw new Error(friendlyAuthError(error.message));
 
-      if (!result.success) {
+      // PKCE callbacks can return ?code=...; exchange it if the SDK has not
+      // already processed the callback URL.
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code && !data.session) {
+        const exchange = await supabase.auth.exchangeCodeForSession(code);
+        if (exchange.error) throw new Error(friendlyAuthError(exchange.error.message));
+      }
+
+      const sessionResult = await supabase.auth.getSession();
+      if (sessionResult.error || !sessionResult.data.session) {
         throw new Error("We could not complete the sign-in. Please try again.");
       }
 
-      const returnTo = safeReturnPath(result.originalUrl);
+      let returnTo = "/portal";
+      try {
+        returnTo = safeReturnPath(sessionStorage.getItem("bsda.supabase.return-to") || "/portal");
+        sessionStorage.removeItem("bsda.supabase.return-to");
+      } catch {}
       markAdminLoginCompleted(returnTo);
-
-      // Student CMS writes are performed by the Wix-hosted backend only.
-      // Never provision an admin dashboard session as a student profile.
-      const destination = new URL(returnTo, window.location.origin);
-      const isAdminDestination =
-        destination.pathname.startsWith("/admin") ||
-        (destination.pathname === "/" &&
-          destination.searchParams.get("bsdaAdmin") === "dashboard");
-
-      if (!isAdminDestination) {
-        try {
-          await ensureCurrentStudentProfile();
-        } catch (provisioningError) {
-          // A profile provisioning failure must not strand a signed-in member on the callback page.
-          // The portal performs its own protected profile lookup and reports its result in development.
-          if (import.meta.env.DEV) {
-            console.warn("[BSDA] Student profile provisioning failed after sign-in", {
-              message: provisioningError instanceof Error ? provisioningError.message : String(provisioningError),
-            });
-          }
-        }
-      }
-
+      window.history.replaceState({}, document.title, window.location.pathname);
       return returnTo;
-    })();
+    })().finally(() => { memberLoginCompletion = null; });
   }
-
   return memberLoginCompletion;
 }
 
 export async function restoreMemberSession() {
-  if (isWixMemberLoggedIn()) return true;
-  if (!restoreWixTokens()) return false;
-  return isWixMemberLoggedIn();
+  const { data, error } = await getSupabaseClient().auth.getSession();
+  return !error && Boolean(data.session?.user?.email_confirmed_at);
 }
 
 export async function getCurrentMember() {
-  await restoreMemberSession();
-
-  if (!isWixMemberLoggedIn()) return null;
-
-  const response = await wixClient.members.getCurrentMember();
-  return response.member ?? null;
-}
-
-function clearLocalMemberSession() {
-  clearWixTokens();
-  if (typeof sessionStorage !== "undefined") {
-    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
-  }
-
-  if (typeof sessionStorage !== "undefined") {
-    sessionStorage.removeItem("bsda.wix.oauth");
-  }
-}
-
-function isLocalDevelopmentHost() {
-  return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1"
-  );
+  const { data, error } = await getSupabaseClient().auth.getUser();
+  if (error || !data.user) return null;
+  const user = data.user;
+  const fullName = String(user.user_metadata?.full_name || "");
+  return {
+    _id: user.id,
+    id: user.id,
+    loginEmail: user.email || "",
+    profile: {
+      nickname: fullName || (user.email ? user.email.split("@")[0] : "Student"),
+      firstName: fullName.split(" ")[0] || "",
+      lastName: fullName.split(" ").slice(1).join(" "),
+      phones: user.user_metadata?.phone ? [String(user.user_metadata.phone)] : [],
+    },
+    emailVerified: Boolean(user.email_confirmed_at),
+  };
 }
 
 export async function signOutMember() {
-  /*
-   * IMPORTANT:
-   * Wix's logout() returns a URL. The actual logout happens only after the
-   * browser navigates to that URL. Therefore a try/catch cannot catch Wix's
-   * "not a valid redirect domain" page after navigation.
-   *
-   * localhost is not an approved Wix redirect domain in this project, so
-   * local development must perform the local token logout directly. In
-   * production, Wix logout is used and redirects to /login.
-   */
-  if (isLocalDevelopmentHost()) {
-    clearLocalMemberSession();
-    window.location.replace("/login");
-    return;
-  }
-
-  try {
-    const postLogoutUrl = new URL("/login", window.location.origin).toString();
-    const logoutUrl = await getWixLogoutUrl(postLogoutUrl);
-
-    clearLocalMemberSession();
-    window.location.assign(logoutUrl);
-  } catch {
-    clearLocalMemberSession();
-    window.location.replace("/login");
-  }
+  await getSupabaseClient().auth.signOut();
+  try { sessionStorage.removeItem(ADMIN_LOGIN_MARKER); } catch {}
+  try { sessionStorage.removeItem(PENDING_VERIFICATION_EMAIL); } catch {}
+  window.location.replace("/login");
 }
 
-export {
-  getWixTokens,
-  persistWixTokens,
-  setWixTokens,
-};
+// Backwards-compatible token helpers for old call sites. These intentionally
+// return no Wix tokens: portal authentication has moved to Supabase.
+export function getWixTokens() { return null; }
+export function persistWixTokens() {}
+export function setWixTokens() {}
