@@ -8,7 +8,10 @@
     "build": "wix build",
     "preview": "wix preview",
     "release": "wix release",
-    "check": "astro check"
+    "check": "astro check",
+    "dev:astro": "astro dev",
+    "build:astro": "astro build",
+    "preview:astro": "astro preview"
   },
   "dependencies": {
     "@wix/bookings": "^1.0.1699",
