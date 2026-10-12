@@ -39,16 +39,31 @@ export default async function handler(req, res) {
 
     // Profile identity comes from Wix. Never accept memberId, role, email, or
     // profile ownership from the request body.
+    const contact = auth.member.contact || {};
+    const firstName = String(contact.firstName || "").trim();
+    const lastName = String(contact.lastName || "").trim();
     const nickname = String(auth.member.profile.nickname || "").trim();
-    const fullName = nickname || "Student";
+    const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
+    const emailCandidate = Array.isArray(contact.emails) ? contact.emails[0] : "";
+    const email = String(auth.member.loginEmail || emailCandidate || "").trim().toLowerCase();
+
+    if (!fullName || !email) {
+      return json(res, 422, {
+        ok: false,
+        error: "Your Wix member profile must have a name and email before a student profile can be created.",
+      });
+    }
+
     const data = {
       memberId: auth.member.id,
       fullName,
       title: fullName,
+      email,
+      phone: Array.isArray(contact.phones) ? String(contact.phones[0] || "") : "",
       transmission: "Not selected",
       lessonsCompleted: 0,
       status: "Active",
-      joinedDate: { "$date": new Date().toISOString() },
+      joinedDate: new Date().toISOString(),
     };
 
     try {
