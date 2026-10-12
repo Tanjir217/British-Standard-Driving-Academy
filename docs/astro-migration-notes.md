@@ -47,6 +47,7 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 - `GET /api/admin/authorization`: fail-closed authorization against the protected `AdminStaffAccess` collection (`memberId`, `enabled` fields currently assumed from earlier repository work).
 - `GET /api/admin/students`: protected StudentProfiles listing.
 - `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons`: protected lesson record operations.
+- `GET /api/admin/bookings`: protected Wix Bookings listing.
 - `GET /api/bookings/availability`: reads current Wix Bookings slots.
 - `POST /api/bookings`: rechecks the requested slot against Wix availability before calling Wix Bookings create.
 
