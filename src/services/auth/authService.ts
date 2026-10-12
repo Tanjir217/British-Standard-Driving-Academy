@@ -1,3 +1,5 @@
+import { ensureCurrentStudentProfile } from "../students/studentProfileProvisioningService";
+
 import { members as managedMembers } from "@wix/members";
 import {
   clearWixTokens,
@@ -17,10 +19,32 @@ import {
   wixClient,
 } from "../wix";
 
-const CALLBACK_PATH = "/auth/callback";
+const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
+
+export function hasCompletedAdminLogin(): boolean {
+  return typeof sessionStorage !== "undefined" &&
+    sessionStorage.getItem(ADMIN_LOGIN_MARKER) === "true";
+}
+
+function markAdminLoginCompleted(returnTo: string): void {
+  if (typeof sessionStorage === "undefined") return;
+
+  const destination = new URL(returnTo, window.location.origin);
+  const isAdminDestination =
+    destination.pathname.startsWith("/admin") ||
+    (destination.pathname === "/" &&
+      destination.searchParams.get("bsdaAdmin") === "dashboard");
+
+  if (isAdminDestination) {
+    sessionStorage.setItem(ADMIN_LOGIN_MARKER, "true");
+  } else {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
+}
 
 function getCallbackUrl() {
-  return new URL(CALLBACK_PATH, window.location.origin).toString();
+  // Return to the root document so Wix static hosting does not 404 the SPA route.
+  return new URL("/?bsdaAuth=callback", window.location.origin).toString();
 }
 
 function safeReturnPath(value?: string) {
@@ -145,14 +169,50 @@ export async function requestPasswordReset(email: string) {
   );
 }
 
-export async function completeMemberLogin() {
-  const result = await completeWixLoginFromUrl();
+// Wix authorization codes are single-use. React StrictMode may mount the
+// callback effect twice during local development, so share one in-flight
+// exchange instead of attempting to redeem the same code twice.
+let memberLoginCompletion: Promise<string> | null = null;
 
-  if (!result.success) {
-    throw new Error("We could not complete the sign-in. Please try again.");
+export function completeMemberLogin(): Promise<string> {
+  if (!memberLoginCompletion) {
+    memberLoginCompletion = (async () => {
+      const result = await completeWixLoginFromUrl();
+
+      if (!result.success) {
+        throw new Error("We could not complete the sign-in. Please try again.");
+      }
+
+      const returnTo = safeReturnPath(result.originalUrl);
+      markAdminLoginCompleted(returnTo);
+
+      // Student CMS writes are performed by the Wix-hosted backend only.
+      // Never provision an admin dashboard session as a student profile.
+      const destination = new URL(returnTo, window.location.origin);
+      const isAdminDestination =
+        destination.pathname.startsWith("/admin") ||
+        (destination.pathname === "/" &&
+          destination.searchParams.get("bsdaAdmin") === "dashboard");
+
+      if (!isAdminDestination) {
+        try {
+          await ensureCurrentStudentProfile();
+        } catch (provisioningError) {
+          // A profile provisioning failure must not strand a signed-in member on the callback page.
+          // The portal performs its own protected profile lookup and reports its result in development.
+          if (import.meta.env.DEV) {
+            console.warn("[BSDA] Student profile provisioning failed after sign-in", {
+              message: provisioningError instanceof Error ? provisioningError.message : String(provisioningError),
+            });
+          }
+        }
+      }
+
+      return returnTo;
+    })();
   }
 
-  return safeReturnPath(result.originalUrl);
+  return memberLoginCompletion;
 }
 
 export async function restoreMemberSession() {
@@ -180,6 +240,9 @@ export async function getCurrentMember() {
 
 function clearLocalMemberSession() {
   clearWixTokens();
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(ADMIN_LOGIN_MARKER);
+  }
 
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem("bsda.wix.oauth");

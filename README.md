@@ -72,5 +72,3 @@ These are code paths added for validation, not a claim that they have been deplo
 5. Add verified Wix owner/collaborator authorization; the current admin endpoint only authorizes explicitly approved site-member staff.
 6. Run type checks, build, route tests, security tests, and preview integration tests.
 7. Obtain explicit approval before merging to `main` or releasing to `bsda.online`.
-
-See [docs/astro-migration-notes.md](docs/astro-migration-notes.md) for the detailed status and acceptance checks.

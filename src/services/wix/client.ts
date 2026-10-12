@@ -42,6 +42,18 @@ export const wixClient = createClient({
   }),
 });
 
+/**
+ * Keep public authentication requests isolated from the application client's
+ * member session. A revoked/stale access token on the application client must
+ * not be attached to a new registration or login request.
+ */
+const wixAuthClient = createClient({
+  modules: { members },
+  auth: OAuthStrategy({
+    clientId: WIX_CLIENT_ID,
+  }),
+});
+
 export function getWixClientId(): string {
   return WIX_CLIENT_ID;
 }
@@ -112,13 +124,13 @@ export async function getWixLoginUrl(
   idp?: "google" | "facebook",
   sessionToken?: string,
 ): Promise<string> {
-  const oauthData = wixClient.auth.generateOAuthData(redirectUri, originalUri);
+  const oauthData = wixAuthClient.auth.generateOAuthData(redirectUri, originalUri);
   const key = "bsda.wix.oauth";
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.setItem(key, JSON.stringify(oauthData));
   }
 
-  const { authUrl } = await wixClient.auth.getAuthUrl(
+  const { authUrl } = await wixAuthClient.auth.getAuthUrl(
     oauthData,
     {
       ...(idp ? { idp } : {}),
@@ -129,7 +141,7 @@ export async function getWixLoginUrl(
 }
 
 export async function loginWithEmail(email: string, password: string) {
-  return wixClient.auth.login({
+  return wixAuthClient.auth.login({
     email,
     password,
   });
@@ -144,7 +156,7 @@ export async function registerWithEmail(
     phones?: string[];
   },
 ) {
-  return wixClient.auth.register({
+  return wixAuthClient.auth.register({
     email,
     password,
     profile,
@@ -152,7 +164,7 @@ export async function registerWithEmail(
 }
 
 export async function verifyMemberEmail(verificationCode: string) {
-  return wixClient.auth.processVerification({ verificationCode });
+  return wixAuthClient.auth.processVerification({ verificationCode });
 }
 
 export async function exchangeDirectLoginSession(sessionToken: string): Promise<WixTokens> {
@@ -166,7 +178,7 @@ export async function sendWixPasswordResetEmail(
   email: string,
   redirectUri: string,
 ): Promise<void> {
-  await wixClient.auth.sendPasswordResetEmail(email, redirectUri);
+  await wixAuthClient.auth.sendPasswordResetEmail(email, redirectUri);
 }
 
 let wixLoginCompletionInFlight: Promise<{
@@ -174,6 +186,51 @@ let wixLoginCompletionInFlight: Promise<{
   originalUrl?: string;
 }> | null = null;
 
+  const raw = sessionStorage.getItem("bsda.wix.oauth");
+  if (!raw) {
+    return { success: false };
+  }
+
+  type WixOAuthData = Parameters<typeof wixClient.auth.getMemberTokens>[2];
+
+  const oauthData = JSON.parse(raw) as WixOAuthData;
+
+  // Wix may return OAuth values in the URL fragment (as seen in local Vite
+  // callbacks: /?bsdaAuth=callback#code=...&state=...). The SDK parser can
+  // return empty values for that shape in some runtime versions, so prefer
+  // its values but fall back to the fragment and query string explicitly.
+  const parsed = wixClient.auth.parseFromUrl();
+  const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(window.location.search);
+  const code = parsed.code || fragment.get("code") || query.get("code");
+  const state = parsed.state || fragment.get("state") || query.get("state");
+  const error = parsed.error || fragment.get("error") || query.get("error");
+
+  if (error) {
+    sessionStorage.removeItem("bsda.wix.oauth");
+    console.error("Wix OAuth returned an error:", error);
+    return { success: false };
+  }
+
+  if (!code || !state) {
+    console.error("Wix OAuth callback is missing code/state.", {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasOAuthData: Boolean(raw),
+      callbackPath: window.location.pathname,
+    });
+    return { success: false };
+  }
+
+  const tokens = await wixAuthClient.auth.getMemberTokens(code, state, oauthData);
+  wixClient.auth.setTokens(tokens);
+  persistWixTokens(tokens);
+  sessionStorage.removeItem("bsda.wix.oauth");
+
+  return {
+    success: true,
+    originalUrl: oauthData.originalUri,
+  };
 export function completeWixLoginFromUrl(): Promise<{
   success: boolean;
   originalUrl?: string;

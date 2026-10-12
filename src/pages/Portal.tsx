@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { VideoEmbed } from "../components/VideoEmbed";
+import { getSiteContent, type SiteContentMap } from "../services/siteContentService";
+
 import "../styles/portal-profile.css";
 import {
   getCurrentMember,
   signOutMember,
   beginManagedMemberLogin,
 } from "../services/auth/authService";
+import { studentService } from "../services/students/studentService";
+import type { Student } from "../services/domain/types";
+
 import {
   getStudentProfile,
   type StudentProfileApiRecord,
@@ -46,6 +52,11 @@ function readPendingIdentity(): PendingIdentity {
 export function Portal() {
   const navigate = useNavigate();
   const [member, setMember] = useState<MemberSummary | null>(null);
+  const [studentProfile, setStudentProfile] = useState<Student | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [learningVideos, setLearningVideos] = useState<string[]>([]);
+
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
   const [managedLoginRequired, setManagedLoginRequired] = useState(false);
@@ -66,6 +77,12 @@ export function Portal() {
   useEffect(() => {
     let active = true;
 
+    Promise.all([
+      getCurrentMember(),
+      getSiteContent().catch(() => ({} as SiteContentMap)),
+      studentService.getCurrent(),
+    ])
+      .then(([currentMember, content, studentResult]) => {
     async function loadPortal() {
       try {
         const currentMember = await getCurrentMember();
@@ -75,6 +92,48 @@ export function Portal() {
           navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
           return;
         }
+
+        setMember({
+          loginEmail: currentMember.loginEmail,
+          contact: currentMember.contact
+            ? {
+                firstName: currentMember.contact.firstName ?? undefined,
+                lastName: currentMember.contact.lastName ?? undefined,
+              }
+            : undefined,
+        });
+
+        if (studentResult.ok) {
+          setStudentProfile(studentResult.data);
+
+          // Log only in development, after the protected Wix endpoint returns
+          // the current member's own profile. Avoid logging contact details.
+          if (import.meta.env.DEV) {
+            console.info("[BSDA] Backend student profile loaded", {
+              id: studentResult.data.id,
+              memberId: studentResult.data.memberId,
+              fullName: studentResult.data.fullName,
+              status: studentResult.data.status,
+              transmission: studentResult.data.transmission,
+              lessonsCompleted: studentResult.data.lessonsCompleted,
+              lessonsRemaining: studentResult.data.lessonsRemaining,
+              progressPercent: studentResult.data.progressPercent,
+            });
+          }
+        } else if (import.meta.env.DEV) {
+          console.warn("[BSDA] Backend student profile unavailable", {
+            code: studentResult.error.code,
+            message: studentResult.error.message,
+          });
+        }
+        setLearningVideos(
+          Array.from(
+            { length: 6 },
+            (_, index) => content["portal-video-" + (index + 1)]?.url || "",
+          ).filter(Boolean),
+        );
+      })
+      .catch((err) => {
 
         const pendingIdentity = readPendingIdentity();
         const memberRecord = currentMember as typeof currentMember & {
@@ -214,6 +273,8 @@ export function Portal() {
     );
   }
 
+  const firstName = member?.contact?.firstName?.trim();
+  const displayName = studentProfile?.fullName?.trim() || firstName || "learner";
   const firstName = studentProfile?.fullName?.trim().split(/\s+/)[0] || member?.contact?.firstName?.trim();
   const displayName = firstName || "learner";
 
@@ -363,6 +424,43 @@ export function Portal() {
           />
         </div>
 
+        <section className="portalLearningVideos">
+          <div className="sectionIntro">
+            <div className="heading">
+              <span className="ey">Learning resources</span>
+              <h2>Training videos from BSDA.</h2>
+              <p>Watch the latest learning materials added by the academy team.</p>
+            </div>
+          </div>
+          {learningVideos.length ? (
+            <div className="portalVideoGrid">
+              {learningVideos.map((url, index) => (
+                <article className="portalVideoCard" key={url + index}>
+                  <div className="portalVideoFrame">
+                    <VideoEmbed url={url} title={"BSDA learning video " + (index + 1)} />
+                  </div>
+                  <span>LEARNING VIDEO {String(index + 1).padStart(2, "0")}</span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="panel portalVideoEmpty">
+              <span className="ey">Learning resources</span>
+              <h3>Your training videos will appear here.</h3>
+              <p>The academy team can add videos from Admin → Content → Student Portal.</p>
+            </div>
+          )}
+        </section>
+
+        <div className="panel dashboardpanel">
+          <div>
+            <span className="ey">Next stage</span>
+            <h2>Your account foundation is ready.</h2>
+            <p>
+              The next backend layer will connect your Wix member account to
+              your Student Profile, bookings, lesson records, progress and
+              learning resources.
+            </p>
         {studentProfile && (
           <div className="panel dashboardpanel">
             <div>

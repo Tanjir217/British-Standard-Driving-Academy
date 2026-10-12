@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { Reveal } from "../components/Reveal";
-import { SocialFeed } from "../components/SocialFeed";
 import { VideoShowcase } from "../components/VideoShowcase";
 import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
-import { InstructorCard } from "../components/InstructorCard";
 import { FAQSection } from "../components/FAQSection";
+import { VideoEmbed } from "../components/VideoEmbed";
+import { getSiteContent } from "../services/siteContentService";
 import { lessons, instructors } from "../data/site";
 import { packageService } from "../services/packages/packageService";
 import type { Package } from "../services/domain/types";
@@ -52,29 +52,86 @@ function toPackageCard(plan: Package) {
     name: plan.name,
     price: formatMoney(plan.priceMinor, plan.currency),
     eyebrow: copy?.eyebrow ?? (plan.lessonHours ? `${plan.lessonHours} Hours` : "Driving Programme"),
-    description:
-      copy?.description ??
-      "A structured BSDA driving programme managed through our booking and pricing system.",
-    features:
-      plan.features.length > 0
-        ? plan.features
-        : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
+    description: copy?.description ?? "A structured BSDA driving programme managed through our booking and pricing system.",
+    features: plan.features.length > 0 ? plan.features : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
     popular: copy?.popular,
   };
 }
 
+function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    let frame = 0;
+    let started = false;
+
+    const animate = () => {
+      const duration = 1300;
+      const start = performance.now();
+
+      const tick = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(target * eased);
+        if (element) {
+          element.textContent =
+            value.toString().padStart(target < 10 ? 2 : 1, "0") + suffix;
+        }
+        if (progress < 1) frame = requestAnimationFrame(tick);
+      };
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          started = true;
+          animate();
+        }
+      },
+      { threshold: 0.45 },
+    );
+
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [target, suffix]);
+
+  return <strong ref={ref}>{target < 10 ? "0" : ""}{target}{suffix}</strong>;
+}
+
 export function Home() {
+  const [reelPage, setReelPage] = useState(0);
+  const [reelsInteracted, setReelsInteracted] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
+  const [testimonialIndex, setTestimonialIndex] = useState(6);
+  const [lessonIndex, setLessonIndex] = useState(4);
+  const [lessonResetting, setLessonResetting] = useState(false);
+  const [testimonialResetting, setTestimonialResetting] = useState(false);
+  const [reelUrls, setReelUrls] = useState<string[]>([]);
+  const [packageActiveIndex, setPackageActiveIndex] = useState(0);
+  const [packageInteracted, setPackageInteracted] = useState(false);
+  const packageTouchStartX = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (packageInteracted || packages.length < 2) return;
+    const timer = window.setInterval(() => {
+      setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [packageInteracted, packages.length]);
 
   useEffect(() => {
     let active = true;
-
     packageService.list().then((result) => {
-      if (active && result.ok) {
-        setPackages(result.data);
-      }
+      if (active && result.ok) setPackages(result.data);
     });
-
     return () => {
       active = false;
     };
@@ -82,6 +139,147 @@ export function Home() {
 
   const packageCards = packages.map(toPackageCard);
 
+
+  useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (!isMobile) return;
+    const timer = window.setInterval(() => {
+      setLessonIndex((current) => current + 1);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (lessonIndex === 8) {
+      const timer = window.setTimeout(() => {
+        setLessonResetting(true);
+        setLessonIndex(4);
+      }, 560);
+      return () => window.clearTimeout(timer);
+    }
+    if (lessonIndex === 3) {
+      const timer = window.setTimeout(() => {
+        setLessonResetting(true);
+        setLessonIndex(7);
+      }, 560);
+      return () => window.clearTimeout(timer);
+    }
+  }, [lessonIndex]);
+
+  useEffect(() => {
+    if (!lessonResetting) return;
+    const frame = window.requestAnimationFrame(() => setLessonResetting(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, [lessonResetting]);
+
+  const testimonialItems = [
+    ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
+    ["The calm coaching made a huge difference. I became much more comfortable in busy traffic.", "Demo learner · Refresher"],
+    ["I stopped feeling rushed behind the wheel and started making decisions with confidence.", "Demo learner · New driver"],
+    ["The instructor explained everything clearly and gave me a plan for every lesson.", "Demo learner · Beginner"],
+    ["I felt much more prepared for real traffic, not just the test route.", "Demo learner · Test preparation"],
+    ["The lessons were practical, patient and focused on the areas I actually needed to improve.", "Demo learner · Refresher"],
+  ];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTestimonialIndex((current) => current + 1);
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    if (testimonialIndex === 12) {
+      const timer = window.setTimeout(() => {
+        setTestimonialResetting(true);
+        setTestimonialIndex(6);
+      }, 560);
+
+      return () => window.clearTimeout(timer);
+    }
+
+    if (testimonialIndex === 5) {
+      const timer = window.setTimeout(() => {
+        setTestimonialResetting(true);
+        setTestimonialIndex(11);
+      }, 560);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [testimonialIndex]);
+
+  useEffect(() => {
+    if (!testimonialResetting) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setTestimonialResetting(false);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [testimonialResetting]);
+  const reelViewportRef = useRef<HTMLDivElement | null>(null);
+  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];
+
+  useEffect(() => {
+    let active = true;
+
+    getSiteContent()
+      .then((content) => {
+        if (!active) return;
+        setReelUrls(
+          Array.from({ length: 6 }, (_, index) => content[`reel-${index + 1}`]?.url || ""),
+        );
+      })
+      .catch(() => {
+        if (active) setReelUrls([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const scrollReels = (direction: -1 | 1) => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    viewport.scrollBy({
+      left: direction * (card.getBoundingClientRect().width + gap),
+      behavior: "smooth",
+    });
+  };
+
+  useEffect(() => {
+    if (reelsInteracted || reelItems.length < 2) return;
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    if (!isMobile) return;
+    const timer = window.setInterval(() => {
+      const viewport = reelViewportRef.current;
+      const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+      const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+      if (!viewport || !grid || !card) return;
+      const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+      const step = card.getBoundingClientRect().width + gap;
+      const maxPage = Math.max(0, reelItems.length - 1);
+      if (reelPage >= maxPage) return;
+      viewport.scrollTo({ left: (reelPage + 1) * step, behavior: "smooth" });
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [reelsInteracted, reelItems.length, reelPage]);
+  const syncReelPage = () => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const step = card.getBoundingClientRect().width + gap;
+    const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
+    setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
+  };
   return (
     <>
       <section className="hero">
@@ -91,7 +289,7 @@ export function Home() {
             <h1>Learn to drive.<br /><em>Learn to live.</em></h1>
             <p>Confident drivers are built through patient coaching, purposeful practice and a learning path that makes every lesson count.</p>
             <div className="actions">
-              <Link className="btn red" to="/packages">Book your first lesson <Icon n="arrow" /></Link>
+              <Link className="btn red" to="/booking">Book your first lesson <Icon n="arrow" /></Link>
               <Link className="btn light" to="/instructors">Meet our instructors</Link>
             </div>
             <div className="heroTrust">
@@ -123,36 +321,97 @@ export function Home() {
           </div>
         </div>
 
-        <div className="container heroNumbers">
-          <div><b>01</b><span>Clear learning path</span></div>
-          <div><b>02</b><span>Instructor-led practice</span></div>
-          <div><b>03</b><span>Test-ready confidence</span></div>
-          <div><b>04</b><span>Support beyond the lesson</span></div>
-        </div>
       </section>
 
-      <section className="journey section">
+      <section className="quickLinks section">
         <div className="container">
-          <div className="sectionIntro">
-            <Heading ey="The BSDA journey" title="From first controls to confident road decisions." text="The experience is designed around progression. You always know what you are learning, why it matters and what comes next." />
-            <span className="sectionNumber">01</span>
-          </div>
-          <div className="journeygrid">
+          <div className="quickLinksGrid">
             {[
-              ["01","Assess","Start with your experience, confidence and goals."],
-              ["02","Learn","Build vehicle control and road awareness with your instructor."],
-              ["03","Practise","Repeat the right skills in real traffic and changing conditions."],
-              ["04","Perform","Refine test technique and become an independent road user."]
+              {
+                image: "/quick-links/driving-lessons.svg",
+                eyebrow: "Start learning",
+                title: "Driving Lessons",
+                text: "Manual and automatic lessons with qualified instructors.",
+                label: "Learn more",
+                to: "/lessons",
+              },
+              {
+                image: "/quick-links/packages.svg",
+                eyebrow: "Choose your pace",
+                title: "Price & Packages",
+                text: "Starter, Plus and Premium lesson paths with transparent pricing.",
+                label: "View packages",
+                to: "/packages",
+              },
+              {
+                image: "/quick-links/learning-portal.svg",
+                eyebrow: "Keep progressing",
+                title: "Learning Portal",
+                text: "Access theory support, mock tests and progress tracking.",
+                label: "Student login",
+                to: "/portal",
+              },
+              {
+                image: "/quick-links/government-links.svg",
+                eyebrow: "Official information",
+                title: "Government Info Links",
+                text: "Find DVLA, theory test booking and practical exam information.",
+                label: "More info",
+                to: "/faq",
+              },
             ].map((item, index) => (
-              <Reveal key={item[1]} delay={index * 80}>
-                <article className="journeycard">
-                  <span>{item[0]}</span>
-                  <h3>{item[1]}</h3>
-                  <p>{item[2]}</p>
-                  <i><Icon n="arrow" s={15} /></i>
+              <Reveal key={item.title} delay={index * 70}>
+                <article className="quickLinkCard">
+                  <div className="quickLinkImage">
+                    <img
+                      src={item.image}
+                      alt=""
+                      width="800"
+                      height="450"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="quickLinkBody">
+                    <span className="ey">{item.eyebrow}</span>
+                    <h2>{item.title}</h2>
+                    <p>{item.text}</p>
+                    <Link className="btn light" to={item.to}>
+                      {item.label}
+                      <Icon n="arrow" />
+                    </Link>
+                  </div>
                 </article>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="homeMotionStats" aria-label="BSDA highlights">
+        <div className="homeMotionTicker" aria-hidden="true">
+          <div className="homeMotionTickerTrack">
+            <span>DRIVING LESSONS</span><i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
+            <span>THEORY TEST SUPPORT</span><i>✦</i>
+            <span>INTENSIVE COURSES</span><i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+            <span>DRIVING LESSONS</span><i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
+            <span>THEORY TEST SUPPORT</span><i>✦</i>
+            <span>INTENSIVE COURSES</span><i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+          </div>
+        </div>
+
+        <div className="homeStats">
+          <div className="container homeStatsGrid">
+            <div><AnimatedStat target={1} /><span>Clear learning path</span></div>
+            <div><AnimatedStat target={3} /><span>Flexible lesson paths</span></div>
+            <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
+            <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
           </div>
         </div>
       </section>
@@ -171,40 +430,51 @@ export function Home() {
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
             <span className="sectionNumber">02</span>
           </div>
-          <div className="cards package-home-grid">
-            {packageCards.map((p, i) => (
-              <Reveal key={p.id} delay={i * 90}><PackageCard p={p} /></Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container split">
-          <Reveal>
-            <Heading ey="Why BSDA" title="A driving school should teach more than test manoeuvres." text="We combine vehicle control, road awareness, decision-making and calm feedback so learners can carry their skills into everyday driving." />
-            <div className="featureRows">
-              <div><b>01</b><span><strong>Learn at your level</strong><small>Beginner, refresher, intensive or test preparation.</small></span></div>
-              <div><b>02</b><span><strong>Train with purpose</strong><small>Each lesson has a clear target and a next-step recommendation.</small></span></div>
-              <div><b>03</b><span><strong>Build lasting confidence</strong><small>Feedback and repetition turn isolated skills into safe habits.</small></span></div>
+          <div
+            className="cards package-home-grid package-home-carousel"
+            aria-label="Driving lesson packages"
+            onTouchStart={(event) => {
+              packageTouchStartX.current = event.changedTouches[0]?.clientX ?? null;
+              setPackageInteracted(true);
+            }}
+            onTouchEnd={(event) => {
+              const startX = packageTouchStartX.current;
+              const endX = event.changedTouches[0]?.clientX;
+              packageTouchStartX.current = null;
+              if (startX === null || endX === undefined) return;
+              const delta = startX - endX;
+              if (Math.abs(delta) < 40 || packages.length < 2) return;
+              setPackageActiveIndex((current) =>
+                Math.max(0, Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)))
+              );
+            }}
+            onPointerDown={() => setPackageInteracted(true)}
+            onWheel={() => setPackageInteracted(true)}
+          >
+            <div className="package-home-track" style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}>
+              {packageCards.map((p, i) => (
+                <div
+                  className={"package-home-slide" + (packageActiveIndex === i ? " is-active" : "")}
+                  key={p.id}
+                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                >
+                  <Reveal delay={i * 90}><PackageCard p={p} /></Reveal>
+                </div>
+              ))}
             </div>
-          </Reveal>
-          <Reveal delay={120}><SocialFeed /></Reveal>
-        </div>
-      </section>
-
-      <section className="section dark">
-        <div className="container">
-          <div className="sectionIntro">
-            <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
-            <span className="sectionNumber lightNumber">03</span>
+            <div className="package-home-dots" aria-label="Choose a package">
+              {packageCards.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={packageActiveIndex === i ? "is-active" : ""}
+                  aria-label={`Show ${p.name}`}
+                  aria-pressed={packageActiveIndex === i}
+                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                />
+              ))}
+            </div>
           </div>
-          <div className="lessoncards">
-            {lessons.map((l, i) => (
-              <Reveal key={l[0]} delay={i * 80}><LessonCard lesson={l} index={i} /></Reveal>
-            ))}
-          </div>
-          <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
         </div>
       </section>
 
@@ -218,30 +488,175 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section instructorsPreview">
+      <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
-            <Heading ey="Meet the instructors" title="The right coach can change the whole learning experience." text="Choose by teaching style, specialty and the kind of support you want from lesson one." />
-            <span className="sectionNumber">05</span>
+            <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
+            <span className="sectionNumber lightNumber">03</span>
           </div>
-          <div className="instructorgrid preview">
-            {instructors.slice(0, 3).map((instructor, i) => (
-              <Reveal key={instructor.id} delay={i * 90}><InstructorCard instructor={instructor} /></Reveal>
-            ))}
+          <div className="lessonMobileCarousel">
+            <div className="lessonMobileViewport">
+              <div
+                className={"lessoncards lessonMobileTrack" + (lessonResetting ? " testimonialTrackReset" : "")}
+                style={{ transform: `translateY(-${lessonIndex * 221}px)` }}
+              >
+                {[...lessons, ...lessons, ...lessons].map((l, index) => (
+                  <Reveal key={`${l[0]}-${index}`}><LessonCard lesson={l} index={index % lessons.length} /></Reveal>
+                ))}
+              </div>
+            </div>
+            <div className="lessonMobileControls" aria-label="Lesson system navigation">
+              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current - 1)} aria-label="Show previous lesson"><span>↑</span></button>
+              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current + 1)} aria-label="Show next lesson"><span>↓</span></button>
+            </div>
           </div>
-          <div className="centerlink"><Link className="btn light" to="/instructors">Meet all instructors <Icon n="arrow" /></Link></div>
+          <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
         </div>
       </section>
 
+      <section className="missionVision section">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading
+              center
+              ey="Our purpose"
+              title="Building better drivers for life."
+              text="Our mission and vision shape every lesson, from the first control to confident everyday driving."
+            />
+            <span className="sectionNumber">04</span>
+          </div>
+
+          <div className="missionVisionGrid">
+            <article className="missionVisionCard missionCard">
+              <span className="missionVisionLabel">Our Mission</span>
+              <h2>Teach with purpose. Coach with patience.</h2>
+              <p>
+                To provide structured, safety-first driving education that helps
+                every learner develop practical skills, sound judgement and the
+                confidence to drive independently.
+              </p>
+              <div className="missionVisionLine" />
+              <span className="missionVisionTag">Learn · Practise · Progress</span>
+            </article>
+
+            <article className="missionVisionCard visionCard">
+              <span className="missionVisionLabel">Our Vision</span>
+              <h2>A generation of confident, responsible drivers.</h2>
+              <p>
+                To become a trusted driving education academy where learners
+                leave with more than a licence — they leave with the awareness,
+                discipline and road confidence to make better decisions every day.
+              </p>
+              <div className="missionVisionLine" />
+              <span className="missionVisionTag">Confidence · Safety · Independence</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="socialReels section">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading
+              center
+              ey="Follow the journey"
+              title="See BSDA in motion."
+              text="Short tips, road moments and learner-focused content from our social channels."
+            />
+            <span className="sectionNumber">04</span>
+          </div>
+
+          <div
+            className="socialReelsViewport"
+            ref={reelViewportRef}
+            onScroll={syncReelPage}
+            onTouchStart={() => setReelsInteracted(true)}
+            onPointerDown={() => setReelsInteracted(true)}
+          >
+            <div className="socialReelsGrid">
+              {reelItems.map((url, index) => (
+                <article className="socialReelCard" key={"reel-" + (index + 1)}>
+                  <div className="socialReelFrame" aria-label={"Short video " + (index + 1)}>
+                    {url ? (
+                      <VideoEmbed
+                        url={url}
+                        title={"BSDA short video " + (index + 1)}
+                        className="socialReelEmbed"
+                      />
+                    ) : (
+                      <div className="socialReelPlaceholder" aria-hidden="true">
+                        <span>REEL {String(index + 1).padStart(2, "0")}</span>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="socialReelsControls" aria-label="Short video navigation">
+            <button
+              type="button"
+              className="socialReelArrow"
+              onClick={() => { setReelsInteracted(true); scrollReels(-1); }}
+              disabled={reelPage === 0}
+              aria-label="Show previous short videos"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              type="button"
+              className="socialReelArrow"
+              onClick={() => { setReelsInteracted(true); scrollReels(1); }}
+              disabled={reelPage === reelItems.length - 4}
+              aria-label="Show next short videos"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
+      </section>
       <section className="testimonials">
         <div className="container testimonialgrid">
           <div>
             <span className="ey">Learner feedback</span>
             <h2>“The goal is not just passing. It is knowing what to do when the road changes.”</h2>
           </div>
-          <div className="quoteCards">
-            <article><b>“</b><p>My lessons finally felt structured. I knew what I had improved and what I needed to practise next.</p><span>— Demo learner · Beginner</span></article>
-            <article><b>“</b><p>The calm coaching made a huge difference. I became much more comfortable in busy traffic.</p><span>— Demo learner · Refresher</span></article>
+
+          <div className="testimonialCarousel">
+            <div className="testimonialViewport">
+              <div
+                className={"testimonialTrack" + (testimonialResetting ? " testimonialTrackReset" : "")}
+                style={{ transform: `translateY(-${testimonialIndex * 221}px)` }}
+              >
+                {[...testimonialItems, ...testimonialItems, ...testimonialItems, ...testimonialItems].map(([quote, learner], index) => (
+                  <article className="quoteCard" key={index}>
+                    <b>“</b>
+                    <p>{quote}</p>
+                    <span>— {learner}</span>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="testimonialControls" aria-label="Learner feedback navigation">
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setTestimonialIndex((current) => current - 1)}
+                aria-label="Show previous learner feedback"
+              >
+                <span aria-hidden="true">↑</span>
+              </button>
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setTestimonialIndex((current) => current + 1)}
+                aria-label="Show next learner feedback"
+              >
+                <span aria-hidden="true">↓</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
