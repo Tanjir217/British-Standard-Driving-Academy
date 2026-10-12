@@ -1,3 +1,4 @@
+import { members as managedMembers } from "@wix/members";
 import {
   clearWixTokens,
   completeWixLoginFromUrl,
@@ -32,6 +33,13 @@ function safeReturnPath(value?: string) {
   } catch {
     return "/portal";
   }
+}
+
+/** Starts the Wix Astro integration managed member session flow. */
+export function beginManagedMemberLogin(returnTo = "/portal") {
+  const safePath = safeReturnPath(returnTo);
+  const loginUrl = "/api/auth/login?returnToUrl=" + encodeURIComponent(safePath);
+  window.location.assign(loginUrl);
 }
 
 export async function beginMemberLogin(
@@ -154,8 +162,16 @@ export async function restoreMemberSession() {
 }
 
 export async function getCurrentMember() {
-  await restoreMemberSession();
+  // Prefer the session managed by Wix's Astro integration. This is the
+  // identity used by the new same-origin protected API endpoints.
+  try {
+    const managedResponse = await managedMembers.getCurrentMember();
+    if (managedResponse.member?._id) return managedResponse.member;
+  } catch {
+    // Fall back to the legacy browser OAuth session during migration.
+  }
 
+  await restoreMemberSession();
   if (!isWixMemberLoggedIn()) return null;
 
   const response = await wixClient.members.getCurrentMember();
@@ -179,6 +195,23 @@ function isLocalDevelopmentHost() {
 }
 
 export async function signOutMember() {
+  // Clear the Wix Astro integration cookie-backed session when present.
+  // This request is same-origin; no token is sent to client-side storage.
+  try {
+    const managedResponse = await managedMembers.getCurrentMember();
+    if (managedResponse.member?._id) {
+      await fetch("/api/auth/logout?returnToUrl=%2Flogin", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      clearLocalMemberSession();
+      window.location.replace("/login");
+      return;
+    }
+  } catch {
+    // The current account may still be using the legacy OAuth session below.
+  }
+
   /*
    * IMPORTANT:
    * Wix's logout() returns a URL. The actual logout happens only after the
