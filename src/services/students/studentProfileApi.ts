@@ -7,6 +7,17 @@ export interface StudentProfileApiRecord {
   email: string;
   phone: string;
   profilePhotoUrl: string;
+  coverPhotoUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  nickname?: string;
+  slug?: string;
+  privacyStatus?: string;
+  activityStatus?: string;
+  contactId?: string;
+  lastLoginDate?: string | null;
+  createdDate?: string | null;
+  updatedDate?: string | null;
   transmission: "manual" | "automatic" | "either";
   assignedInstructorId?: string;
   enrolledPackageId?: string;
