@@ -40,6 +40,7 @@ export function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [updatingStudentId, setUpdatingStudentId] = useState("");
 
   async function loadDashboard(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
@@ -90,6 +91,31 @@ export function AdminDashboard() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  }
+
+  async function updateStudentStatus(student: StudentRecord) {
+    if (student.status.toLowerCase() !== "active" && student.status.toLowerCase() !== "inactive") return;
+    setUpdatingStudentId(student.id);
+    setError("");
+    try {
+      const response = await httpClient.fetchWithAuth("/api/admin/students", {
+        method: "PATCH",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId: student.id,
+          status: student.status.toLowerCase() === "active" ? "inactive" : "active",
+        }),
+      });
+      const result = await response.json().catch(() => null) as { ok?: boolean; message?: string } | null;
+      if (!response.ok || result?.ok !== true) {
+        throw new Error(result?.message || "The student status could not be updated.");
+      }
+      await loadDashboard(true);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "The student status could not be updated.");
+    } finally {
+      setUpdatingStudentId("");
     }
   }
 
@@ -217,8 +243,8 @@ export function AdminDashboard() {
               <div className="adminLivePanelHead"><div><span className="adminEyebrow">WIX CMS</span><h2>Student profiles</h2></div><span>{filteredStudents.length} loaded</span></div>
               <label className="adminLiveSearch">Search student records<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, email, phone or member ID" /></label>
               {filteredStudents.length === 0 ? <p className="adminLiveEmpty">No matching student profiles were returned.</p> : (
-                <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Student</th><th>Email</th><th>Phone</th><th>Member ID</th><th>Status</th></tr></thead><tbody>
-                  {filteredStudents.map((student) => <tr key={student.id}><td>{student.fullName || "Unnamed student"}</td><td>{student.email || "—"}</td><td>{student.phone || "—"}</td><td className="adminLiveMono">{student.memberId || "—"}</td><td><span className="adminLiveStatus">{student.status || "unknown"}</span></td></tr>)}
+                <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Student</th><th>Email</th><th>Phone</th><th>Member ID</th><th>Status</th><th>Action</th></tr></thead><tbody>
+                  {filteredStudents.map((student) => <tr key={student.id}><td>{student.fullName || "Unnamed student"}</td><td>{student.email || "—"}</td><td>{student.phone || "—"}</td><td className="adminLiveMono">{student.memberId || "—"}</td><td><span className="adminLiveStatus">{student.status || "unknown"}</span></td><td><button type="button" className="adminLiveActionButton" disabled={updatingStudentId === student.id || !["active", "inactive"].includes(student.status.toLowerCase())} onClick={() => void updateStudentStatus(student)}>{updatingStudentId === student.id ? "Saving..." : student.status.toLowerCase() === "active" ? "Deactivate" : student.status.toLowerCase() === "inactive" ? "Activate" : "Managed"}</button></td></tr>)}
                 </tbody></table></div>
               )}
             </div>
