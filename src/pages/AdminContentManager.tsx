@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
-import { getSiteContent, saveSiteContent, SiteContentMap } from "../services/siteContentService";
+import { getSiteContent, saveSiteContent } from "../services/siteContentService";
+import type { SiteContentMap } from "../services/siteContentService";
 import { getVideoProvider } from "../components/VideoEmbed";
 
 type Section = "home" | "reels" | "portal";
