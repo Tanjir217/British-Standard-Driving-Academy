@@ -304,7 +304,7 @@ export function AdminDashboard() {
           <section className="adminLiveContent">
             <div className="adminLivePanel">
               <div className="adminLivePanelHead"><div><span className="adminEyebrow">WIX BOOKINGS</span><h2>Booking records</h2></div><span>{bookings.length} loaded</span></div>
-              {bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
+              {bookingError ? <p className="adminLiveEmpty">{bookingError}</p> : bookings.length === 0 ? <p className="adminLiveEmpty">No booking records were returned.</p> : (
                 <div className="adminLiveTableWrap"><table className="adminLiveTable"><thead><tr><th>Customer</th><th>Email</th><th>Service</th><th>Start</th><th>Status</th><th>Payment</th></tr></thead><tbody>
                   {bookings.map((booking) => <tr key={booking.id}><td>{[booking.firstName, booking.lastName].filter(Boolean).join(" ") || "Booking"}<small>{booking.id}</small></td><td>{booking.email || "—"}</td><td>{booking.serviceId || "—"}</td><td>{booking.startDate ? new Date(booking.startDate).toLocaleString("en-GB") : "—"}</td><td><span className="adminLiveStatus">{booking.status.toLowerCase().replaceAll("_", " ")}</span></td><td>{booking.paymentStatus.toLowerCase().replaceAll("_", " ")}</td></tr>)}
                 </tbody></table></div>
