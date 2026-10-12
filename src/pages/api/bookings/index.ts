@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
   const timeZone = stringField(slot.timeZone, 100) || "Europe/London";
   const localStartDate = stringField(slot.localStartDate, 80);
 
-  if (!serviceId || !scheduleId || !startDate || !endDate || slot.bookable !== true) {
+  if (!serviceId || !scheduleId || !startDate || !endDate || !/^\\d{4}-\\d{2}-\\d{2}/.test(localStartDate) || slot.bookable !== true) {
     return json({ ok: false, code: "INVALID_SLOT", message: "Choose a valid available slot before booking." }, 400);
   }
 
