@@ -62,7 +62,8 @@ export const POST: APIRoute = async ({ request }) => {
       timeZone,
       bookable: true,
     });
-    const freshSlot = (availability.timeSlots ?? []).find((candidate: any) =>
+    const freshSlots = (availability.timeSlots ?? []) as any[];
+    const freshSlot = freshSlots.find((candidate: any) =>
       candidate.bookable === true &&
       candidate.serviceId === serviceId &&
       candidate.scheduleId === scheduleId &&
