@@ -105,6 +105,28 @@ $$;
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at before update on public.profiles
 for each row execute function public.set_updated_at();
+
+-- Prevent users from changing their own account status through the public client.
+create or replace function public.protect_bsda_profile_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+begin
+  if new.account_status is distinct from old.account_status
+     and not (select public.bsda_is_admin()) then
+    raise exception 'Only BSDA administrators can change account status.'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists profiles_protect_account_status on public.profiles;
+create trigger profiles_protect_account_status
+before update on public.profiles
+for each row execute function public.protect_bsda_profile_status();
 drop trigger if exists packages_set_updated_at on public.packages;
 create trigger packages_set_updated_at before update on public.packages
 for each row execute function public.set_updated_at();
