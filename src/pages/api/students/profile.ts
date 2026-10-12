@@ -71,13 +71,15 @@ function safeProfile(record: WixRecord) {
   };
 }
 
-async function getAuthenticatedMember() {
+type AuthenticatedMember = { _id: string; loginEmail?: string | null };
+
+async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
   // The Wix Astro integration binds SDK calls to the request's authenticated
   // visitor/member session. Never accept a member ID from the request body.
   const response = await members.getCurrentMember();
   const member = response.member;
-  if (!member?._id) return null;
-  return member;
+  if (!member || typeof member._id !== "string" || !member._id) return null;
+  return member as AuthenticatedMember;
 }
 
 async function findProfileByMemberId(memberId: string): Promise<WixRecord | null> {
