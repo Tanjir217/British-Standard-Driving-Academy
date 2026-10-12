@@ -1,0 +1,17 @@
+---
+import { BSDAClient } from "../astro/BSDAClient";
+
+export const prerender = false;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101a33" />
+    <title>British Standard Driving Academy</title>
+  </head>
+  <body>
+    <BSDAClient client:only="react" />
+  </body>
+</html>

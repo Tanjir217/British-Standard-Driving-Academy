@@ -169,37 +169,51 @@ export async function sendWixPasswordResetEmail(
   await wixClient.auth.sendPasswordResetEmail(email, redirectUri);
 }
 
-export async function completeWixLoginFromUrl(): Promise<{
+let wixLoginCompletionInFlight: Promise<{
+  success: boolean;
+  originalUrl?: string;
+}> | null = null;
+
+export function completeWixLoginFromUrl(): Promise<{
   success: boolean;
   originalUrl?: string;
 }> {
-  if (typeof sessionStorage === "undefined") {
-    return { success: false };
-  }
+  // Authorization codes are single-use. Share one exchange across concurrent
+  // calls (including React StrictMode effect replay in development).
+  if (wixLoginCompletionInFlight) return wixLoginCompletionInFlight;
 
-  const raw = sessionStorage.getItem("bsda.wix.oauth");
-  if (!raw) {
-    return { success: false };
-  }
+  wixLoginCompletionInFlight = (async () => {
+    if (typeof sessionStorage === "undefined") return { success: false };
 
-  type WixOAuthData = Parameters<typeof wixClient.auth.getMemberTokens>[2];
+    const raw = sessionStorage.getItem("bsda.wix.oauth");
+    if (!raw) return { success: false };
 
-  const oauthData = JSON.parse(raw) as WixOAuthData;
-  const { code, state, error } = wixClient.auth.parseFromUrl();
+    try {
+      type WixOAuthData = Parameters<typeof wixClient.auth.getMemberTokens>[2];
+      const oauthData = JSON.parse(raw) as WixOAuthData;
+      const { code, state, error } = wixClient.auth.parseFromUrl();
+      if (error || !code || !state) return { success: false };
 
-  if (error || !code || !state) {
-    return { success: false };
-  }
+      const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
+      wixClient.auth.setTokens(tokens);
+      persistWixTokens(tokens);
+      sessionStorage.removeItem("bsda.wix.oauth");
+      return { success: true, originalUrl: oauthData.originalUri };
+    } catch (error) {
+      // Prevent a replay from redeeming the same one-time code again.
+      sessionStorage.removeItem("bsda.wix.oauth");
+      throw error;
+    }
+  })();
 
-  const tokens = await wixClient.auth.getMemberTokens(code, state, oauthData);
-  wixClient.auth.setTokens(tokens);
-  persistWixTokens(tokens);
-  sessionStorage.removeItem("bsda.wix.oauth");
-
-  return {
-    success: true,
-    originalUrl: oauthData.originalUri,
-  };
+  const current = wixLoginCompletionInFlight;
+  void current.finally(() => {
+    if (wixLoginCompletionInFlight === current) wixLoginCompletionInFlight = null;
+  }).catch(() => {
+    // The original caller handles the rejection; this avoids an unhandled
+    // rejection from the cleanup promise.
+  });
+  return current;
 }
 
 export async function getWixLogoutUrl(
