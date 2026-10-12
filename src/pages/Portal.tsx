@@ -21,6 +21,7 @@ type MemberSummary = {
     firstName?: string;
     lastName?: string;
     phones?: string[];
+    contactId?: string | null;
   };
 };
 
@@ -79,6 +80,8 @@ export function Portal() {
         const memberRecord = currentMember as typeof currentMember & {
           email?: string | null;
           profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
+          contact?: (typeof currentMember.contact & { contactId?: string | null }) | null;
+          contactId?: string | null;
         };
         const summary: MemberSummary = {
           loginEmail: currentMember.loginEmail || memberRecord.email || pendingIdentity.email || null,
@@ -90,6 +93,7 @@ export function Portal() {
             phones: currentMember.contact?.phones?.length
               ? currentMember.contact.phones
               : pendingIdentity.phone ? [pendingIdentity.phone] : undefined,
+            contactId: memberRecord.contact?.contactId ?? memberRecord.contactId ?? null,
           },
         };
         setMember(summary);
