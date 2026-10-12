@@ -8770,6 +8770,43 @@ nav .navbook {
   font-size: 13px !important;
 }
 
+/* Desktop-only list on the Driving Lessons quick-link card. Keep compact layouts unchanged. */
+@media (min-width: 769px) {
+  .quickLinkLessonList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 14px;
+    margin: 0 0 17px;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .quickLinkLessonList li {
+    position: relative;
+    padding-left: 13px;
+  }
+
+  .quickLinkLessonList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.48em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+}
+
+@media (max-width: 768px) {
+  .quickLinkLessonList {
+    display: none;
+  }
+}
+
 @media (max-width: 1050px) {
   .quickLinksGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
