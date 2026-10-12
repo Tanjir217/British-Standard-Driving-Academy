@@ -1,7 +1,9 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import {
+  beginManagedMemberLogin,
   beginMemberLogin,
   completeMemberVerification,
   createMemberAccount,
@@ -82,6 +84,20 @@ export function Login() {
     }
 
     setBusy(true);
+
+    // Keep only non-sensitive identity fields as a temporary display fallback
+    // across the Wix OAuth redirect. Never store passwords or use this value
+    // for authorization; the authenticated Wix member remains authoritative.
+    try {
+      sessionStorage.setItem("bsda.pending.member.identity", JSON.stringify({
+        email: form.email.trim(),
+        firstName: mode === "register" ? form.firstName.trim() : "",
+        lastName: mode === "register" ? form.lastName.trim() : "",
+        phone: mode === "register" ? form.phone.trim() : "",
+      }));
+    } catch {
+      // Storage can be disabled; login must still proceed.
+    }
 
     try {
       const result =
@@ -417,6 +433,14 @@ export function Login() {
                     >
                       <span className="googlemark">G</span>
                       Continue with Google
+                    </button>
+                    <button
+                      type="button"
+                      className="authprovider"
+                      disabled={busy}
+                      onClick={() => beginManagedMemberLogin(returnTo)}
+                    >
+                      Continue with Wix secure sign-in
                     </button>
                   </>
                 )}
