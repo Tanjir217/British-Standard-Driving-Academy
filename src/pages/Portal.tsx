@@ -5,59 +5,99 @@ import {
   getCurrentMember,
   signOutMember,
 } from "../services/auth/authService";
+import {
+  createStudentProfile,
+  getStudentProfile,
+  type StudentProfileApiRecord,
+} from "../services/students/studentProfileApi";
 
 type MemberSummary = {
   loginEmail?: string | null;
   contact?: {
     firstName?: string;
     lastName?: string;
+    phones?: string[];
   };
 };
 
 export function Portal() {
   const navigate = useNavigate();
   const [member, setMember] = useState<MemberSummary | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
+  const [profileMessage, setProfileMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
-    getCurrentMember()
-      .then((currentMember) => {
+    async function loadPortal() {
+      try {
+        const currentMember = await getCurrentMember();
         if (!active) return;
 
         if (!currentMember) {
-          navigate(
-            "/login?returnTo=" +
-              encodeURIComponent("/portal"),
-            { replace: true },
-          );
+          navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
           return;
         }
 
-        setMember({
+        const summary: MemberSummary = {
           loginEmail: currentMember.loginEmail,
           contact: currentMember.contact
             ? {
                 firstName: currentMember.contact.firstName ?? undefined,
                 lastName: currentMember.contact.lastName ?? undefined,
+                phones: currentMember.contact.phones ?? undefined,
               }
             : undefined,
-        });
-      })
-      .catch((err) => {
+        };
+        setMember(summary);
+
+        // Profile data comes only from the protected server endpoint. If no
+        // profile exists, provision it from the authenticated member's contact
+        // details; the endpoint derives the actual member ID from the session.
+        try {
+          let response = await getStudentProfile();
+          if (response.profileState === "missing" || !response.profile) {
+            const firstName = summary.contact?.firstName?.trim() || "";
+            const lastName = summary.contact?.lastName?.trim() || "";
+            if (firstName && lastName) {
+              response = await createStudentProfile({
+                firstName,
+                lastName,
+                phone: summary.contact?.phones?.[0] || "",
+              });
+            }
+          }
+
+          if (!active) return;
+          if (response.profile) {
+            setStudentProfile(response.profile);
+            setProfileMessage("Your student profile is saved in the academy system.");
+          } else {
+            setProfileMessage("Your account is signed in, but profile setup is pending. Please contact the academy if this continues.");
+          }
+        } catch (profileError) {
+          if (!active) return;
+          setProfileMessage(
+            profileError instanceof Error
+              ? profileError.message
+              : "We couldn't retrieve your saved student profile.",
+          );
+        }
+      } catch (err) {
         if (!active) return;
         setError(
           err instanceof Error
             ? err.message
             : "We couldn't load your account.",
         );
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
 
+    void loadPortal();
     return () => {
       active = false;
     };
@@ -90,7 +130,7 @@ export function Portal() {
     );
   }
 
-  const firstName = member?.contact?.firstName?.trim();
+  const firstName = studentProfile?.fullName?.trim().split(/\s+/)[0] || member?.contact?.firstName?.trim();
   const displayName = firstName || "learner";
 
   return (
@@ -101,13 +141,10 @@ export function Portal() {
             <span className="ey">Student dashboard</span>
             <h1>Good to see you, {displayName}.</h1>
             <p className="dashboardemail">
-              {member?.loginEmail || "Your BSDA member account"}
+              {studentProfile?.email || member?.loginEmail || "Your BSDA member account"}
             </p>
           </div>
-          <button
-            className="btn light"
-            onClick={() => void signOutMember()}
-          >
+          <button className="btn light" onClick={() => void signOutMember()}>
             Sign out
           </button>
         </div>
@@ -115,11 +152,8 @@ export function Portal() {
         <div className="dashgrid">
           <div className="dash darkdash">
             <span className="ey">Account status</span>
-            <strong>Active</strong>
-            <p>
-              Your BSDA member account is connected. Student training data will
-              appear here once your learner profile is linked.
-            </p>
+            <strong>{studentProfile?.status || "Profile pending"}</strong>
+            <p>{profileMessage || "Checking your saved student profile."}</p>
           </div>
 
           <PortalCard
@@ -128,11 +162,24 @@ export function Portal() {
             text="Your upcoming and completed lessons will be connected to the BSDA booking system here."
           />
 
-          <PortalCard
-            icon="car"
-            title="Learning progress"
-            text="Your instructor progress, completed lessons and next learning targets will appear here."
-          />
+          <div className="dash">
+            <Icon n="car" s={24} />
+            <h3>Learning progress</h3>
+            {studentProfile ? (
+              <>
+                <p>{studentProfile.lessonsCompleted} lessons completed · {studentProfile.lessonsRemaining} remaining</p>
+                <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress">
+                  <span style={{ width: `${studentProfile.progressPercent}%` }} />
+                </div>
+                <span className="portalstatus">{studentProfile.progressPercent}% complete</span>
+              </>
+            ) : (
+              <>
+                <p>Your instructor progress, completed lessons and next learning targets will appear here.</p>
+                <span className="portalstatus">Waiting for learner profile</span>
+              </>
+            )}
+          </div>
 
           <PortalCard
             icon="book"
@@ -141,20 +188,37 @@ export function Portal() {
           />
         </div>
 
-        <div className="panel dashboardpanel">
-          <div>
-            <span className="ey">Next stage</span>
-            <h2>Your account foundation is ready.</h2>
-            <p>
-              The next backend layer will connect your Wix member account to
-              your Student Profile, bookings, lesson records, progress and
-              learning resources.
-            </p>
+        {studentProfile && (
+          <div className="panel dashboardpanel">
+            <div>
+              <span className="ey">Learner profile</span>
+              <h2>{studentProfile.fullName}</h2>
+              <p>
+                {studentProfile.phone || "No phone number saved"}
+                {" · "}
+                {studentProfile.transmission === "either"
+                  ? "Manual or automatic"
+                  : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}
+              </p>
+            </div>
+            <button className="btn red" onClick={() => navigate("/booking")}>
+              Book a lesson <Icon n="arrow" />
+            </button>
           </div>
-          <button className="btn red" onClick={() => navigate("/booking")}>
-            Book a lesson <Icon n="arrow" />
-          </button>
-        </div>
+        )}
+
+        {!studentProfile && (
+          <div className="panel dashboardpanel">
+            <div>
+              <span className="ey">Next stage</span>
+              <h2>Your account is connected.</h2>
+              <p>{profileMessage}</p>
+            </div>
+            <button className="btn red" onClick={() => navigate("/booking")}>
+              Book a lesson <Icon n="arrow" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
