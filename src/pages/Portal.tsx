@@ -5,11 +5,13 @@ import "../styles/portal-profile.css";
 import {
   getCurrentMember,
   signOutMember,
+  beginManagedMemberLogin,
 } from "../services/auth/authService";
 import {
   createStudentProfile,
   getStudentProfile,
   type StudentProfileApiRecord,
+  StudentProfileApiError,
 } from "../services/students/studentProfileApi";
 
 type MemberSummary = {
@@ -26,6 +28,7 @@ export function Portal() {
   const [member, setMember] = useState<MemberSummary | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
+  const [managedLoginRequired, setManagedLoginRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -80,11 +83,16 @@ export function Portal() {
           }
         } catch (profileError) {
           if (!active) return;
-          setProfileMessage(
-            profileError instanceof Error
-              ? profileError.message
-              : "We couldn't retrieve your saved student profile.",
-          );
+          if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
+            setManagedLoginRequired(true);
+            setProfileMessage("Your current sign-in is not connected to the Wix-managed session required for secure profile access. Continue with Wix secure sign-in to finish connecting your portal.");
+          } else {
+            setProfileMessage(
+              profileError instanceof Error
+                ? profileError.message
+                : "We couldn't retrieve your saved student profile.",
+            );
+          }
         }
       } catch (err) {
         if (!active) return;
@@ -215,9 +223,16 @@ export function Portal() {
               <h2>Your account is connected.</h2>
               <p>{profileMessage}</p>
             </div>
-            <button className="btn red" onClick={() => navigate("/booking")}>
-              Book a lesson <Icon n="arrow" />
-            </button>
+            <div className="dashboardpanelactions">
+              {managedLoginRequired && (
+                <button className="btn light" onClick={() => beginManagedMemberLogin("/portal")}>
+                  Continue with Wix secure sign-in
+                </button>
+              )}
+              <button className="btn red" onClick={() => navigate("/booking")}>
+                Book a lesson <Icon n="arrow" />
+              </button>
+            </div>
           </div>
         )}
       </div>
