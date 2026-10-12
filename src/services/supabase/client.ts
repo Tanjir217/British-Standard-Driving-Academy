@@ -1,34 +1,33 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Public Supabase client for browser-side auth and RLS-protected data access.
- * This module deliberately does not contain or accept a service-role key.
- *
- * Lazy initialization keeps local builds possible before .env.local is set.
- * Auth/session storage is managed by supabase-js; database access remains
- * constrained by the user's JWT and the project's Row Level Security policies.
+ * Browser-safe Supabase client. Only the publishable/anon key belongs here.
+ * All exposed-table access is governed by PostgreSQL grants and RLS policies.
  */
 let client: SupabaseClient | null = null;
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(
     import.meta.env.VITE_SUPABASE_URL &&
-    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      import.meta.env.VITE_SUPABASE_ANON_KEY),
   );
 }
 
 export function getSupabaseClient(): SupabaseClient {
   const url = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const publishableKey =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!url || !anonKey) {
+  if (!url || !publishableKey) {
     throw new Error(
-      "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your local environment.",
+      "Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your local environment.",
     );
   }
 
   if (!client) {
-    client = createClient(url, anonKey, {
+    client = createClient(url, publishableKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
