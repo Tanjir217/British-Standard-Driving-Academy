@@ -110,14 +110,14 @@ export const PATCH: APIRoute = async ({ request }) => {
       return json({ ok: false, code: "STUDENT_NOT_FOUND", message: "Student profile not found." }, 404);
     }
 
-    const record = { ...(existing as Record<string, unknown>), _id: profileId };
+    const record: Record<string, unknown> = { ...(existing as Record<string, unknown>), _id: profileId };
     if (body.status !== undefined) record.status = body.status;
     if (body.phone !== undefined) record.phone = String(body.phone).trim().slice(0, 40);
     if (body.transmission !== undefined) record.transmission = body.transmission;
 
     const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
     const updated = await elevatedUpdate("StudentProfiles", record);
-    const resultRecord = updated && typeof updated === "object"
+    const resultRecord: Record<string, unknown> = updated && typeof updated === "object"
       ? updated as Record<string, unknown>
       : record;
     return json({
