@@ -86,3 +86,18 @@ The migration therefore pins the Wix Astro 2.x integration with Astro 5 and down
 - `npm run build:astro`: not a valid substitute for release verification; the Wix Pages integration uses a `cloudflare:` runtime module that is only available through the expected Wix build runtime.
 
 The official Wix docs for linking an existing Astro project state that `headless link` requires a project without `wix.config.json` and provisions a new Wix business/site. This repo already contains `wix.config.json`, the target site ID still needs reconciliation, and the operating guardrails prohibit creating a new Wix site. Therefore, **do not run `headless link`, overwrite site IDs, or publish**. The supported in-place path for this existing site must be established before the managed build, preview, endpoint integration tests, or production release can be completed.
+
+## Wix OAuth redirect URI troubleshooting (October 2026)
+
+The existing custom email/password and Google sign-in flow creates its OAuth callback using `new URL("/auth/callback", window.location.origin)`. Therefore, the callback must be allowlisted for each origin from which the app is tested.
+
+Add these exact redirect URIs to the OAuth app's allowed redirect URI list in Wix Headless settings:
+
+- Local Astro development: `http://localhost:4321/auth/callback`
+- Production custom domain: `https://bsda.online/auth/callback`
+- If the production site is also intentionally used on the www hostname, add `https://www.bsda.online/auth/callback` only if that hostname is configured and tested.
+
+The user's screenshot showed the OAuth authorize endpoint returning `Invalid redirect URI. Please add an allowed URI to your OAuth App`. That response is a Wix OAuth configuration rejection, not a React Console exception. The actual `redirect_uri` query parameter should be checked in DevTools or the address bar if the error persists; allowlist the exact value, including scheme, host, port, path, and trailing-slash behavior. Do not add the entire authorize URL, wildcard URLs, query strings, or a client secret.
+
+The React callback route is `/auth/callback`, and the local dev server in the current test is `http://localhost:4321`. After saving the allowed URI, retry account creation/sign-in and confirm that the browser returns to `/auth/callback` and the callback completes. The production URI is listed for later production verification; adding it does not mean the Astro backend has been deployed or that production login is currently working.
+
