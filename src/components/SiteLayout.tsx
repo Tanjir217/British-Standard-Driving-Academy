@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Brand } from "./Brand";
 import { Icon } from "./Icon";
