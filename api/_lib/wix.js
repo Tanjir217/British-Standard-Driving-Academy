@@ -13,8 +13,11 @@ export function json(res, status, body) {
 
 export function allowedOrigin(req) {
   const origin = req.headers.origin;
-  const configured = process.env.BSDA_ALLOWED_ORIGIN;
-  if (!origin || !configured || origin !== configured) return null;
+  const configured = (process.env.BSDA_ALLOWED_ORIGIN || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (!origin || !configured.includes(origin)) return null;
   return origin;
 }
 
@@ -43,7 +46,7 @@ export async function getAuthenticatedWixMember(req) {
     return { ok: false, status: 401, error: "A valid Wix member session is required." };
   }
 
-  const response = await fetch(`${WIX_API_BASE}/members/v1/members/my`, {
+  const response = await fetch(`${WIX_API_BASE}/members/v1/members/my?fieldsets=FULL`, {
     method: "GET",
     headers: {
       Authorization: accessToken,
@@ -68,7 +71,15 @@ export async function getAuthenticatedWixMember(req) {
     return { ok: false, status: 401, error: "Wix did not return a signed-in member." };
   }
 
-  return { ok: true, member: { id: String(memberId), profile: member.profile || {} } };
+  return {
+    ok: true,
+    member: {
+      id: String(memberId),
+      profile: member.profile || {},
+      loginEmail: typeof member.loginEmail === "string" ? member.loginEmail : "",
+      contact: member.contact || {},
+    },
+  };
 }
 
 /**
