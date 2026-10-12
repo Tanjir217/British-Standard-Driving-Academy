@@ -149,30 +149,53 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
   const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
   const contactId = typeof member.contactId === "string" ? member.contactId.trim() : "";
-  const email = typeof member.loginEmail === "string" ? member.loginEmail.trim() : "";
+  const memberRecord = member as AuthenticatedMember & { email?: string | null };
+  const email = String(member.loginEmail ?? memberRecord.email ?? "").trim().toLowerCase();
 
-  // Resolve the FullData row from the identity attached to the authenticated
-  // Wix session. A contact ID is a distinct identifier from a site-member ID:
-  // never substitute member._id into FullData.contactId.
-  if (contactId) {
-    const byContact = recordsFromQuery(
-      await elevatedQuery(collectionId).eq("contactId", contactId).limit(2).find(),
-    );
-    if (byContact.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-    if (byContact[0]) return byContact[0];
+  // Diagnostic evidence confirms the collection can be queried without a
+  // filter. Some Wix system-collection query/filter combinations may fail
+  // even though a plain query succeeds, so retrieve a bounded set and match
+  // only against identifiers supplied by the authenticated Wix session.
+  console.info("[BSDA FullData profile] Resolving authenticated member", {
+    collectionId,
+    hasContactId: Boolean(contactId),
+    hasLoginEmail: Boolean(email),
+    memberFields: Object.keys(member),
+  });
+
+  if (!contactId && !email) {
+    console.error("[BSDA FullData profile] Current Wix member response has no contactId or loginEmail.");
+    throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
   }
 
-  // Some Wix member responses/configurations do not expose contactId. In that
-  // case, use only the login email from the server-resolved member session.
-  // Do not accept identity fields from query parameters or the request body.
-  if (email) {
-    const byEmail = recordsFromQuery(
-      await elevatedQuery(collectionId).eq("loginEmail", email).limit(2).find(),
-    );
-    if (byEmail.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-    if (byEmail[0]) return byEmail[0];
+  const result = await elevatedQuery(collectionId).limit(100).find();
+  const records = recordsFromQuery(result);
+
+  const contactMatches = contactId
+    ? records.filter((record) => String(record.contactId ?? "").trim() === contactId)
+    : [];
+  if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+  if (contactMatches.length === 1) {
+    console.info("[BSDA FullData profile] FullData match found by contactId.");
+    return contactMatches[0];
   }
 
+  const emailMatches = email
+    ? records.filter((record) =>
+        String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email,
+      )
+    : [];
+  if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+  if (emailMatches.length === 1) {
+    console.info("[BSDA FullData profile] FullData match found by email.");
+    return emailMatches[0];
+  }
+
+  console.info("[BSDA FullData profile] No matching record in queried rows.", {
+    queriedRecords: records.length,
+    matchedByContactId: contactMatches.length,
+    matchedByEmail: emailMatches.length,
+  });
   return null;
 }
 
@@ -197,7 +220,7 @@ export const GET: APIRoute = async () => {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
     console.error("[BSDA FullData profile] GET failed:", reason);
-    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
+    if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {\n      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix authenticated the session but did not provide contactId or loginEmail. Check the server log for the available member fields." }, 422);\n    }\n    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
     }
     return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from Members/FullData. Check the server log for the Wix error code and verify the site binding." }, 500);
