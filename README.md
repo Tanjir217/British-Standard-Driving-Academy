@@ -55,8 +55,9 @@ Do not run `wix headless link` or any release command until the Wix site binding
 - `POST /api/students/profile` — idempotent profile provisioning for the authenticated member.
 - `PATCH /api/students/profile` — ownership-checked updates to allowed profile fields.
 - `GET /api/admin/authorization` — fail-closed approved-staff authorization.
-- `GET /api/admin/students` — protected student list.
+- `GET /api/admin/students`, `PATCH /api/admin/students` — protected student list and limited updates.
 - `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons` — protected lesson record operations.
+- `GET /api/admin/bookings` — protected Wix Bookings list.
 - `GET /api/bookings/availability` — current Wix Bookings availability.
 - `POST /api/bookings` — rechecks the selected slot and asks Wix Bookings to create the booking.
 
