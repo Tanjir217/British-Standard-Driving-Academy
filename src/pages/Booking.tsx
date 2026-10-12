@@ -4,7 +4,7 @@ import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
-import type { BookingServiceCatalogItem, BookingSlot } from "../services/bookings/bookingService";
+import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import { submitBooking } from "../services/bookingService";
 import type { Package } from "../services/domain/types";
@@ -338,7 +338,7 @@ export function Booking() {
               </label>
             </div>
 
-            <button disabled={busy || availabilityLoading || !selectedSlot} className="btn red full">
+            <button disabled={busy || availabilityLoading || !selectedSlot || done} className="btn red full">
               {busy ? "Submitting booking..." : "Submit booking"} <Icon n="arrow" />
             </button>
 
