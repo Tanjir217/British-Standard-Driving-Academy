@@ -16,12 +16,32 @@ import {
 
 type MemberSummary = {
   loginEmail?: string | null;
+  email?: string | null;
+  profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
   contact?: {
     firstName?: string;
     lastName?: string;
     phones?: string[];
   };
 };
+
+type PendingIdentity = { email?: string; firstName?: string; lastName?: string; phone?: string };
+
+function readPendingIdentity(): PendingIdentity {
+  try {
+    const raw = sessionStorage.getItem("bsda.pending.member.identity");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as PendingIdentity;
+    return {
+      email: typeof parsed.email === "string" ? parsed.email : "",
+      firstName: typeof parsed.firstName === "string" ? parsed.firstName : "",
+      lastName: typeof parsed.lastName === "string" ? parsed.lastName : "",
+      phone: typeof parsed.phone === "string" ? parsed.phone : "",
+    };
+  } catch {
+    return {};
+  }
+}
 
 export function Portal() {
   const navigate = useNavigate();
@@ -45,15 +65,22 @@ export function Portal() {
           return;
         }
 
+        const pendingIdentity = readPendingIdentity();
+        const memberRecord = currentMember as typeof currentMember & {
+          email?: string | null;
+          profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
+        };
         const summary: MemberSummary = {
-          loginEmail: currentMember.loginEmail,
-          contact: currentMember.contact
-            ? {
-                firstName: currentMember.contact.firstName ?? undefined,
-                lastName: currentMember.contact.lastName ?? undefined,
-                phones: currentMember.contact.phones ?? undefined,
-              }
-            : undefined,
+          loginEmail: currentMember.loginEmail || memberRecord.email || pendingIdentity.email || null,
+          email: memberRecord.email || pendingIdentity.email || null,
+          profile: memberRecord.profile,
+          contact: {
+            firstName: currentMember.contact?.firstName || pendingIdentity.firstName || undefined,
+            lastName: currentMember.contact?.lastName || pendingIdentity.lastName || undefined,
+            phones: currentMember.contact?.phones?.length
+              ? currentMember.contact.phones
+              : pendingIdentity.phone ? [pendingIdentity.phone] : undefined,
+          },
         };
         setMember(summary);
 
