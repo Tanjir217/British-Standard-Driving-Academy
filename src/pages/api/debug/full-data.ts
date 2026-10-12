@@ -5,9 +5,10 @@ import { items } from "@wix/data";
 /**
  * Temporary local-only diagnostic for the Wix Members/FullData system collection.
  *
- * It deliberately does not return member records to the browser. Full records
- * (which can contain personal data) are written to the local Wix dev server
- * terminal only. Remove this route after diagnosis.
+ * Full records may contain personal data. By default they are logged to the
+ * local Wix dev server terminal only. Add ?showValues=1 to opt in to displaying
+ * up to five raw records in the local development HTTP response. Remove this
+ * route after diagnosis.
  */
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body, null, 2), {
@@ -35,7 +36,7 @@ function extractRecords(value: unknown): Record<string, unknown>[] {
   });
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   // Never enable a collection dump on a deployed environment.
   if (!import.meta.env.DEV) {
     return json({ ok: false, code: "LOCAL_DIAGNOSTICS_ONLY" }, 404);
@@ -63,12 +64,17 @@ export const GET: APIRoute = async () => {
       fieldNames: records.map((record) => Object.keys(record)),
     });
 
+    const showValues = url.searchParams.get("showValues") === "1";
+
     return json({
       ok: true,
       collectionId,
       returnedRecords: records.length,
       fieldNames: records.map((record) => Object.keys(record)),
-      message: "Raw CMS records were logged in the local Wix dev server terminal; records are not returned to the browser.",
+      ...(showValues ? { records } : {}),
+      message: showValues
+        ? "Raw CMS values are included below for local development only. Do not share this response publicly."
+        : "Field values are logged in the local Wix dev server terminal. Add ?showValues=1 to include up to five raw records in this local response.",
     });
   } catch (error) {
     const err = error as { message?: unknown; code?: unknown; status?: unknown; details?: unknown };
