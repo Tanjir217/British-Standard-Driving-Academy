@@ -147,7 +147,7 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
 
 async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecord | null> {
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "FullData";
+  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
   const contactId = typeof member.contactId === "string" ? member.contactId.trim() : "";
   const email = typeof member.loginEmail === "string" ? member.loginEmail.trim() : "";
 
@@ -185,7 +185,7 @@ export const GET: APIRoute = async () => {
 
     const record = await findFullDataMember(member);
     if (!record) {
-      return json({ ok: true, profileState: "missing", profile: null, source: "FullData" }, 200);
+      return json({ ok: true, profileState: "missing", profile: null, source: "Members/FullData" }, 200);
     }
 
     return json({
@@ -200,7 +200,7 @@ export const GET: APIRoute = async () => {
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
     }
-    return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from FullData. Please verify the collection permissions and field IDs." }, 500);
+    return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from Members/FullData. Check the server log for the Wix error code and verify the site binding." }, 500);
   }
 };
 
