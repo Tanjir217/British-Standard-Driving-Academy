@@ -148,10 +148,23 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
 async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecord | null> {
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
   const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "FullData";
+  const contactId = typeof member.contactId === "string" ? member.contactId.trim() : "";
   const email = typeof member.loginEmail === "string" ? member.loginEmail.trim() : "";
 
-  // Query only by values derived from the current Wix-authenticated member.
-  // Never accept email, contact ID, or member ID from browser input.
+  // Resolve the FullData row from the identity attached to the authenticated
+  // Wix session. A contact ID is a distinct identifier from a site-member ID:
+  // never substitute member._id into FullData.contactId.
+  if (contactId) {
+    const byContact = recordsFromQuery(
+      await elevatedQuery(collectionId).eq("contactId", contactId).limit(2).find(),
+    );
+    if (byContact.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    if (byContact[0]) return byContact[0];
+  }
+
+  // Some Wix member responses/configurations do not expose contactId. In that
+  // case, use only the login email from the server-resolved member session.
+  // Do not accept identity fields from query parameters or the request body.
   if (email) {
     const byEmail = recordsFromQuery(
       await elevatedQuery(collectionId).eq("loginEmail", email).limit(2).find(),
@@ -160,12 +173,7 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     if (byEmail[0]) return byEmail[0];
   }
 
-  const contactId = typeof member.contactId === "string" && member.contactId ? member.contactId : member._id;
-  const byContact = recordsFromQuery(
-    await elevatedQuery(collectionId).eq("contactId", contactId).limit(2).find(),
-  );
-  if (byContact.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-  return byContact[0] ?? null;
+  return null;
 }
 
 export const GET: APIRoute = async () => {
