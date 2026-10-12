@@ -205,3 +205,86 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, code: "PROFILE_PROVISION_FAILED", message: "We could not save your student profile. Please try again." }, 500);
   }
 };
+
+
+export const PATCH: APIRoute = async ({ request }) => {
+  if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
+    return json({ ok: false, code: "UNSUPPORTED_MEDIA_TYPE", message: "Send a JSON request body." }, 415);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    const raw = await request.text();
+    if (raw.length > 8_192) return json({ ok: false, code: "PAYLOAD_TOO_LARGE", message: "The profile update is too large." }, 413);
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid object");
+    body = parsed as Record<string, unknown>;
+  } catch {
+    return json({ ok: false, code: "INVALID_JSON", message: "Send a valid JSON object." }, 400);
+  }
+
+  const allowedKeys = new Set(["firstName", "lastName", "phone", "transmission"]);
+  if (Object.keys(body).some((key) => !allowedKeys.has(key))) {
+    return json({ ok: false, code: "FIELD_NOT_ALLOWED", message: "One or more submitted fields cannot be changed here." }, 400);
+  }
+
+  try {
+    const member = await getAuthenticatedMember();
+    if (!member) {
+      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before updating your profile." }, 401);
+    }
+
+    const existing = await findProfileByMemberId(member._id);
+    if (!existing) {
+      return json({ ok: false, code: "PROFILE_NOT_FOUND", message: "Your student profile has not been created yet." }, 404);
+    }
+
+    const currentName = String(existing.fullName ?? existing.title ?? "").trim().split(/\s+/);
+    const firstName = typeof body.firstName === "string" ? body.firstName.trim() : currentName.shift() || "";
+    const lastName = typeof body.lastName === "string" ? body.lastName.trim() : currentName.join(" ");
+    if (!firstName || firstName.length > 60 || lastName.length > 60) {
+      return json({ ok: false, code: "VALIDATION_ERROR", message: "Enter a valid first and last name." }, 400);
+    }
+
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").slice(0, 120);
+    const phone = body.phone === undefined
+      ? String(existing.phone ?? "")
+      : typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : null;
+    if (phone === null) {
+      return json({ ok: false, code: "VALIDATION_ERROR", message: "Phone number must be text." }, 400);
+    }
+
+    const transmission = body.transmission === undefined
+      ? String(existing.transmission ?? "either")
+      : body.transmission;
+    if (transmission !== "manual" && transmission !== "automatic" && transmission !== "either") {
+      return json({ ok: false, code: "VALIDATION_ERROR", message: "Transmission must be manual, automatic, or either." }, 400);
+    }
+
+    const updatedRecord = {
+      ...existing,
+      _id: String(existing._id ?? existing.id ?? ""),
+      memberId: member._id,
+      title: fullName,
+      fullName,
+      email: typeof member.loginEmail === "string" ? member.loginEmail : String(existing.email ?? ""),
+      phone,
+      transmission,
+    };
+    if (!updatedRecord._id) {
+      return json({ ok: false, code: "PROFILE_INVALID", message: "Your profile needs academy support." }, 409);
+    }
+
+    const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
+    const updated = await elevatedUpdate(COLLECTION_ID, updatedRecord);
+    const profile = normalizeRecord(updated) ?? updatedRecord;
+    return json({ ok: true, profileState: "ready", profile: safeProfile(profile) });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    console.error("[BSDA profile] PATCH failed:", reason);
+    if (reason === "DUPLICATE_MEMBER_PROFILE") {
+      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your profile needs academy support." }, 409);
+    }
+    return json({ ok: false, code: "PROFILE_UPDATE_FAILED", message: "We could not update your student profile. Please try again." }, 500);
+  }
+};
