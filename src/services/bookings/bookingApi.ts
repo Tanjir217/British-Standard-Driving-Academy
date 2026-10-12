@@ -14,7 +14,7 @@ export interface BookingApiSlot {
 }
 
 type ApiError = { code?: string; message?: string };
-type ApiResult<T> = { ok: true } & T | { ok: false } & ApiError;
+type ApiResult<T> = ({ ok: true } & T & { message?: string }) | ({ ok: false } & ApiError);
 
 async function parseResponse<T>(response: Response): Promise<ApiResult<T>> {
   const payload = await response.json().catch(() => null) as ApiResult<T> | null;
