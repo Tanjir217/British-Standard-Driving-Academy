@@ -87,10 +87,11 @@ export function Portal() {
             setManagedLoginRequired(true);
             setProfileMessage("Your current sign-in is not connected to the Wix-managed session required for secure profile access. Continue with Wix secure sign-in to finish connecting your portal.");
           } else {
+            // Keep the portal useful while CMS collections/permissions are
+            // being repaired. The authenticated Wix member remains the source
+            // for basic identity fields; academy-specific data stays pending.
             setProfileMessage(
-              profileError instanceof Error
-                ? profileError.message
-                : "We couldn't retrieve your saved student profile.",
+              "Your Wix member details are available. Academy profile data is temporarily unavailable and will appear when the student records service is restored.",
             );
           }
         }
