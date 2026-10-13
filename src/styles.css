@@ -8759,7 +8759,7 @@ nav .navbook {
   min-height: 66px;
   margin: 0 0 17px;
   color: var(--muted);
-  font-size: 14px !important;
+  font-size: 18px !important;
   line-height: 1.5;
 }
 
@@ -8768,6 +8768,43 @@ nav .navbook {
   justify-content: center;
   padding: 11px 13px;
   font-size: 13px !important;
+}
+
+/* Desktop-only list on the Driving Lessons quick-link card. Keep compact layouts unchanged. */
+@media (min-width: 769px) {
+  .quickLinkLessonList {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 5px 14px;
+    margin: 0 0 17px;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .quickLinkLessonList li {
+    position: relative;
+    padding-left: 13px;
+  }
+
+  .quickLinkLessonList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.48em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+}
+
+@media (max-width: 768px) {
+  .quickLinkLessonList {
+    display: none;
+  }
 }
 
 @media (max-width: 1050px) {
@@ -8872,7 +8909,7 @@ nav .navbook {
 .homeStatsGrid span {
   margin-top: 10px;
   color: #eef1f5;
-  font-size: 14px;
+  font-size: 34px;
   font-weight: 700;
 }
 
@@ -9798,11 +9835,11 @@ nav .navbook {
 }
 
 .homeStatsGrid strong {
-  font-size: clamp(36px, 3.5vw, 52px);
+  font-size: 48px;
 }
 
 .homeStatsGrid span {
-  font-size: 17px;
+  font-size: 24px;
 }
 
 @media (max-width: 700px) {
@@ -10217,4 +10254,20 @@ nav .navbook {
 }
 .auth-password-toggle svg {
   display: block;
+}
+
+/* Desktop fixes: keep the full package grid stationary and enforce requested stats typography.
+   Mobile styles below 700px remain controlled by the existing responsive rules. */
+@media (min-width: 701px) {
+  .package-home-carousel .package-home-track {
+    transform: none !important;
+  }
+
+  .homeStats .homeStatsGrid > div > strong {
+    font-size: 48px !important;
+  }
+
+  .homeStats .homeStatsGrid > div > span {
+    font-size: 24px !important;
+  }
 }

@@ -120,7 +120,8 @@ export function Home() {
   const packageTouchStartX = useRef<number | null>(null);
 
   useEffect(() => {
-    if (packageInteracted || packages.length < 2) return;
+    // The desktop layout displays every package at once; only rotate the mobile carousel.
+    if (packageInteracted || packages.length < 2 || !window.matchMedia("(max-width: 700px)").matches) return;
     const timer = window.setInterval(() => {
       setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
     }, 3000);
@@ -331,7 +332,7 @@ export function Home() {
                 image: "/quick-links/driving-lessons.svg",
                 eyebrow: "Start learning",
                 title: "Driving Lessons",
-                text: "Manual and automatic lessons with qualified instructors.",
+                text: "",
                 label: "Learn more",
                 to: "/lessons",
               },
@@ -346,7 +347,7 @@ export function Home() {
               {
                 image: "/quick-links/learning-portal.svg",
                 eyebrow: "Keep progressing",
-                title: "Learning Portal",
+                title: "Get Ready For",
                 text: "Access theory support, mock tests and progress tracking.",
                 label: "Student login",
                 to: "/portal",
@@ -375,7 +376,42 @@ export function Home() {
                   <div className="quickLinkBody">
                     <span className="ey">{item.eyebrow}</span>
                     <h2>{item.title}</h2>
-                    <p>{item.text}</p>
+                    {/* <p>{item.text}</p> */}
+                    {item.title === "Driving Lessons" && (
+                      <ul className="quickLinkLessonList" aria-label="Driving lesson options">
+                        <li>Automatic / manual</li>
+                        {/* <li>Beginner</li> */}
+                        <li>Partly trained</li>
+                        <li>Refresher</li>
+                        <li>Full experience</li>
+                        {/* <li>Motorway training</li>
+                        <li>PDI and ADI training</li> */}
+                      </ul>
+                    )}
+                    {item.title ==="Get Ready For" && (
+                      <ul className="quickLinkLessonList" aria-label="Learning portal features">
+                        <li>Theory Test</li>
+                        <li>Practical Test</li>
+                        <li>ADI Training</li>
+                        <li>Progress tracking</li>
+                      </ul>
+                    )}
+                    {item.title ==="Government Info Links" && (
+                      <ul className="quickLinkLessonList" aria-label="Government information links">
+                        <li>DVLA</li>
+                        <li>Theory Test Booking</li>
+                        <li>Practical Exam</li>
+                        <li>Test Fees</li>
+                      </ul> 
+                    )}
+                    {item.title ==="Price & Packages" && (  
+                      <ul className="quickLinkLessonList" aria-label="Price and package options">
+                        <li>Standard Lessons </li>
+                        <li>Block Bookings</li>
+                        <li>Intensive Programs</li>
+                        <li>Test Preparation Lesson</li>
+                      </ul>
+                    )}
                     <Link className="btn light" to={item.to}>
                       {item.label}
                       <Icon n="arrow" />
@@ -408,8 +444,8 @@ export function Home() {
 
         <div className="homeStats">
           <div className="container homeStatsGrid">
-            <div><AnimatedStat target={1} /><span>Clear learning path</span></div>
-            <div><AnimatedStat target={3} /><span>Flexible lesson paths</span></div>
+            <div><AnimatedStat target={120} suffix="+" /><span>Successful Students</span></div>
+            <div><AnimatedStat target={15} suffix="+" /><span>Certified Instructors</span></div>
             <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
             <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
           </div>
