@@ -107,7 +107,8 @@ export function Packages() {
           center
           ey=""
           title="Straightforward pricing for every stage of learning."
-          text=""
+          text="Lessons are generally scheduled in 2-hour slots.
+          "
         />
 
         {loading && (
@@ -155,7 +156,7 @@ export function Packages() {
             <Heading
               ey="Additional services"
               title="More than standard lessons."
-              text="Service names, descriptions and prices below are loaded from Wix Bookings."
+              text=""
             />
           </div>
 
@@ -194,7 +195,7 @@ export function Packages() {
                 <Heading
                   ey="Test support"
                   title="Test preparation and test-day car hire."
-                  text="These services are managed as live Wix Bookings services and use their configured prices."
+                  text="Build confidence, improve your skills, and prepare for your practical test."
                 />
               </div>
 
