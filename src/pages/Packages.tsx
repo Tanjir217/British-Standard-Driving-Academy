@@ -16,7 +16,38 @@ function formatMoney(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
-function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
+function getDescriptionList(description: string) {
+  const normalized = description.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return { intro: "", items: [] as string[] };
+
+  const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
+  const sourceLines = lines.length > 1
+    ? lines
+    : (() => {
+        const colon = normalized.match(/^(.+?:)\s+(.+)$/);
+        const intro = colon?.[1] ?? "";
+        const remainder = colon?.[2] ?? normalized;
+        const sentences = remainder.match(/[^.!?]+[.!?]+(?:["')\]]*)|[^.!?]+$/g) ?? [remainder];
+        return intro ? [intro, ...sentences.map((sentence) => sentence.trim()).filter(Boolean)] : sentences.map((sentence) => sentence.trim()).filter(Boolean);
+      })();
+
+  const intro = sourceLines[0]?.endsWith(":") ? sourceLines[0] : "";
+  const items = (intro ? sourceLines.slice(1) : sourceLines)
+    .map((item) => item.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+  return { intro, items };
+}
+
+function ServiceCard({
+  service,
+  descriptionAsList = false,
+}: {
+  service: BookingServiceCatalogItem;
+  descriptionAsList?: boolean;
+}) {
+  const description = service.description?.trim() ?? "";
+  const descriptionList = descriptionAsList ? getDescriptionList(description) : null;
+
   return (
     <article className="servicecard">
       <div>
@@ -24,7 +55,20 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
           {formatMoney(service.priceMinor, service.currency)}
         </span>
         <h3>{service.name}</h3>
-        <p>{service.description || "Driving service available through BSDA."}</p>
+        {descriptionAsList && descriptionList ? (
+          <div className="servicecardDescription">
+            {descriptionList.intro && <p>{descriptionList.intro}</p>}
+            {descriptionList.items.length > 0 && (
+              <ul className="serviceDescriptionList">
+                {descriptionList.items.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p>{description || "Driving service available through BSDA."}</p>
+        )}
       </div>
       <Link className="textlink" to="/packages">
         View packages <span>→</span>
@@ -201,7 +245,7 @@ export function Packages() {
 
               <div className="servicegrid">
                 {testSupportServices.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
+                  <ServiceCard key={service.id} service={service} descriptionAsList />
                 ))}
               </div>
             </div>
