@@ -10558,18 +10558,28 @@ nav .navbook {
   }
 }
 
-/* Keep the desktop package cards consistent across wide viewport sizes. */
+/* Keep the package grid at a stable width on large desktop screens. */
 @media (min-width: 1200px) {
+  .page > .container:has(> .cards.pagecards) {
+    width: min(1600px, calc(100% - 80px));
+    max-width: none;
+  }
+
   .cards.pagecards {
-    width: 100%;
+    display: grid;
+    width: min(1180px, 100%);
     max-width: 1180px;
     margin-inline: auto;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: stretch;
+    gap: 24px;
   }
 
   .cards.pagecards > .card {
+    width: 100%;
     min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
   }
 }
 
