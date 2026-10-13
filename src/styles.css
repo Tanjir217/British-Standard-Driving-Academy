@@ -8759,7 +8759,7 @@ nav .navbook {
   min-height: 66px;
   margin: 0 0 17px;
   color: var(--muted);
-  font-size: 14px !important;
+  font-size: 18px !important;
   line-height: 1.5;
 }
 
@@ -8774,13 +8774,13 @@ nav .navbook {
 @media (min-width: 769px) {
   .quickLinkLessonList {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 5px 14px;
     margin: 0 0 17px;
     padding: 0;
     list-style: none;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 16px;
     line-height: 1.35;
   }
 
@@ -8909,7 +8909,7 @@ nav .navbook {
 .homeStatsGrid span {
   margin-top: 10px;
   color: #eef1f5;
-  font-size: 14px;
+  font-size: 34px;
   font-weight: 700;
 }
 
@@ -9839,7 +9839,7 @@ nav .navbook {
 }
 
 .homeStatsGrid span {
-  font-size: 17px;
+  font-size: 37px;
 }
 
 @media (max-width: 700px) {
