@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wix dev",
-    "build": "wix build",
+    "build": "astro build",
     "preview": "wix preview",
     "release": "wix release",
     "check": "astro check",
@@ -36,7 +36,6 @@
     "@wix/cli": "^1.1.258",
     "typescript": "^5.9.2",
     "vite": "^7.1.9",
-    "@wix/cli": "^1.1.247",
     "@astrojs/check": "^0.9.4"
   }
 }
