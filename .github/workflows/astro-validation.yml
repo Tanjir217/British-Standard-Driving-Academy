@@ -1,0 +1,48 @@
+name: Astro validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [astro-wix-backend-foundation]
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # A placeholder only for build-time integration initialization. It is not
+    # a production credential and is never used for Wix API requests.
+    env:
+      WIX_CLIENT_ID: "00000000-0000-0000-0000-000000000000"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Regenerate dependencies from package.json for validation
+        run: |
+          npm install --include=dev --ignore-scripts --no-audit --no-fund
+      - name: Commit regenerated lockfile
+        run: |
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "package-lock.json is already current"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "build: regenerate npm lockfile"
+            git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          fi
+      - name: Report installed integration versions
+        run: npm ls astro @wix/astro @wix/astro-pages @astrojs/react @wix/cloud-provider-fetch-adapter
+      - name: Astro type check
+        run: npm run check
+      - name: Wix-managed production build
+        run: npm run build

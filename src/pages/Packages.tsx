@@ -170,9 +170,9 @@ export function Packages() {
       <div className="container">
         <Heading
           center
-          ey="UK pricing"
+          ey=""
           title="Straightforward pricing for every stage of learning."
-          text="Live package and service pricing is loaded from BSDA's Wix booking and pricing-plan configuration."
+          text=""
         />
 
         {loading && (
