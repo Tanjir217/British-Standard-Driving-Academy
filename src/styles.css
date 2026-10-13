@@ -10255,3 +10255,19 @@ nav .navbook {
 .auth-password-toggle svg {
   display: block;
 }
+
+/* Desktop fixes: keep the full package grid stationary and enforce requested stats typography.
+   Mobile styles below 700px remain controlled by the existing responsive rules. */
+@media (min-width: 701px) {
+  .package-home-carousel .package-home-track {
+    transform: none !important;
+  }
+
+  .homeStats .homeStatsGrid > div > strong {
+    font-size: 48px !important;
+  }
+
+  .homeStats .homeStatsGrid > div > span {
+    font-size: 24px !important;
+  }
+}
