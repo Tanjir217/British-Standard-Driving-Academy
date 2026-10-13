@@ -15,29 +15,6 @@ import { bookingService } from "../services/bookings/bookingService";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 
-// const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
-//   "10-hour block booking": {
-//     eyebrow: "10 Hours",
-//     description: "A discounted block for learners who want consistent progress over a structured period.",
-//     features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-//     popular: true,
-//   },
-//   "20-hour block booking": {
-//     eyebrow: "20 Hours",
-//     description: "A larger discounted block for learners who want more consistent serious practice and continuity.",
-//     features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-//   },
-//   "10-hour intensive programme": {
-//     eyebrow: "10 Hours · Intensive",
-//     description: "A focused programme designed to complete 10 hours of training within a two-week period.",
-//     features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
-//   },
-//   "20-hour intensive programme": {
-//     eyebrow: "20 Hours · Intensive",
-//     description: "A focused programme designed to complete 20 hours of training within a three-week period.",
-//     features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
-//   },
-// };
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -155,7 +132,6 @@ export function Home() {
   }, []);
 
   const packageCards = packages.map(toPackageCard);
-
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 600px)").matches;
@@ -396,13 +372,10 @@ export function Home() {
                     {item.title === "Driving Lessons" && (
                       <ul className="quickLinkLessonList" aria-label="Driving lesson options">
                         <li>Automatic / manual</li>
-                        {/* <li>Beginner</li> */}
-                        <li>Partly trained</li>
+<li>Partly trained</li>
                         <li>Refresher</li>
                         <li>Full experience</li>
-                        {/* <li>Motorway training</li>
-                        <li>PDI and ADI training</li> */}
-                      </ul>
+</ul>
                     )}
                     {item.title ==="Get Ready For" && (
                       <ul className="quickLinkLessonList" aria-label="Learning portal features">
