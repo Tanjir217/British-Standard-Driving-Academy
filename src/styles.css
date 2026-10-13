@@ -10422,3 +10422,12 @@ nav .navbook {
     box-shadow: 0 0 70px rgba(17, 24, 39, 0.12);
   }
 }
+
+/* Center quick-link card headings on mobile without changing the mobile card layout. */
+@media (max-width: 600px) {
+  .quickLinkBody h2 {
+    width: 100%;
+    text-align: center;
+    align-self: stretch;
+  }
+}
