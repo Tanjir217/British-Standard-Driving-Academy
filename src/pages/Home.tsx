@@ -332,7 +332,7 @@ export function Home() {
                 image: "/quick-links/driving-lessons.svg",
                 eyebrow: "Start learning",
                 title: "Driving Lessons",
-                text: "",
+                text: "Every great driver starts somewhere. Start with us.",
                 label: "Learn more",
                 to: "/lessons",
               },
@@ -376,7 +376,7 @@ export function Home() {
                   <div className="quickLinkBody">
                     <span className="ey">{item.eyebrow}</span>
                     <h2>{item.title}</h2>
-                    {/* <p>{item.text}</p> */}
+                    <p>{item.text}</p>
                     {item.title === "Driving Lessons" && (
                       <ul className="quickLinkLessonList" aria-label="Driving lesson options">
                         <li>Automatic / manual</li>
