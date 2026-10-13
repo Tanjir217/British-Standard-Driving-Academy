@@ -6852,44 +6852,6 @@ nav .navbook:hover {
   left: 42%;
   animation: drive 3.5s linear infinite;
 }
-.cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-.card {
-  background: #fff;
-  border: 1px solid var(--line);
-  padding: 27px;
-  border-radius: 12px;
-  position: relative;
-  transition: 0.3s;
-}
-.card:hover {
-  transform: translateY(-7px);
-  box-shadow: var(--shadow);
-}
-.card.featured {
-  border-color: rgba(213, 31, 42, 0.5);
-  box-shadow: 0 18px 45px rgba(213, 31, 42, 0.08);
-}
-.cardey,
-.ribbon {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 1.8px;
-  color: var(--red);
-  font-weight: 800;
-}
-.card h3 {
-  font: 700 31px "Times New Roman";
-  margin: 6px 0;
-}
-.card > p {
-  font-size: 12px;
-  color: var(--muted);
-  min-height: 42px;
-}
 .price {
   font-size: 28px;
   font-weight: 800;
@@ -6900,22 +6862,6 @@ nav .navbook:hover {
   font-size: 9px;
   color: var(--muted);
   font-weight: 500;
-}
-.card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 22px;
-}
-.card li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 0;
-  color: #4e5665;
-  font-size: 11px;
-}
-.card li svg {
-  color: var(--red);
 }
 .ribbon {
   position: absolute;
