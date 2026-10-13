@@ -22,7 +22,7 @@ export function PackageCard({ p, full = false }: { p: P; full?: boolean }) {
       </div>
       {p.features.length > 0 && (
         <ul>
-          {(full ? p.features : p.features.slice(0, 3)).map((f) => (
+          {p.features.map((f) => (
             <li key={f}>
               <Icon n="check" s={15} />
               {f}
