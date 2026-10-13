@@ -476,7 +476,7 @@ nav .navbook:hover {
 }
 .section,
 .page {
-  padding: 100px 0;
+  padding: 20px 0;
 }
 .soft {
   background: #f5f1e9;
@@ -512,7 +512,7 @@ nav .navbook:hover {
 }
 .heading.center {
   text-align: center;
-  margin: 0 auto;
+  margin: 0 auto 40px auto;
 }
 .heading h2 {
   font: 700 clamp(36px, 4.3vw, 58px)/1.04 "Times New Roman";
@@ -6586,10 +6586,10 @@ nav .navbook:hover {
   background: var(--red);
   animation: growBar 1.2s 0.9s both;
 }
-.section,
+/* .section,
 .page {
-  padding: 100px 0;
-}
+  padding: 40px 0;
+} */
 .soft {
   background: #f5f1e9;
 }
@@ -6622,10 +6622,10 @@ nav .navbook:hover {
 .heading {
   max-width: 700px;
 }
-.heading.center {
+/* .heading.center {
   text-align: center;
   margin: 0 auto;
-}
+} */
 .heading h2 {
   font: 700 clamp(36px, 4.3vw, 58px)/1.04 "Times New Roman";
   letter-spacing: -2px;
@@ -9732,11 +9732,11 @@ nav .navbook {
   gap: 20px;
 }
 
-.section,
+/* .section,
 .page {
-  padding-top: 108px;
-  padding-bottom: 108px;
-}
+  padding-top: 10px;
+  padding-bottom: 10px;
+} */
 
 .heading p {
   font-size: 16px !important;
@@ -10114,11 +10114,11 @@ nav .navbook {
   align-items: start;
 }
 
-.section,
+/* .section,
 .page {
-  padding-top: 64px;
-  padding-bottom: 64px;
-}
+  padding-top: 10px;
+  padding-bottom: 10px;
+} */
 
 @media (max-width: 560px) {
   .hero {
