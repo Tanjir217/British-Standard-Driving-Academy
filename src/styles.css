@@ -8750,6 +8750,7 @@ nav .navbook {
 }
 
 .quickLinkBody h2 {
+  text-align: left;
   margin: 7px 0 8px;
   color: var(--navy);
   font: 700 23px/1.08 "Times New Roman", Times, serif;
@@ -9921,7 +9922,8 @@ nav .navbook {
   }
 
   .quickLinkBody h2 {
-    margin: 0 0 5px;
+    text-align: left;
+    margin: 20px 0 0 0;
     font-size: clamp(16px, 4.2vw, 19px);
     line-height: 1.12;
     overflow-wrap: anywhere;
@@ -9937,7 +9939,7 @@ nav .navbook {
   .quickLinkBody .btn {
     width: auto;
     min-height: 30px;
-    margin-top: auto;
+    margin-top: 20px;
     justify-content: center;
     gap: 6px;
     padding: 6px 10px;
@@ -10427,7 +10429,7 @@ nav .navbook {
 @media (max-width: 600px) {
   .quickLinkBody h2 {
     width: 100%;
-    text-align: center;
+    /* text-align: center; */
     align-self: stretch;
   }
 }
