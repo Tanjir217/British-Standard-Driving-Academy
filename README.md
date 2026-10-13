@@ -1,50 +1,74 @@
-# British Standard Driving Academy
+# British Standard Driving Academy (BSDA)
 
-A multi-page React + Vite demo website for British Standard Driving Academy.
+BSDA is the existing multi-page driving academy application. The `main` branch remains the recovery baseline; the `astro-wix-backend-foundation` branch introduces a controlled migration to Astro + React with Wix-managed Headless capabilities.
 
 ## Architecture
-- React 19 + TypeScript
-- Vite
-- React Router
-- Route-based multi-page experience
-- Restrained navy, red, cream and white palette
-- No neon colors
-- Responsive navigation and layouts
-- Demo booking/inquiry flow
-- Demo package selection + payment-method hand-off
-- Demo Learning Portal login/dashboard
-- FAQ accordion
-- Homepage social-feed module
-- CSS road/car motion and video showcase fallback
 
-## Routes
-- / — Home
-- /booking — Booking & Inquiry
-- /packages — Package & Price
-- /lessons — Driving Lesson
-- /portal — Learning Portal
-- /faq — FAQ
+- Astro with the official Wix Astro integration (dependency versions must match the published Wix package peer requirements), Wix page registry, and Wix fetch adapter.
+- React 18.3.1 + TypeScript + React Router (required by the pinned Wix Astro integration) for the existing interactive page experience.
+- Wix Members for identity, Wix CMS for academy-specific student/lesson data, Wix Bookings for live services/availability/bookings, and Wix Pricing Plans for commercial plans.
+- Protected server endpoints under `src/pages/api/`; private CMS operations are not performed directly by browser code.
+- Existing navy, red, cream, and white design system and current React page components remain the presentation source of truth.
 
-## Development
+## Existing routes
+
+- `/` — Home
+- `/booking` — Booking
+- `/packages` — Packages and pricing
+- `/lessons` — Driving lessons
+- `/instructors` and `/instructors/:instructorId` — Instructor directory/details
+- `/portal` — Student portal
+- `/login` and `/auth/callback` — Legacy login flow retained during migration
+- `/faq` — FAQ
+- `/admin` — Protected staff dashboard
+
+## Development commands
+
+Install dependencies:
+
+```bash
 npm install
+```
+
+Wix CLI development (requires the supported project binding and an authenticated Wix CLI session):
+
+```bash
 npm run dev
+npm run check
 npm run build
+npm run preview
+```
 
-## Production integrations to add later
-1. Real payment gateway for Bank Transfer / Pay by Bank
-2. Booking/calendar availability
-3. CRM + inquiry notifications
-4. Authenticated student portal
-5. Real theory/practical learning content
-6. Live Facebook/Instagram feed
-7. Final BSDA logo asset and production photography/video
-8. Analytics, Meta Pixel/CAPI and conversion events
+Astro-only local diagnostics:
 
-## Branching rule
-The initial demo is committed directly to main as requested. Future feature work should be developed on separate branches and merged into main only after testing.
+```bash
+npm run dev:astro
+npm run build:astro
+npm run preview:astro
+```
 
-## BSDA backend development rule
+Do not run `wix headless link` or any release command until the Wix site binding has been checked. The current repository has an existing `wix.config.json`, and the site ID must be reconciled with the intended `bsda.online` site first.
 
-The Wix site editor is unavailable for this project; development work must be done from the repository. Wix-hosted HTTP Functions source is maintained at `src/backend/http-functions.js`, with a mirrored copy at `wix-site-backend/backend/http-functions.js`. Do not add Vercel backend routes or expose privileged CMS operations in the frontend.
+## Endpoint source files added in the migration branch
 
-See [BSDA local-first Wix backend workflow](docs/BSDA-LOCAL-FIRST-WIX-BACKEND.md) for deployment and verification requirements for both `localhost:5173` and `https://bsda.online`.
+- `GET /api/students/profile` — current member's profile or a structured missing-profile state.
+- `POST /api/students/profile` — idempotent profile provisioning for the authenticated member.
+- `PATCH /api/students/profile` — ownership-checked updates to allowed profile fields.
+- `GET /api/admin/authorization` — fail-closed approved-staff authorization.
+- `GET /api/admin/students`, `PATCH /api/admin/students` — protected student list and limited updates.
+- `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons` — protected lesson record operations.
+- `GET /api/admin/bookings` — protected Wix Bookings list.
+- `GET /api/bookings/availability` — current Wix Bookings availability.
+- `POST /api/bookings` — rechecks the selected slot and asks Wix Bookings to create the booking.
+
+These are code paths added for validation, not a claim that they have been deployed or tested against the production CMS schema.
+
+## Important release gates
+
+1. Confirm that the repository's Wix site ID and app ID point to the intended existing site for `bsda.online`.
+2. Confirm the actual collection IDs, field keys, permissions, and uniqueness strategy for `StudentProfiles`, `AdminStaffAccess`, and `LessonRecords`.
+3. Regenerate `package-lock.json` by running `npm install` after the new dependencies are added.
+4. Verify managed login/session behavior, CMS reads/writes, booking creation, and authorization against a non-production Wix project.
+5. Add verified Wix owner/collaborator authorization; the current admin endpoint only authorizes explicitly approved site-member staff.
+6. Run type checks, build, route tests, security tests, and preview integration tests.
+7. Obtain explicit approval before merging to `main` or releasing to `bsda.online`.
