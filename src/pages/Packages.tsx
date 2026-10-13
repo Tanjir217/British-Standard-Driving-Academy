@@ -16,68 +16,6 @@ function formatMoney(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
-const packageCopy: Record<
-  string,
-  { eyebrow: string; description: string; features: string[]; popular?: boolean }
-> = {
-  "10-hour block booking": {
-    eyebrow: "10 Hours",
-    description:
-      "A discounted block booking for learners who want consistent progress over a structured period.",
-    features: [
-      "10 driving lessons",
-      "Complete within 1 month",
-      "Progress-focused tuition",
-    ],
-    popular: true,
-  },
-  "20-hour block booking": {
-    eyebrow: "20 Hours",
-    description:
-      "A larger discounted block for learners who want more practice and continuity.",
-    features: [
-      "20 driving lessons",
-      "Complete within 1 month",
-      "Progress-focused tuition",
-    ],
-  },
-  "10-hour intensive programme": {
-    eyebrow: "10 Hours · Intensive",
-    description:
-      "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: [
-      "10 driving lessons",
-      "Complete within 2 weeks",
-      "Intensive training structure",
-    ],
-  },
-  "20-hour intensive programme": {
-    eyebrow: "20 Hours · Intensive",
-    description:
-      "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: [
-      "20 driving lessons",
-      "Complete within 3 weeks",
-      "Intensive training structure",
-    ],
-  },
-};
-
-function getPackageCopy(plan: Package) {
-  const copy = packageCopy[plan.name.trim().toLowerCase()];
-  return {
-    eyebrow: copy?.eyebrow ?? `${plan.lessonHours} Hours`,
-    description:
-      copy?.description ??
-      "A structured BSDA driving programme managed through our booking and pricing system.",
-    features:
-      plan.features.length > 0
-        ? plan.features
-        : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
-    popular: copy?.popular,
-  };
-}
-
 function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
   return (
     <article className="servicecard">
@@ -144,17 +82,13 @@ export function Packages() {
     };
   }, []);
 
-  const packageCards = packageData.map((plan) => {
-    const copy = getPackageCopy(plan);
-    return {
-      ...plan,
-      price: formatMoney(plan.priceMinor, plan.currency),
-      eyebrow: copy.eyebrow,
-      description: copy.description,
-      features: copy.features,
-      popular: copy.popular,
-    };
-  });
+  const packageCards = packageData.map((plan) => ({
+    ...plan,
+    price: formatMoney(plan.priceMinor, plan.currency),
+    eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
+    description: plan.description,
+    features: plan.features,
+  }));
 
   const standardServices = serviceData.filter(
     (service) =>

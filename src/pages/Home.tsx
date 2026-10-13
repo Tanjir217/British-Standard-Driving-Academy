@@ -11,32 +11,33 @@ import { VideoEmbed } from "../components/VideoEmbed";
 import { getSiteContent } from "../services/siteContentService";
 import { lessons, instructors } from "../data/site";
 import { packageService } from "../services/packages/packageService";
+import { bookingService } from "../services/bookings/bookingService";
+import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 
-const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
-  "10-hour block booking": {
-    eyebrow: "10 Hours",
-    description: "A discounted block for learners who want consistent progress over a structured period.",
-    features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-    popular: true,
-  },
-  "20-hour block booking": {
-    eyebrow: "20 Hours",
-    description: "A larger discounted block for learners who want more consistent serious practice and continuity.",
-    features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-  },
-  "10-hour intensive programme": {
-    eyebrow: "10 Hours · Intensive",
-    description: "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
-  },
-  "20-hour intensive programme": {
-    eyebrow: "20 Hours · Intensive",
-    description: "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
-  },
-};
-
+// const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
+//   "10-hour block booking": {
+//     eyebrow: "10 Hours",
+//     description: "A discounted block for learners who want consistent progress over a structured period.",
+//     features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
+//     popular: true,
+//   },
+//   "20-hour block booking": {
+//     eyebrow: "20 Hours",
+//     description: "A larger discounted block for learners who want more consistent serious practice and continuity.",
+//     features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
+//   },
+//   "10-hour intensive programme": {
+//     eyebrow: "10 Hours · Intensive",
+//     description: "A focused programme designed to complete 10 hours of training within a two-week period.",
+//     features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
+//   },
+//   "20-hour intensive programme": {
+//     eyebrow: "20 Hours · Intensive",
+//     description: "A focused programme designed to complete 20 hours of training within a three-week period.",
+//     features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
+//   },
+// };
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -46,15 +47,13 @@ function formatMoney(amountMinor: number, currency: string) {
 }
 
 function toPackageCard(plan: Package) {
-  const copy = packageCopy[plan.name.trim().toLowerCase()];
   return {
     id: plan.id,
     name: plan.name,
     price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow: copy?.eyebrow ?? (plan.lessonHours ? `${plan.lessonHours} Hours` : "Driving Programme"),
-    description: copy?.description ?? "A structured BSDA driving programme managed through our booking and pricing system.",
-    features: plan.features.length > 0 ? plan.features : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
-    popular: copy?.popular,
+    eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
+    description: plan.description,
+    features: plan.features,
   };
 }
 
@@ -110,6 +109,9 @@ export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const [reelsInteracted, setReelsInteracted] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
+  const [bookingServices, setBookingServices] = useState<BookingServiceCatalogItem[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
@@ -130,9 +132,23 @@ export function Home() {
 
   useEffect(() => {
     let active = true;
-    packageService.list().then((result) => {
-      if (active && result.ok) setPackages(result.data);
-    });
+    Promise.all([packageService.list(), bookingService.listServices()])
+      .then(([packageResult, serviceResult]) => {
+        if (!active) return;
+        if (packageResult.ok) setPackages(packageResult.data);
+        if (serviceResult.ok) {
+          setBookingServices(serviceResult.data);
+          setServicesError("");
+        } else {
+          setServicesError(serviceResult.error.message);
+        }
+      })
+      .catch((error) => {
+        if (active) setServicesError(error instanceof Error ? error.message : "Unable to load services.");
+      })
+      .finally(() => {
+        if (active) setServicesLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -509,6 +525,45 @@ export function Home() {
                 />
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section homeLiveServices">
+        <div className="container">
+          <div className="sectionIntro">
+            <Heading center ey="Wix Bookings services" title="Explore available driving services." text="Service names, descriptions and prices are loaded from the live Wix Bookings catalogue." />
+          </div>
+          {servicesLoading && <p role="status">Loading current driving services…</p>}
+          {!servicesLoading && servicesError && (
+            <div className="paystrip" role="alert"><div>
+              <span className="ey">Services unavailable</span>
+              <h3>We couldn't load the current driving services.</h3>
+              <p>{servicesError}</p>
+            </div></div>
+          )}
+          {!servicesLoading && !servicesError && bookingServices.length === 0 && (
+            <div className="paystrip"><div>
+              <span className="ey">No services available</span>
+              <h3>There are currently no public appointment services.</h3>
+            </div></div>
+          )}
+          {!servicesLoading && !servicesError && bookingServices.length > 0 && (
+            <div className="servicegrid">
+              {bookingServices.map((service) => (
+                <article className="servicecard" key={service.id}>
+                  <div>
+                    <span className="cardey">{formatMoney(service.priceMinor, service.currency)}</span>
+                    <h3>{service.name}</h3>
+                    {service.description?.trim() && <p>{service.description}</p>}
+                  </div>
+                  <Link className="textlink" to="/booking">Check availability <Icon n="arrow" s={15} /></Link>
+                </article>
+              ))}
+            </div>
+          )}
+          <div className="actions" style={{ justifyContent: "center", marginTop: 28 }}>
+            <Link className="btn light" to="/packages">View all packages and services <Icon n="arrow" /></Link>
           </div>
         </div>
       </section>
