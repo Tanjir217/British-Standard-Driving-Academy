@@ -2774,6 +2774,31 @@ textarea {
   margin: 0;
 }
 
+/* Only the Packages page test-support service cards render descriptions as lists. */
+.servicecardDescription {
+  margin-top: 8px;
+}
+
+.servicecard .servicecardDescription p {
+  margin: 0 0 8px;
+}
+
+.servicecard .serviceDescriptionList {
+  list-style: disc;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.servicecard .serviceDescriptionList li {
+  margin: 0 0 7px;
+  line-height: 1.55;
+}
+
+.servicecard .serviceDescriptionList li:last-child {
+  margin-bottom: 0;
+}
+
 @media (max-width: 980px) {
   .servicegrid {
     grid-template-columns: repeat(2, 1fr);
