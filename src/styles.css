@@ -10534,3 +10534,27 @@ nav .navbook {
     align-self: stretch;
   }
 }
+
+/* Wide-screen reels: size cards so exactly four fit in the viewport. */
+@media (min-width: 1400px) {
+  .socialReels .container {
+    width: min(1600px, calc(100% - 80px));
+    max-width: none;
+  }
+
+  .socialReelsViewport {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .socialReelsGrid {
+    gap: 18px;
+    width: max-content;
+  }
+
+  .socialReelCard {
+    flex: 0 0 calc((min(1600px, 100vw - 80px) - 54px) / 4);
+    min-width: 0;
+  }
+}
+
