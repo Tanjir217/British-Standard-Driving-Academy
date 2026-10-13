@@ -12,7 +12,13 @@ import { Portal } from "./pages/Portal";
 import { Login } from "./pages/Login";
 import { AuthCallback } from "./pages/AuthCallback";
 import { FAQ } from "./pages/FAQ";
+import { About } from "./pages/About";
+import { Contact } from "./pages/Contact";
+import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { NotFound } from "./pages/NotFound";
+import { AdminGate } from "./pages/AdminGate";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 
 function Scroll() {
@@ -26,8 +32,29 @@ function Scroll() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const query = new URLSearchParams(search);
+  const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
+  const wixAuthRoute = pathname === "/" ? query.get("bsdaAuth") : null;
+
+  // Wix static hosting may return 404 for deep SPA routes. OAuth/member
+  // callbacks therefore return through the root document with a query marker.
+  if (wixAdminRoute === "login") return <AdminLogin />;
+  if (wixAdminRoute === "dashboard") return <AdminGate />;
+  if (wixAdminRoute === "auth-callback" || wixAuthRoute === "callback") return <AuthCallback />;
   const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  // Keep admin routes outside the public site layout and always enforce the
+  // Wix-backed admin gate. The login page is the only unauthenticated admin route.
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<AdminGate />} />
+      </Routes>
+    );
+  }
 
   if (isAuthRoute) {
     return (
@@ -52,6 +79,9 @@ function AppRoutes() {
         />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteLayout>

@@ -1,0 +1,20 @@
+{
+  "preview": {
+    "id": "eac40d7b-79fc-4dd7-a95c-2e24b424daeb",
+    "site": {
+      "main": "https://lkne6t-british-standard-dri-bsdaonline-140a.wix-site-host.com"
+    },
+    "dashboard": {
+      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=eac40d7b-79fc-4dd7-a95c-2e24b424daeb"
+    }
+  },
+  "production": {
+    "id": "de4745fb-035a-4397-af52-494ad83eea44",
+    "site": {
+      "main": "https://7jgb4q-british-standard-dri-bsdaonline-140a.wix-site-host.com"
+    },
+    "dashboard": {
+      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=de4745fb-035a-4397-af52-494ad83eea44"
+    }
+  }
+}
