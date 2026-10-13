@@ -444,8 +444,8 @@ export function Home() {
 
         <div className="homeStats">
           <div className="container homeStatsGrid">
-            <div><AnimatedStat target={1} /><span>Clear learning path</span></div>
-            <div><AnimatedStat target={3} /><span>Flexible lesson paths</span></div>
+            <div><AnimatedStat target={120} suffix="+" /><span>Successful Students</span></div>
+            <div><AnimatedStat target={15} suffix="+" /><span>Certified Instructors</span></div>
             <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
             <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
           </div>
