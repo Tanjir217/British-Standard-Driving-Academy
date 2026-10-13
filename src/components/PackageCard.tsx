@@ -15,19 +15,21 @@ export function PackageCard({ p, full = false }: { p: P; full?: boolean }) {
       {full && p.popular && <span className="ribbon">Most popular</span>}
       <span className="cardey">{p.eyebrow}</span>
       <h3>{p.name}</h3>
-      <p>{p.description}</p>
+      {p.description?.trim() && <p>{p.description}</p>}
       <div className="price">
         {p.price}
         <small>/ package</small>
       </div>
-      <ul>
-        {(full ? p.features : p.features.slice(0, 3)).map((f) => (
-          <li key={f}>
-            <Icon n="check" s={15} />
-            {f}
-          </li>
-        ))}
-      </ul>
+      {p.features.length > 0 && (
+        <ul>
+          {(full ? p.features : p.features.slice(0, 3)).map((f) => (
+            <li key={f}>
+              <Icon n="check" s={15} />
+              {f}
+            </li>
+          ))}
+        </ul>
+      )}
       {full ? (
         <Link className="btn red full" to={"/booking?package=" + p.id}>
           Select & continue <Icon n="arrow" />
