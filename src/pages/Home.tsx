@@ -16,13 +16,13 @@ import type { Package } from "../services/domain/types";
 const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
   "10-hour block booking": {
     eyebrow: "10 Hours",
-    description: "A discounted block booking for learners who want consistent progress over a structured period.",
+    description: "A discounted block for learners who want consistent progress over a structured period.",
     features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
     popular: true,
   },
   "20-hour block booking": {
     eyebrow: "20 Hours",
-    description: "A larger discounted block for learners who want more practice and continuity.",
+    description: "A larger discounted block for learners who want more consistent serious practice and continuity.",
     features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
   },
   "10-hour intensive programme": {
