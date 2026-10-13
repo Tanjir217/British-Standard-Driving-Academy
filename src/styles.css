@@ -772,11 +772,10 @@ nav .navbook:hover {
 }
 .card li {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 7px;
   padding: 6px 0;
   color: #4e5665;
-  font-size: 11px;
 }
 .card li svg {
   color: var(--red);

@@ -9,12 +9,12 @@
     }
   },
   "production": {
-    "id": "a951bc92-e292-478f-8bbf-b285764f439a",
+    "id": "0a768aa9-8b96-4ede-adcf-33a7517e64ff",
     "site": {
-      "main": "https://1ocmef-british-standard-dri-bsdaonline-140a.wix-site-host.com"
+      "main": "https://laogo4-british-standard-dri-bsdaonline-140a.wix-site-host.com"
     },
     "dashboard": {
-      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=a951bc92-e292-478f-8bbf-b285764f439a"
+      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=0a768aa9-8b96-4ede-adcf-33a7517e64ff"
     }
   }
 }

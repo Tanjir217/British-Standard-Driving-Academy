@@ -239,7 +239,7 @@ export function Packages() {
                 <Heading
                   ey="Test support"
                   title="Test preparation and test-day car hire."
-                  text="Build confidence, improve your skills, and prepare for your practical test."
+                  text="Build confidence, improve your skills, and prepare for your practical test. All test-day car hire is subject to eligibility, instructor approval, and availability."
                 />
               </div>
 
