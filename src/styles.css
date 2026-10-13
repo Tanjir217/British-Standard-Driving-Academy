@@ -10271,3 +10271,24 @@ nav .navbook {
     font-size: 24px !important;
   }
 }
+
+/* Packages page: enforce the same four-column desktop layout as the homepage.
+   This higher-specificity rule overrides later duplicate global .cards rules. */
+.cards.pagecards {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+@media (max-width: 980px) {
+  .cards.pagecards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .cards.pagecards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
