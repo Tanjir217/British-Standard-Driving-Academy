@@ -11,6 +11,9 @@ import { Portal } from "../pages/Portal";
 import { Login } from "../pages/Login";
 import { AuthCallback } from "../pages/AuthCallback";
 import { FAQ } from "../pages/FAQ";
+import { About } from "../pages/About";
+import { Contact } from "../pages/Contact";
+import { JoinOurTeam } from "../pages/JoinOurTeam";
 import { NotFound } from "../pages/NotFound";
 import { AdminDashboard } from "../pages/AdminDashboard";
 import "../styles.css";
@@ -71,6 +74,9 @@ function AppRoutes() {
         <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteLayout>
