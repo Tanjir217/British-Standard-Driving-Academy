@@ -26,8 +26,20 @@ function ScrollToTop() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation();
-  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const { pathname, search } = useLocation();
+  const query = new URLSearchParams(search);
+
+  // Wix OAuth redirects to the root document with this query marker because
+  // some Wix-hosted setups do not resolve SPA deep links as server routes.
+  // The root URL must render AuthCallback before Home so the authorization
+  // code is exchanged and the member is navigated to the saved return path.
+  const isRootAuthCallback =
+    pathname === "/" && query.get("bsdaAuth") === "callback";
+  if (isRootAuthCallback || pathname === "/auth/callback") {
+    return <AuthCallback />;
+  }
+
+  const isAuthRoute = pathname === "/login";
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
   if (isAdminRoute) {
@@ -43,7 +55,6 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     );
