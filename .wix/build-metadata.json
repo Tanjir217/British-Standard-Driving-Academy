@@ -1,0 +1,9 @@
+{
+  "appManifestPath": "C:\\Users\\SHAWAL\\British-Standard-Driving-Academy\\dist\\_wix\\app-manifest.json",
+  "clientDir": "C:\\Users\\SHAWAL\\British-Standard-Driving-Academy\\dist\\client\\",
+  "extensionsTopology": [],
+  "outDir": "C:\\Users\\SHAWAL\\British-Standard-Driving-Academy\\dist\\",
+  "serverDir": "C:\\Users\\SHAWAL\\British-Standard-Driving-Academy\\dist\\server\\",
+  "serverUrlPlaceholder": "http://_wix_server_url_placeholder_",
+  "staticsUrlPlaceholder": "http://_wix_statics_url_placeholder_"
+}

@@ -135,7 +135,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading ey="The BSDA journey" title="From first controls to confident road decisions." text="The experience is designed around progression. You always know what you are learning, why it matters and what comes next." />
-            <span className="sectionNumber">01</span>
           </div>
           <div className="journeygrid">
             {[
@@ -169,7 +168,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
-            <span className="sectionNumber">02</span>
           </div>
           <div className="cards package-home-grid">
             {packageCards.map((p, i) => (
@@ -197,7 +195,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
-            <span className="sectionNumber lightNumber">03</span>
           </div>
           <div className="lessoncards">
             {lessons.map((l, i) => (
@@ -212,7 +209,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
-            <span className="sectionNumber">04</span>
           </div>
           <Reveal><VideoShowcase /></Reveal>
         </div>
@@ -222,7 +218,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading ey="Meet the instructors" title="The right coach can change the whole learning experience." text="Choose by teaching style, specialty and the kind of support you want from lesson one." />
-            <span className="sectionNumber">05</span>
           </div>
           <div className="instructorgrid preview">
             {instructors.slice(0, 3).map((instructor, i) => (

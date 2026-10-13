@@ -1,29 +1,20 @@
 {
   "preview": {
-<<<<<<< HEAD
-    "id": "c4b4b769-cbb9-4649-b986-615158e95802",
+    "id": "bdf5bc42-a328-46ec-b64a-d74bf3d7d50c",
     "site": {
-      "main": "https://nyjfhq-british-standard-dri-bsdaonline-140a.wix-site-host.com"
+      "main": "https://drjj9d-british-standard-dri-bsdaonline-140a.wix-site-host.com"
     },
     "dashboard": {
-      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=c4b4b769-cbb9-4649-b986-615158e95802"
-=======
-    "id": "eac40d7b-79fc-4dd7-a95c-2e24b424daeb",
-    "site": {
-      "main": "https://lkne6t-british-standard-dri-bsdaonline-140a.wix-site-host.com"
-    },
-    "dashboard": {
-      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=eac40d7b-79fc-4dd7-a95c-2e24b424daeb"
->>>>>>> 8f0df225337c1c69e16a0dcdc80c741515f98c3a
+      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=bdf5bc42-a328-46ec-b64a-d74bf3d7d50c"
     }
   },
   "production": {
-    "id": "687eebbd-6aba-4802-b00d-4c63e3e02a5c",
+    "id": "a951bc92-e292-478f-8bbf-b285764f439a",
     "site": {
-      "main": "https://zhs2yc-british-standard-dri-bsdaonline-140a.wix-site-host.com"
+      "main": "https://1ocmef-british-standard-dri-bsdaonline-140a.wix-site-host.com"
     },
     "dashboard": {
-      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=687eebbd-6aba-4802-b00d-4c63e3e02a5c"
+      "main": "https://manage.wix.com/dashboard/30f45408-24b5-43d7-adc4-d299da97466b?apps-override=a951bc92-e292-478f-8bbf-b285764f439a"
     }
   }
 }

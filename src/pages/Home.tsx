@@ -464,7 +464,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
-            <span className="sectionNumber">02</span>
           </div>
           <div
             className="cards package-home-grid package-home-carousel"
@@ -518,7 +517,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
-            <span className="sectionNumber">04</span>
           </div>
           <Reveal><VideoShowcase /></Reveal>
         </div>
@@ -528,7 +526,6 @@ export function Home() {
         <div className="container">
           <div className="sectionIntro">
             <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
-            <span className="sectionNumber lightNumber">03</span>
           </div>
           <div className="lessonMobileCarousel">
             <div className="lessonMobileViewport">
@@ -559,7 +556,6 @@ export function Home() {
               title="Building better drivers for life."
               text="Our mission and vision shape every lesson, from the first control to confident everyday driving."
             />
-            <span className="sectionNumber">04</span>
           </div>
 
           <div className="missionVisionGrid">
@@ -599,7 +595,6 @@ export function Home() {
               title="See BSDA in motion."
               text="Short tips, road moments and learner-focused content from our social channels."
             />
-            <span className="sectionNumber">04</span>
           </div>
 
           <div
