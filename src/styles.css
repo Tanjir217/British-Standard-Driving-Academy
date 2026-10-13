@@ -10587,11 +10587,12 @@ nav .navbook {
 .footerSocial {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 16px;
   padding-top: 22px;
+  padding-bottom: 22px;
   color: #c8cfdb;
-  font-size: 11px;
+  font-size: 22px;
 }
 
 .footerSocialLinks {
@@ -10601,8 +10602,8 @@ nav .navbook {
 }
 
 .footerSocialLinks a {
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
   display: inline-grid;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, .25);
@@ -10625,9 +10626,16 @@ nav .navbook {
 
 @media (max-width: 600px) {
   .footerSocial {
-    justify-content: center;
+    justify-content: start;
+    /* font-size: 14px; */
     flex-wrap: wrap;
     padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .footerSocialLinks a {
+    gap: 8px;
+    width:30px;
+    height:30px;
   }
 }
 
