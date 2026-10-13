@@ -1,3 +1,22 @@
+export const lessons = [
+  [
+    "Beginner Driving",
+    "Controls, steering, moving off, stopping, junctions and confident road positioning.",
+  ],
+  [
+    "City & Traffic",
+    "Urban traffic judgement, lane discipline, signals, parking and defensive driving.",
+  ],
+  [
+    "Highway Confidence",
+    "Higher-speed road awareness, merging, overtaking and safe following distances.",
+  ],
+  [
+    "Test Preparation",
+    "Theory-test support, mock practicals, common faults and final-day confidence.",
+  ],
+] as const;
+
 export const instructors = [
   {
     id: "samir",
