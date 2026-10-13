@@ -6,6 +6,7 @@ import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
+import "../package-page-grid.css";
 
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
