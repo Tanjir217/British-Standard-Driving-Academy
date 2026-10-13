@@ -120,7 +120,8 @@ export function Home() {
   const packageTouchStartX = useRef<number | null>(null);
 
   useEffect(() => {
-    if (packageInteracted || packages.length < 2) return;
+    // The desktop layout displays every package at once; only rotate the mobile carousel.
+    if (packageInteracted || packages.length < 2 || !window.matchMedia("(max-width: 700px)").matches) return;
     const timer = window.setInterval(() => {
       setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
     }, 3000);
