@@ -10292,3 +10292,36 @@ nav .navbook {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Packages page: keep the primary action buttons uniform and prevent label wrapping. */
+.cards.pagecards .card > .btn.full {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  font-size: 13px !important;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.cards.pagecards .card > .btn.full > svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 1200px) and (min-width: 981px) {
+  .cards.pagecards .card > .btn.full {
+    gap: 5px;
+    padding-inline: 7px;
+    font-size: 12px !important;
+  }
+}
