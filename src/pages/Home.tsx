@@ -529,45 +529,6 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section homeLiveServices">
-        <div className="container">
-          <div className="sectionIntro">
-            <Heading center ey="Wix Bookings services" title="Explore available driving services." text="Service names, descriptions and prices are loaded from the live Wix Bookings catalogue." />
-          </div>
-          {servicesLoading && <p role="status">Loading current driving services…</p>}
-          {!servicesLoading && servicesError && (
-            <div className="paystrip" role="alert"><div>
-              <span className="ey">Services unavailable</span>
-              <h3>We couldn't load the current driving services.</h3>
-              <p>{servicesError}</p>
-            </div></div>
-          )}
-          {!servicesLoading && !servicesError && bookingServices.length === 0 && (
-            <div className="paystrip"><div>
-              <span className="ey">No services available</span>
-              <h3>There are currently no public appointment services.</h3>
-            </div></div>
-          )}
-          {!servicesLoading && !servicesError && bookingServices.length > 0 && (
-            <div className="servicegrid">
-              {bookingServices.map((service) => (
-                <article className="servicecard" key={service.id}>
-                  <div>
-                    <span className="cardey">{formatMoney(service.priceMinor, service.currency)}</span>
-                    <h3>{service.name}</h3>
-                    {service.description?.trim() && <p>{service.description}</p>}
-                  </div>
-                  <Link className="textlink" to="/booking">Check availability <Icon n="arrow" s={15} /></Link>
-                </article>
-              ))}
-            </div>
-          )}
-          <div className="actions" style={{ justifyContent: "center", marginTop: 28 }}>
-            <Link className="btn light" to="/packages">View all packages and services <Icon n="arrow" /></Link>
-          </div>
-        </div>
-      </section>
-
       <section className="section videoSection">
         <div className="container">
           <div className="sectionIntro">
