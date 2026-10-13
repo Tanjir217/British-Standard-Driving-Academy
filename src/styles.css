@@ -9835,11 +9835,11 @@ nav .navbook {
 }
 
 .homeStatsGrid strong {
-  font-size: clamp(36px, 3.5vw, 52px);
+  font-size: 48px;
 }
 
 .homeStatsGrid span {
-  font-size: 37px;
+  font-size: 24px;
 }
 
 @media (max-width: 700px) {
