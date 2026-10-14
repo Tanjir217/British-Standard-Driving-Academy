@@ -1,8 +1,10 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
 function getYouTubeId(value: string) {
   try {
     const url = new URL(value);
-    if (url.hostname === "youtu.be") return url.pathname.slice(1).split("/")[0];
-    if (["youtube.com", "www.youtube.com", "m.youtube.com"].includes(url.hostname)) {
+    if (["youtu.be", "www.youtu.be"].includes(url.hostname)) return url.pathname.slice(1).split("/")[0];
+    if (["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"].includes(url.hostname)) {
       if (url.pathname === "/watch") return url.searchParams.get("v") || "";
       if (url.pathname.startsWith("/embed/")) return url.pathname.split("/embed/")[1]?.split("/")[0] || "";
       if (url.pathname.startsWith("/shorts/")) return url.pathname.split("/shorts/")[1]?.split("/")[0] || "";
@@ -56,12 +58,41 @@ export function VideoEmbed({
   url,
   title,
   className = "",
+  autoPlayWhenVisible = false,
 }: {
   url: string;
   title: string;
   className?: string;
+  /** Automatically play muted YouTube embeds while the iframe is in view. */
+  autoPlayWhenVisible?: boolean;
 }) {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const embedUrl = getVideoEmbedUrl(url);
+  const isYouTube = Boolean(getYouTubeId(url));
+
+  useEffect(() => {
+    if (!autoPlayWhenVisible) return;
+    const iframe = iframeRef.current;
+    if (!iframe || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting && entry.intersectionRatio >= 0.35),
+      { threshold: [0, 0.35, 0.6] },
+    );
+    observer.observe(iframe);
+    return () => observer.disconnect();
+  }, [autoPlayWhenVisible, url]);
+
+  const effectiveEmbedUrl = useMemo(() => {
+    if (!embedUrl || !autoPlayWhenVisible || !isYouTube) return embedUrl;
+    const target = new URL(embedUrl);
+    target.searchParams.set("autoplay", isVisible ? "1" : "0");
+    target.searchParams.set("mute", "1");
+    target.searchParams.set("playsinline", "1");
+    target.searchParams.set("controls", "0");
+    return target.toString();
+  }, [embedUrl, autoPlayWhenVisible, isYouTube, isVisible]);
 
   if (!embedUrl) {
     return (
@@ -74,8 +105,9 @@ export function VideoEmbed({
 
   return (
     <iframe
+      ref={iframeRef}
       className={className}
-      src={embedUrl}
+      src={effectiveEmbedUrl}
       title={title}
       loading="lazy"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
