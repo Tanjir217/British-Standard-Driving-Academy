@@ -121,6 +121,8 @@ export function Booking() {
         if (!active) return;
         if (error instanceof StudentProfileApiError && error.status === 401) {
           setAccountError("Sign in with your Wix account to book a lesson.");
+        } else if (error instanceof StudentProfileApiError && error.status === 403) {
+          setAccountError(error.message || "Your BSDA account is not active or approved for booking. Please contact the academy.");
         } else if (error instanceof StudentProfileApiError && error.status === 409) {
           setAccountError("We found conflicting student records. Please contact BSDA before booking.");
         } else {
