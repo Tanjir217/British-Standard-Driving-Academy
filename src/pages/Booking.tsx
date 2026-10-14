@@ -136,7 +136,7 @@ export function Booking() {
   useEffect(() => {
     if (!accountLoading && (accountMissing || accountError)) {
       // After account creation or sign-in, continue to the student profile.
-      navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
+      navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo), { replace: true });
     }
   }, [accountLoading, accountMissing, accountError, navigate]);
 
