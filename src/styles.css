@@ -8721,15 +8721,15 @@ nav .navbook {
 }
 
 .quickLinkBody h2 {
+  height: 40px;
   text-align: left;
-  margin: 7px 0 8px;
+  margin: 7px 0 10px;
   color: var(--navy);
   font: 700 23px/1.08 "Times New Roman", Times, serif;
 }
-
 .quickLinkBody p {
   min-height: 66px;
-  margin: 0 0 17px;
+  margin: 10px 0 10px;
   color: var(--muted);
   font-size: 18px !important;
   line-height: 1.5;
@@ -8787,7 +8787,7 @@ nav .navbook {
 
 @media (max-width: 600px) {
   .quickLinks {
-    padding: 24px 0 55px;
+    padding: 24px 0 40px;
   }
 
   .quickLinksGrid {
@@ -8797,6 +8797,10 @@ nav .navbook {
 
   .quickLinkBody p {
     min-height: 0;
+
+  }
+  .quickLInkBody h2{
+    height: 30px;
   }
 }
 
@@ -9893,8 +9897,9 @@ nav .navbook {
   }
 
   .quickLinkBody h2 {
+    height: 20px;
     text-align: left;
-    margin: 10px 0 0 0;
+    margin: 10px 0 10px 0;
     font-size: clamp(16px, 4.2vw, 19px);
     line-height: 1.12;
     overflow-wrap: anywhere;
