@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getHomeFeaturedVideo } from "../services/videoLibraryService";
 
 function getYouTubeId(value: string) {
@@ -38,8 +38,6 @@ export function VideoShowcase() {
   const [videoTitle, setVideoTitle] = useState("Inside the learning journey");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -65,19 +63,6 @@ export function VideoShowcase() {
     return () => {
       active = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting && entry.intersectionRatio >= 0.35),
-      { threshold: [0, 0.35, 0.6] },
-    );
-
-    observer.observe(section);
-    return () => observer.disconnect();
   }, []);
 
   const youtubeId = useMemo(() => getYouTubeId(url), [url]);
@@ -113,10 +98,14 @@ export function VideoShowcase() {
     );
   }
 
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&playsinline=1&autoplay=${isVisible ? 1 : 0}&mute=1`;
+  // Keep autoplay enabled in the initial iframe URL. Changing autoplay from 0
+  // to 1 after IntersectionObserver fires can be too late for some browsers.
+  // Muted autoplay is the browser-compatible default; viewers can unmute using
+  // the YouTube player controls if desired.
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0`;
 
   return (
-    <div ref={sectionRef} className="video videoYoutube">
+    <div className="video videoYoutube">
       <iframe
         src={embedUrl}
         title={videoTitle}
