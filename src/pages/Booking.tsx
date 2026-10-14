@@ -228,7 +228,7 @@ export function Booking() {
       <section className="page">
         <div className="container authloading">
           <span className="ey">Booking</span>
-          <h1>Loading your selected package...</h1>
+          <h1>Preparing your booking...</h1>
           <p>Please wait while we prepare your booking.</p>
         </div>
       </section>
@@ -263,7 +263,7 @@ export function Booking() {
         <div className="booking booking--spaced">
           <form className="form" onSubmit={submit}>
             <div className="payment">
-              <span className="ey">Selected package</span>
+              <span className="ey">{selectedPackage ? "Selected package" : "Selected service"}</span>
               {selectedPackage ? (
                 <>
                   <h3>{selectedPackage.name}</h3>
@@ -271,108 +271,25 @@ export function Booking() {
                 </>
               ) : (
                 <>
-                  <h3>Choose a package (optional)</h3>
+                  <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
                   <p>You can continue with this service, or select a package from the packages page.</p>
                   <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
                 </>
               )}
             </div>
 
-            <label>
-              Lesson service
-              <div className="bookingCustomSelect">
-                <input type="hidden" name="serviceId" value={selectedServiceId} required />
-                <button
-                  type="button"
-                  className={serviceDropdownOpen ? "bookingCustomSelectTrigger is-open" : "bookingCustomSelectTrigger"}
-                  aria-haspopup="listbox"
-                  aria-expanded={serviceDropdownOpen}
-                  disabled={services.length === 0}
-                  onClick={() => setServiceDropdownOpen((open) => !open)}
-                >
-                  <span>{services.find((service) => service.id === selectedServiceId)?.name || "No Wix services available"}</span>
-                  <span className="bookingCustomSelectChevron" aria-hidden="true" />
-                </button>
-                {serviceDropdownOpen && services.length > 0 && (
-                  <div className="bookingCustomSelectMenu" role="listbox" aria-label="Lesson service">
-                    {services.map((service) => (
-                      <button
-                        key={service.id}
-                        type="button"
-                        role="option"
-                        aria-selected={service.id === selectedServiceId}
-                        className={service.id === selectedServiceId ? "bookingCustomSelectOption is-selected" : "bookingCustomSelectOption"}
-                        onClick={() => {
-                          setSelectedServiceId(service.id);
-                          setServiceDropdownOpen(false);
-                        }}
-                      >
-                        <span>{service.name}</span>
-                        {service.id === selectedServiceId && <span className="bookingCustomSelectCheck" aria-hidden="true">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </label>
+            <div className="payment bookingSelectedServiceSummary">
+              <span className="ey">Selected service</span>
+              <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
+              {(() => {
+                const selectedService = services.find((service) => service.id === selectedServiceId);
+                return selectedService ? (
+                  <p>{formatMoney(selectedService.priceMinor, selectedService.currency)}</p>
+                ) : null;
+              })()}
+            </div>
 
             <label>
-              Additional services (optional)
-              <div className="bookingCustomSelect">
-                <button
-                  type="button"
-                  className={additionalDropdownOpen ? "bookingCustomSelectTrigger is-open" : "bookingCustomSelectTrigger"}
-                  aria-haspopup="listbox"
-                  aria-expanded={additionalDropdownOpen}
-                  disabled={services.filter((service) => service.id !== selectedServiceId).length === 0}
-                  onClick={() => setAdditionalDropdownOpen((open) => !open)}
-                >
-                  <span>
-                    {selectedAdditionalServiceIds.length
-                      ? `${selectedAdditionalServiceIds.length} additional service${selectedAdditionalServiceIds.length === 1 ? "" : "s"} selected`
-                      : "Choose additional services"}
-                  </span>
-                  <span className="bookingCustomSelectChevron" aria-hidden="true" />
-                </button>
-                {additionalDropdownOpen && (
-                  <div className="bookingCustomSelectMenu" role="group" aria-label="Additional services">
-                    {services.filter((service) => service.id !== selectedServiceId).map((service) => {
-                      const checked = selectedAdditionalServiceIds.includes(service.id);
-                      return (
-                        <label key={service.id} className="bookingAdditionalOption">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => setSelectedAdditionalServiceIds((current) =>
-                              checked
-                                ? current.filter((id) => id !== service.id)
-                                : [...current, service.id]
-                            )}
-                          />
-                          <span className="bookingAdditionalOptionText">
-                            <span>{service.name}</span>
-                            <small>{formatMoney(service.priceMinor, service.currency)}</small>
-                          </span>
-                          {checked && <span className="bookingCustomSelectCheck" aria-hidden="true">✓</span>}
-                        </label>
-                      );
-                    })}
-                    <div className="bookingAdditionalFooter">
-                      <span>{selectedAdditionalServiceIds.length} selected</span>
-                      <button type="button" onClick={() => setAdditionalDropdownOpen(false)}>Done</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {selectedAdditionalServiceIds.length > 0 && (
-                <span className="bookingAdditionalSummary">
-                  Selected: {services.filter((service) => selectedAdditionalServiceIds.includes(service.id)).map((service) => service.name).join(", ")}
-                </span>
-              )}
-            </label>
-
-            <div className="twocol">
-              <label>
                 Full name
                 <input name="name" required placeholder="Your full name" autoComplete="name" />
               </label>
