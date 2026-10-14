@@ -231,6 +231,18 @@ export const GET: APIRoute = async () => {
       return json({ ok: true, profileState: "missing", profile: null, source: "Members/FullData" }, 200);
     }
 
+    // FullData determines whether the authenticated member is eligible to
+    // book. It does not authenticate the browser session; Wix validates that
+    // session above, then this record's status is checked separately.
+    const activityStatus = String(record.activityStatus ?? "").trim().toLowerCase();
+    const approvalStatus = String(record.status ?? "").trim().toLowerCase();
+    if (activityStatus && activityStatus !== "active") {
+      return json({ ok: false, code: "MEMBER_INACTIVE", message: "Your BSDA account is not active. Please contact the academy." }, 403);
+    }
+    if (approvalStatus && !["approved", "active"].includes(approvalStatus)) {
+      return json({ ok: false, code: "MEMBER_NOT_APPROVED", message: "Your BSDA account is not approved for booking yet." }, 403);
+    }
+
     return json({
       ok: true,
       profileState: "ready",
