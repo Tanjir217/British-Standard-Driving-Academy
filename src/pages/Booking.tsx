@@ -71,6 +71,8 @@ export function Booking() {
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [additionalDropdownOpen, setAdditionalDropdownOpen] = useState(false);
+  const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]);
   const [lessonDate, setLessonDate] = useState(localToday);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => {
@@ -208,6 +210,7 @@ export function Booking() {
         slot: selectedSlot,
         packageId: selectedPackage.id,
         paymentMethod: pay,
+        notes: selectedAdditionalServiceIds.length ? "Additional services requested: " + services.filter((service) => selectedAdditionalServiceIds.includes(service.id)).map((service) => service.name).join(", ") : undefined,
       });
 
       if (result.ok) {
@@ -310,6 +313,61 @@ export function Booking() {
                   </div>
                 )}
               </div>
+            </label>
+
+            <label>
+              Additional services (optional)
+              <div className="bookingCustomSelect">
+                <button
+                  type="button"
+                  className={additionalDropdownOpen ? "bookingCustomSelectTrigger is-open" : "bookingCustomSelectTrigger"}
+                  aria-haspopup="listbox"
+                  aria-expanded={additionalDropdownOpen}
+                  disabled={services.filter((service) => service.id !== selectedServiceId).length === 0}
+                  onClick={() => setAdditionalDropdownOpen((open) => !open)}
+                >
+                  <span>
+                    {selectedAdditionalServiceIds.length
+                      ? `${selectedAdditionalServiceIds.length} additional service${selectedAdditionalServiceIds.length === 1 ? "" : "s"} selected`
+                      : "Choose additional services"}
+                  </span>
+                  <span className="bookingCustomSelectChevron" aria-hidden="true" />
+                </button>
+                {additionalDropdownOpen && (
+                  <div className="bookingCustomSelectMenu" role="group" aria-label="Additional services">
+                    {services.filter((service) => service.id !== selectedServiceId).map((service) => {
+                      const checked = selectedAdditionalServiceIds.includes(service.id);
+                      return (
+                        <label key={service.id} className="bookingAdditionalOption">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setSelectedAdditionalServiceIds((current) =>
+                              checked
+                                ? current.filter((id) => id !== service.id)
+                                : [...current, service.id]
+                            )}
+                          />
+                          <span className="bookingAdditionalOptionText">
+                            <span>{service.name}</span>
+                            <small>{formatMoney(service.priceMinor, service.currency)}</small>
+                          </span>
+                          {checked && <span className="bookingCustomSelectCheck" aria-hidden="true">✓</span>}
+                        </label>
+                      );
+                    })}
+                    <div className="bookingAdditionalFooter">
+                      <span>{selectedAdditionalServiceIds.length} selected</span>
+                      <button type="button" onClick={() => setAdditionalDropdownOpen(false)}>Done</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {selectedAdditionalServiceIds.length > 0 && (
+                <span className="bookingAdditionalSummary">
+                  Selected: {services.filter((service) => selectedAdditionalServiceIds.includes(service.id)).map((service) => service.name).join(", ")}
+                </span>
+              )}
             </label>
 
             <div className="twocol">
