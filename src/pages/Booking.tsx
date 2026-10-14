@@ -9,7 +9,6 @@ import type { BookingServiceCatalogItem } from "../services/bookings/bookingServ
 import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import { submitBooking } from "../services/bookingService";
 import type { Package } from "../services/domain/types";
-import { beginManagedMemberLogin } from "../services/auth/authService";
 import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
 function formatMoney(amountMinor: number, currency: string) {
@@ -133,6 +132,13 @@ export function Booking() {
 
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!accountLoading && (accountMissing || accountError)) {
+      // After account creation or sign-in, continue to the student profile.
+      navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
+    }
+  }, [accountLoading, accountMissing, accountError, navigate]);
 
   useEffect(() => {
     let active = true;
@@ -275,31 +281,6 @@ export function Booking() {
           <span className="ey">Account verification</span>
           <h1>Checking your BSDA account...</h1>
           <p>Bookings are available only to signed-in users with a matching FullData record.</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (accountMissing || accountError) {
-    return (
-      <section className="page">
-        <div className="container authloading">
-          <span className="ey">Account required</span>
-          <h1>{accountMissing ? "Create or connect your BSDA account first." : "We couldn't verify your account."}</h1>
-          <p>{accountMissing
-            ? "You must sign in with an account linked to a student record in FullData before booking a package or service."
-            : accountError}</p>
-          <div className="bookingAccountActions">
-            <button type="button" className="btn red" onClick={() => beginManagedMemberLogin(bookingReturnTo)}>
-              Sign in <Icon n="arrow" />
-            </button>
-            <button type="button" className="btn light" onClick={() => navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo))}>
-              Create an account <Icon n="arrow" />
-            </button>
-            <button type="button" className="btn light" onClick={() => navigate("/packages")}>
-              Back to packages
-            </button>
-          </div>
         </div>
       </section>
     );
