@@ -66,6 +66,7 @@ export function Booking() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
   const packageId = sp.get("package") || "";
+  const requestedServiceId = sp.get("service") || "";
 
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
@@ -93,20 +94,15 @@ export function Booking() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!packageId) {
-      navigate("/packages", { replace: true });
-      return;
-    }
-
     let active = true;
 
-    Promise.all([packageService.getById(packageId), bookingService.listServices()])
+    Promise.all([packageId ? packageService.getById(packageId) : packageService.list().then((result) => result.ok ? ({ ok: true as const, data: null }) : result), bookingService.listServices()])
       .then(([packageResult, serviceResult]) => {
         if (!active) return;
 
         if (!packageResult.ok) {
           setCatalogError(packageResult.error.message);
-        } else {
+        } else if (packageId && packageResult.data) {
           setSelectedPackage(packageResult.data);
         }
 
@@ -114,7 +110,7 @@ export function Booking() {
           setAvailabilityError(serviceResult.error.message);
         } else {
           setServices(serviceResult.data);
-          setSelectedServiceId(serviceResult.data[0]?.id || "");
+          setSelectedServiceId(serviceResult.data.find((service) => service.id === requestedServiceId)?.id || serviceResult.data[0]?.id || "");
           if (serviceResult.data.length === 0) {
             setAvailabilityError("Wix has no bookable services available right now.");
           }
@@ -135,7 +131,7 @@ export function Booking() {
     return () => {
       active = false;
     };
-  }, [navigate, packageId]);
+  }, [navigate, packageId, requestedServiceId]);
 
   useEffect(() => {
     if (!selectedServiceId || !lessonDate) {
@@ -208,7 +204,7 @@ export function Booking() {
         date: lessonDate,
         serviceId: selectedServiceId,
         slot: selectedSlot,
-        packageId: selectedPackage.id,
+        packageId: selectedPackage?.id,
         paymentMethod: pay,
         notes: selectedAdditionalServiceIds.length ? "Additional services requested: " + services.filter((service) => selectedAdditionalServiceIds.includes(service.id)).map((service) => service.name).join(", ") : undefined,
       });
@@ -268,13 +264,18 @@ export function Booking() {
           <form className="form" onSubmit={submit}>
             <div className="payment">
               <span className="ey">Selected package</span>
-              <h3>{selectedPackage.name}</h3>
-              <p>
-                {selectedPackage.lessonHours > 0
-                  ? `${selectedPackage.lessonHours} hours · `
-                  : ""}
-                {formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}
-              </p>
+              {selectedPackage ? (
+                <>
+                  <h3>{selectedPackage.name}</h3>
+                  <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
+                </>
+              ) : (
+                <>
+                  <h3>Choose a package (optional)</h3>
+                  <p>You can continue with this service, or select a package from the packages page.</p>
+                  <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
+                </>
+              )}
             </div>
 
             <label>
