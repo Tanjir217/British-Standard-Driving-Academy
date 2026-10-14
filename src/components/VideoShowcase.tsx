@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getHomeFeaturedVideo } from "../services/videoLibraryService";
 
 function getYouTubeId(value: string) {
@@ -38,9 +38,6 @@ export function VideoShowcase() {
   const [videoTitle, setVideoTitle] = useState("Inside the learning journey");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [inViewport, setInViewport] = useState(false);
-  const sectionRef = useRef<HTMLDivElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -52,6 +49,7 @@ export function VideoShowcase() {
         setVideoTitle(video?.title?.trim() || "Inside the learning journey");
       })
       .catch((error) => {
+        // Keep details in the developer console; don't expose request metadata.
         console.error("Unable to load the BSDA featured video from Wix CMS.", error);
         if (active) {
           setUrl("");
@@ -67,37 +65,7 @@ export function VideoShowcase() {
     };
   }, []);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setInViewport(entry.isIntersecting && entry.intersectionRatio >= 0.35),
-      { threshold: [0, 0.35, 0.6] },
-    );
-
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-
   const youtubeId = useMemo(() => getYouTubeId(url), [url]);
-
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || !youtubeId) return;
-
-    // The iframe API accepts these commands from the embedding page.
-    // Autoplay is muted for browser autoplay-policy compatibility.
-    const command = inViewport ? "playVideo" : "pauseVideo";
-    iframe.contentWindow?.postMessage(
-      JSON.stringify({ event: "command", func: command, args: [] }),
-      "https://www.youtube-nocookie.com",
-    );
-  }, [inViewport, youtubeId]);
-
-  const embedUrl = youtubeId
-    ? `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${inViewport ? 1 : 0}&mute=1&controls=0&playsinline=1&rel=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${encodeURIComponent(typeof window !== "undefined" ? window.location.origin : "")}`
-    : "";
 
   if (loading) {
     return (
@@ -131,19 +99,14 @@ export function VideoShowcase() {
   }
 
   return (
-    <div ref={sectionRef} className="video videoYoutube">
-      {inViewport ? (
-        <iframe
-          ref={iframeRef}
-          src={embedUrl}
-          title={videoTitle}
-          loading="lazy"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen={false}
-        />
-      ) : (
-        <div className="videoYoutubeAutoplayPlaceholder" aria-label={videoTitle} />
-      )}
+    <div className="video videoYoutube">
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&playsinline=1`}
+        title={videoTitle}
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
       <div className="videoYoutubeLabel">
         <span>BSDA VIDEO</span>
         <b>{videoTitle}</b>
