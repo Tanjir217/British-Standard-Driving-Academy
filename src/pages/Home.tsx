@@ -348,7 +348,7 @@ export function Home() {
                 image: "/quick-links/driving-lessons.svg",
                 eyebrow: "Start learning",
                 title: "Driving Lessons",
-                text: "Every great driver starts somewhere. Start with us.",
+                text: "Be Smart, Drive Confident Learn With an expert ADI instructor.",
                 label: "Learn more",
                 to: "/lessons",
               },
@@ -356,23 +356,23 @@ export function Home() {
                 image: "/quick-links/packages.svg",
                 eyebrow: "Choose your pace",
                 title: "Price & Packages",
-                text: "Starter, Plus and Premium lesson paths with transparent pricing.",
+                text: "Choose Your Package. Standard, Priority Or Super Priority",
                 label: "View packages",
                 to: "/packages",
               },
               {
                 image: "/quick-links/learning-portal.svg",
                 eyebrow: "Keep progressing",
-                title: "Get Ready For",
-                text: "Access theory support, mock tests and progress tracking.",
+                title: "BSDA Learning Hub",
+                text: "Get Ready for Test Theory, Practical, ADI & PDI Training.",
                 label: "Student login",
                 to: "/portal",
               },
               {
                 image: "/quick-links/government-links.svg",
                 eyebrow: "Official information",
-                title: "Government Info Links",
-                text: "Find DVLA, theory test booking and practical exam information.",
+                title: "Student Support & Information Center",
+                text: "Your Questioned Answered. Your Driving Journey Supported",
                 label: "More info",
                 to: "/faq",
               },
@@ -390,7 +390,7 @@ export function Home() {
                     />
                   </div>
                   <div className="quickLinkBody">
-                    <span className="ey">{item.eyebrow}</span>
+                    {/* <span className="ey">{item.eyebrow}</span> */}
                     <h2>{item.title}</h2>
                     <p>{item.text}</p>
                     {item.title === "Driving Lessons" && (
@@ -404,7 +404,7 @@ export function Home() {
                         <li>PDI and ADI training</li> */}
                       </ul>
                     )}
-                    {item.title ==="Get Ready For" && (
+                    {item.title ==="BSDA Learning Hub" && (
                       <ul className="quickLinkLessonList" aria-label="Learning portal features">
                         <li>Theory Test</li>
                         <li>Practical Test</li>
@@ -412,7 +412,7 @@ export function Home() {
                         <li>Progress tracking</li>
                       </ul>
                     )}
-                    {item.title ==="Government Info Links" && (
+                    {item.title ==="Student Support & Information Center" && (
                       <ul className="quickLinkLessonList" aria-label="Government information links">
                         <li>DVLA</li>
                         <li>Theory Test Booking</li>
@@ -440,7 +440,7 @@ export function Home() {
         </div>
       </section>
 
-      <section className="homeMotionStats" aria-label="BSDA highlights">
+      {/* <section className="homeMotionStats" aria-label="BSDA highlights">
         <div className="homeMotionTicker" aria-hidden="true">
           <div className="homeMotionTickerTrack">
             <span>DRIVING LESSONS</span><i>✦</i>
@@ -466,15 +466,15 @@ export function Home() {
             <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="offerstrip">
+      {/* <section className="offerstrip">
         <div className="container offerin">
           <div><span className="ey">New learner offer</span><h2>Choose your pace. Keep your progress.</h2></div>
           <div><strong>3 / 8 / 15</strong><span>lesson paths</span></div>
           <Link className="btn white" to="/packages">See packages <Icon n="arrow" /></Link>
         </div>
-      </section>
+      </section> */}
 
       <section className="section soft">
         <div className="container">
