@@ -228,6 +228,19 @@ export function Home() {
     });
   };
 
+  const scrollReelTo = (index: number) => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
+    const step = card.getBoundingClientRect().width + gap;
+    viewport.scrollTo({ left: Math.max(0, index) * step, behavior: "smooth" });
+  };
+
   const advanceReelAfterEnd = (finishedIndex: number) => {
     if (
       typeof window === "undefined" ||
@@ -746,7 +759,7 @@ export function Home() {
                 className={reelPage === index ? "is-active" : ""}
                 aria-label={"Show reel " + (index + 1)}
                 aria-pressed={reelPage === index}
-                onClick={() => scrollReels(index - reelPage)}
+                onClick={() => scrollReelTo(index)}
               />
             ))}
           </div>
