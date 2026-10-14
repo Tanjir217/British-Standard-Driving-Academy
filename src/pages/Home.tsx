@@ -8,7 +8,10 @@ import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
 import { VideoEmbed } from "../components/VideoEmbed";
-import { getHomeReels, type VideoLibraryItem } from "../services/videoLibraryService";
+import {
+  getHomeReels,
+  type VideoLibraryItem,
+} from "../services/videoLibraryService";
 import { lessons, instructors } from "../data/site";
 import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
@@ -28,13 +31,20 @@ function toPackageCard(plan: Package) {
     id: plan.id,
     name: plan.name,
     price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
+    eyebrow:
+      plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
     description: plan.description,
     features: plan.features,
   };
 }
 
-function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string }) {
+function AnimatedStat({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
   const ref = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -79,14 +89,26 @@ function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string
     };
   }, [target, suffix]);
 
-  return <strong ref={ref}>{target < 10 ? "0" : ""}{target}{suffix}</strong>;
+  return (
+    <strong ref={ref}>
+      {target < 10 ? "0" : ""}
+      {target}
+      {suffix}
+    </strong>
+  );
 }
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
-  const [isMobileViewport, setIsMobileViewport] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 600px)").matches,
+  );
   const [packages, setPackages] = useState<Package[]>([]);
-  const [bookingServices, setBookingServices] = useState<BookingServiceCatalogItem[]>([]);
+  const [bookingServices, setBookingServices] = useState<
+    BookingServiceCatalogItem[]
+  >([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(6);
@@ -100,9 +122,16 @@ export function Home() {
 
   useEffect(() => {
     // The desktop layout displays every package at once; only rotate the mobile carousel.
-    if (packageInteracted || packages.length < 2 || !window.matchMedia("(max-width: 700px)").matches) return;
+    if (
+      packageInteracted ||
+      packages.length < 2 ||
+      !window.matchMedia("(max-width: 700px)").matches
+    )
+      return;
     const timer = window.setInterval(() => {
-      setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
+      setPackageActiveIndex((current) =>
+        Math.min(current + 1, packages.length - 1),
+      );
     }, 3000);
     return () => window.clearInterval(timer);
   }, [packageInteracted, packages.length]);
@@ -121,7 +150,10 @@ export function Home() {
         }
       })
       .catch((error) => {
-        if (active) setServicesError(error instanceof Error ? error.message : "Unable to load services.");
+        if (active)
+          setServicesError(
+            error instanceof Error ? error.message : "Unable to load services.",
+          );
       })
       .finally(() => {
         if (active) setServicesLoading(false);
@@ -166,12 +198,30 @@ export function Home() {
   }, [lessonResetting]);
 
   const testimonialItems = [
-    ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
-    ["The calm coaching made a huge difference. I became much more comfortable in busy traffic.", "Demo learner · Refresher"],
-    ["I stopped feeling rushed behind the wheel and started making decisions with confidence.", "Demo learner · New driver"],
-    ["The instructor explained everything clearly and gave me a plan for every lesson.", "Demo learner · Beginner"],
-    ["I felt much more prepared for real traffic, not just the test route.", "Demo learner · Test preparation"],
-    ["The lessons were practical, patient and focused on the areas I actually needed to improve.", "Demo learner · Refresher"],
+    [
+      "My lessons finally felt structured. I knew what I had improved and what I needed to practise next.",
+      "Demo learner · Beginner",
+    ],
+    [
+      "The calm coaching made a huge difference. I became much more comfortable in busy traffic.",
+      "Demo learner · Refresher",
+    ],
+    [
+      "I stopped feeling rushed behind the wheel and started making decisions with confidence.",
+      "Demo learner · New driver",
+    ],
+    [
+      "The instructor explained everything clearly and gave me a plan for every lesson.",
+      "Demo learner · Beginner",
+    ],
+    [
+      "I felt much more prepared for real traffic, not just the test route.",
+      "Demo learner · Test preparation",
+    ],
+    [
+      "The lessons were practical, patient and focused on the areas I actually needed to improve.",
+      "Demo learner · Refresher",
+    ],
   ];
 
   useEffect(() => {
@@ -228,7 +278,10 @@ export function Home() {
         if (active) setReelUrls(items);
       })
       .catch((error) => {
-        console.error("Unable to load homepage reels from Wix VideoLibrary.", error);
+        console.error(
+          "Unable to load homepage reels from Wix VideoLibrary.",
+          error,
+        );
         if (active) setReelUrls([]);
       });
 
@@ -243,7 +296,9 @@ export function Home() {
     const card = grid?.querySelector<HTMLElement>(".socialReelCard");
     if (!viewport || !grid || !card) return;
 
-    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
     viewport.scrollBy({
       left: direction * (card.getBoundingClientRect().width + gap),
       behavior: "smooth",
@@ -251,8 +306,13 @@ export function Home() {
   };
 
   const advanceReelAfterEnd = (finishedIndex: number) => {
-    if (typeof window === "undefined" || !window.matchMedia("(max-width: 600px)").matches) return;
-    if (finishedIndex !== reelPage || finishedIndex >= reelItems.length - 1) return;
+    if (
+      typeof window === "undefined" ||
+      !window.matchMedia("(max-width: 600px)").matches
+    )
+      return;
+    if (finishedIndex !== reelPage || finishedIndex >= reelItems.length - 1)
+      return;
     // Advance only after the active YouTube player reports its ended state.
     scrollReels(1);
   };
@@ -262,7 +322,9 @@ export function Home() {
     const card = grid?.querySelector<HTMLElement>(".socialReelCard");
     if (!viewport || !grid || !card) return;
 
-    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
     const step = card.getBoundingClientRect().width + gap;
     const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
     setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
@@ -273,16 +335,33 @@ export function Home() {
         <div className="container herogrid">
           <div className="heroCopy">
             <span className="ey">British-standard driving education</span>
-            <h1>Learn to drive.<br /><em>Learn to live.</em></h1>
-            <p>Confident drivers are built through patient coaching, purposeful practice and a learning path that makes every lesson count.</p>
+            <h1>
+              Learn to drive.
+              <br />
+              <em>Learn to live.</em>
+            </h1>
+            <p>
+              Confident drivers are built through patient coaching, purposeful
+              practice and a learning path that makes every lesson count.
+            </p>
             <div className="actions">
-              <Link className="btn red" to="/booking">Book your first lesson <Icon n="arrow" /></Link>
-              <Link className="btn light" to="/instructors">Meet our instructors</Link>
+              <Link className="btn red" to="/booking">
+                Book your first lesson <Icon n="arrow" />
+              </Link>
+              <Link className="btn light" to="/instructors">
+                Meet our instructors
+              </Link>
             </div>
             <div className="heroTrust">
-              <span><Icon n="shield" s={16} /> Safety-first coaching</span>
-              <span><Icon n="car" s={16} /> Practical road skills</span>
-              <span><Icon n="calendar" s={16} /> Flexible scheduling</span>
+              <span>
+                <Icon n="shield" s={16} /> Safety-first coaching
+              </span>
+              <span>
+                <Icon n="car" s={16} /> Practical road skills
+              </span>
+              <span>
+                <Icon n="calendar" s={16} /> Flexible scheduling
+              </span>
             </div>
           </div>
 
@@ -298,16 +377,20 @@ export function Home() {
               <div className="heroDash dashTwo" />
               <div className="heroDash dashThree" />
               <div className="heroCar" />
-              <div className="heroFramecopy"><small>YOUR NEXT MILE</small><b>Starts here.</b></div>
+              <div className="heroFramecopy">
+                <small>YOUR NEXT MILE</small>
+                <b>Starts here.</b>
+              </div>
             </div>
             <div className="floatingCard">
               <span className="ey">Learning path</span>
               <b>Beginner → Road-ready</b>
-              <i><span /></i>
+              <i>
+                <span />
+              </i>
             </div>
           </div>
         </div>
-
       </section>
 
       <section className="quickLinks section">
@@ -364,31 +447,43 @@ export function Home() {
                     <h2>{item.title}</h2>
                     <p>{item.text}</p>
                     {item.title === "Driving Lessons" && (
-                      <ul className="quickLinkLessonList" aria-label="Driving lesson options">
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Driving lesson options"
+                      >
                         <li>Automatic / manual</li>
-<li>Partly trained</li>
+                        <li>Partly trained</li>
                         <li>Refresher</li>
                         <li>Full experience</li>
-</ul>
+                      </ul>
                     )}
-                    {item.title ==="Get Ready For" && (
-                      <ul className="quickLinkLessonList" aria-label="Learning portal features">
+                    {item.title === "Get Ready For" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Learning portal features"
+                      >
                         <li>Theory Test</li>
                         <li>Practical Test</li>
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
                     )}
-                    {item.title ==="Government Info Links" && (
-                      <ul className="quickLinkLessonList" aria-label="Government information links">
+                    {item.title === "Government Info Links" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Government information links"
+                      >
                         <li>DVLA</li>
                         <li>Theory Test Booking</li>
                         <li>Practical Exam</li>
                         <li>Test Fees</li>
-                      </ul> 
+                      </ul>
                     )}
-                    {item.title ==="Price & Packages" && (  
-                      <ul className="quickLinkLessonList" aria-label="Price and package options">
+                    {item.title === "Price & Packages" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Price and package options"
+                      >
                         <li>Standard Lessons </li>
                         <li>Block Bookings</li>
                         <li>Intensive Programs</li>
@@ -407,52 +502,90 @@ export function Home() {
         </div>
       </section>
 
-      <section className="homeMotionStats" aria-label="BSDA highlights">
+      {/* <section className="homeMotionStats" aria-label="BSDA highlights">
         <div className="homeMotionTicker" aria-hidden="true">
           <div className="homeMotionTickerTrack">
-            <span>DRIVING LESSONS</span><i>✦</i>
-            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
-            <span>THEORY TEST SUPPORT</span><i>✦</i>
-            <span>INTENSIVE COURSES</span><i>✦</i>
-            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
-            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
-            <span>DRIVING LESSONS</span><i>✦</i>
-            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
-            <span>THEORY TEST SUPPORT</span><i>✦</i>
-            <span>INTENSIVE COURSES</span><i>✦</i>
-            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
-            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+            <span>DRIVING LESSONS</span>
+            <i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span>
+            <i>✦</i>
+            <span>THEORY TEST SUPPORT</span>
+            <i>✦</i>
+            <span>INTENSIVE COURSES</span>
+            <i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span>
+            <i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span>
+            <i>✦</i>
+            <span>DRIVING LESSONS</span>
+            <i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span>
+            <i>✦</i>
+            <span>THEORY TEST SUPPORT</span>
+            <i>✦</i>
+            <span>INTENSIVE COURSES</span>
+            <i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span>
+            <i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span>
+            <i>✦</i>
           </div>
         </div>
 
         <div className="homeStats">
           <div className="container homeStatsGrid">
-            <div><AnimatedStat target={120} suffix="+" /><span>Successful Students</span></div>
-            <div><AnimatedStat target={15} suffix="+" /><span>Certified Instructors</span></div>
-            <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
-            <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
+            <div>
+              <AnimatedStat target={120} suffix="+" />
+              <span>Successful Students</span>
+            </div>
+            <div>
+              <AnimatedStat target={15} suffix="+" />
+              <span>Certified Instructors</span>
+            </div>
+            <div>
+              <AnimatedStat target={24} suffix="/7" />
+              <span>Learning resources</span>
+            </div>
+            <div>
+              <AnimatedStat target={100} suffix="%" />
+              <span>Safety-first coaching</span>
+            </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="offerstrip">
+      {/* <section className="offerstrip">
         <div className="container offerin">
-          <div><span className="ey">New learner offer</span><h2>Choose your pace. Keep your progress.</h2></div>
-          <div><strong>3 / 8 / 15</strong><span>lesson paths</span></div>
-          <Link className="btn white" to="/packages">See packages <Icon n="arrow" /></Link>
+          <div>
+            <span className="ey">New learner offer</span>
+            <h2>Choose your pace. Keep your progress.</h2>
+          </div>
+          <div>
+            <strong>3 / 8 / 15</strong>
+            <span>lesson paths</span>
+          </div>
+          <Link className="btn white" to="/packages">
+            See packages <Icon n="arrow" />
+          </Link>
         </div>
-      </section>
+      </section> */}
 
       <section className="section soft">
         <div className="container">
           <div className="sectionIntro">
-            <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
+            <Heading
+              center
+              ey="Choose your path"
+              title="Training built around your goal."
+              text="Start small, train consistently or choose an intensive path when time matters."
+            />
           </div>
           <div
             className="cards package-home-grid package-home-carousel"
             aria-label="Driving lesson packages"
             onTouchStart={(event) => {
-              packageTouchStartX.current = event.changedTouches[0]?.clientX ?? null;
+              packageTouchStartX.current =
+                event.changedTouches[0]?.clientX ?? null;
               setPackageInteracted(true);
             }}
             onTouchEnd={(event) => {
@@ -463,20 +596,34 @@ export function Home() {
               const delta = startX - endX;
               if (Math.abs(delta) < 40 || packages.length < 2) return;
               setPackageActiveIndex((current) =>
-                Math.max(0, Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)))
+                Math.max(
+                  0,
+                  Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)),
+                ),
               );
             }}
             onPointerDown={() => setPackageInteracted(true)}
             onWheel={() => setPackageInteracted(true)}
           >
-            <div className="package-home-track" style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}>
+            <div
+              className="package-home-track"
+              style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}
+            >
               {packageCards.map((p, i) => (
                 <div
-                  className={"package-home-slide" + (packageActiveIndex === i ? " is-active" : "")}
+                  className={
+                    "package-home-slide" +
+                    (packageActiveIndex === i ? " is-active" : "")
+                  }
                   key={p.id}
-                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                  onClick={() => {
+                    setPackageActiveIndex(i);
+                    setPackageInteracted(true);
+                  }}
                 >
-                  <Reveal delay={i * 90}><PackageCard p={p} /></Reveal>
+                  <Reveal delay={i * 90}>
+                    <PackageCard p={p} />
+                  </Reveal>
                 </div>
               ))}
             </div>
@@ -488,7 +635,10 @@ export function Home() {
                   className={packageActiveIndex === i ? "is-active" : ""}
                   aria-label={`Show ${p.name}`}
                   aria-pressed={packageActiveIndex === i}
-                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                  onClick={() => {
+                    setPackageActiveIndex(i);
+                    setPackageInteracted(true);
+                  }}
                 />
               ))}
             </div>
@@ -499,34 +649,71 @@ export function Home() {
       <section className="section videoSection">
         <div className="container">
           <div className="sectionIntro">
-            <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
+            <Heading
+              center
+              ey="Inside the learning journey"
+              title="Focused lessons. Real road confidence."
+              text="A visual layer brings movement to the experience without getting in the way of the information."
+            />
           </div>
-          <Reveal><VideoShowcase /></Reveal>
+          <Reveal>
+            <VideoShowcase />
+          </Reveal>
         </div>
       </section>
 
       <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
-            <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
+            <Heading
+              ey="Lesson system"
+              title="Skills that matter beyond the test."
+              text="Four focused lesson paths cover the fundamentals and the situations learners need most."
+            />
           </div>
           <div className="lessonMobileCarousel">
             <div className="lessonMobileViewport">
               <div
-                className={"lessoncards lessonMobileTrack" + (lessonResetting ? " testimonialTrackReset" : "")}
+                className={
+                  "lessoncards lessonMobileTrack" +
+                  (lessonResetting ? " testimonialTrackReset" : "")
+                }
                 style={{ transform: `translateY(-${lessonIndex * 221}px)` }}
               >
                 {[...lessons, ...lessons, ...lessons].map((l, index) => (
-                  <Reveal key={`${l[0]}-${index}`}><LessonCard lesson={l} index={index % lessons.length} /></Reveal>
+                  <Reveal key={`${l[0]}-${index}`}>
+                    <LessonCard lesson={l} index={index % lessons.length} />
+                  </Reveal>
                 ))}
               </div>
             </div>
-            <div className="lessonMobileControls" aria-label="Lesson system navigation">
-              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current - 1)} aria-label="Show previous lesson"><span>↑</span></button>
-              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current + 1)} aria-label="Show next lesson"><span>↓</span></button>
+            <div
+              className="lessonMobileControls"
+              aria-label="Lesson system navigation"
+            >
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setLessonIndex((current) => current - 1)}
+                aria-label="Show previous lesson"
+              >
+                <span>↑</span>
+              </button>
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setLessonIndex((current) => current + 1)}
+                aria-label="Show next lesson"
+              >
+                <span>↓</span>
+              </button>
             </div>
           </div>
-          <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
+          <div className="darklink">
+            <Link className="textlink" to="/lessons">
+              Explore the full lesson system <Icon n="arrow" s={15} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -551,7 +738,9 @@ export function Home() {
                 confidence to drive independently.
               </p>
               <div className="missionVisionLine" />
-              <span className="missionVisionTag">Learn · Practise · Progress</span>
+              <span className="missionVisionTag">
+                Learn · Practise · Progress
+              </span>
             </article>
 
             <article className="missionVisionCard visionCard">
@@ -560,10 +749,13 @@ export function Home() {
               <p>
                 To become a trusted driving education academy where learners
                 leave with more than a licence — they leave with the awareness,
-                discipline and road confidence to make better decisions every day.
+                discipline and road confidence to make better decisions every
+                day.
               </p>
               <div className="missionVisionLine" />
-              <span className="missionVisionTag">Confidence · Safety · Independence</span>
+              <span className="missionVisionTag">
+                Confidence · Safety · Independence
+              </span>
             </article>
           </div>
         </div>
@@ -584,18 +776,25 @@ export function Home() {
             className="socialReelsViewport"
             ref={reelViewportRef}
             onScroll={syncReelPage}
-            
           >
             <div className="socialReelsGrid">
               {reelItems.map((reel, index) => (
-                <article className="socialReelCard" key={reel._id || "reel-" + (index + 1)}>
-                  <div className="socialReelFrame" aria-label={reel.title || "Short video " + (index + 1)}>
+                <article
+                  className="socialReelCard"
+                  key={reel._id || "reel-" + (index + 1)}
+                >
+                  <div
+                    className="socialReelFrame"
+                    aria-label={reel.title || "Short video " + (index + 1)}
+                  >
                     {reel.videoUrl ? (
                       <VideoEmbed
                         url={reel.videoUrl}
                         title={reel.title || "BSDA short video " + (index + 1)}
                         className="socialReelEmbed"
-                        autoPlayWhenVisible={!isMobileViewport || index === reelPage}
+                        autoPlayWhenVisible={
+                          !isMobileViewport || index === reelPage
+                        }
                         onEnded={() => advanceReelAfterEnd(index)}
                       />
                     ) : (
@@ -614,7 +813,10 @@ export function Home() {
             </div>
           </div>
 
-          <div className="socialReelsControls" aria-label="Short video navigation">
+          <div
+            className="socialReelsControls"
+            aria-label="Short video navigation"
+          >
             <button
               type="button"
               className="socialReelArrow"
@@ -640,16 +842,29 @@ export function Home() {
         <div className="container testimonialgrid">
           <div>
             <span className="ey">Learner feedback</span>
-            <h2>“The goal is not just passing. It is knowing what to do when the road changes.”</h2>
+            <h2>
+              “The goal is not just passing. It is knowing what to do when the
+              road changes.”
+            </h2>
           </div>
 
           <div className="testimonialCarousel">
             <div className="testimonialViewport">
               <div
-                className={"testimonialTrack" + (testimonialResetting ? " testimonialTrackReset" : "")}
-                style={{ transform: `translateY(-${testimonialIndex * 221}px)` }}
+                className={
+                  "testimonialTrack" +
+                  (testimonialResetting ? " testimonialTrackReset" : "")
+                }
+                style={{
+                  transform: `translateY(-${testimonialIndex * 221}px)`,
+                }}
               >
-                {[...testimonialItems, ...testimonialItems, ...testimonialItems, ...testimonialItems].map(([quote, learner], index) => (
+                {[
+                  ...testimonialItems,
+                  ...testimonialItems,
+                  ...testimonialItems,
+                  ...testimonialItems,
+                ].map(([quote, learner], index) => (
                   <article className="quoteCard" key={index}>
                     <b>“</b>
                     <p>{quote}</p>
@@ -659,7 +874,10 @@ export function Home() {
               </div>
             </div>
 
-            <div className="testimonialControls" aria-label="Learner feedback navigation">
+            <div
+              className="testimonialControls"
+              aria-label="Learner feedback navigation"
+            >
               <button
                 type="button"
                 className="testimonialArrow"
@@ -682,7 +900,6 @@ export function Home() {
       </section>
 
       <FAQSection />
-
     </>
   );
 }
