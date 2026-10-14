@@ -71,9 +71,6 @@ export function Booking() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
-  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
-  const [additionalDropdownOpen, setAdditionalDropdownOpen] = useState(false);
-  const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]);
   const [lessonDate, setLessonDate] = useState(localToday);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => {
@@ -289,7 +286,8 @@ export function Booking() {
               })()}
             </div>
 
-            <label>
+            <div className="twocol">
+              <label>
                 Full name
                 <input name="name" required placeholder="Your full name" autoComplete="name" />
               </label>
@@ -299,7 +297,6 @@ export function Booking() {
               </label>
             </div>
 
-            <div className="twocol">
               <label>
                 Email
                 <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
