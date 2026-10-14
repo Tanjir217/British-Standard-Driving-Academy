@@ -203,7 +203,6 @@ export function Booking() {
         slot: selectedSlot,
         packageId: selectedPackage?.id,
         paymentMethod: pay,
-        notes: selectedAdditionalServiceIds.length ? "Additional services requested: " + services.filter((service) => selectedAdditionalServiceIds.includes(service.id)).map((service) => service.name).join(", ") : undefined,
       });
 
       if (result.ok) {
@@ -363,7 +362,6 @@ export function Booking() {
                   </div>
                 )}
               </label>
-            </div>
 
             <label>
               Available time slot
