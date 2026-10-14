@@ -286,31 +286,6 @@ export function Home() {
             </div>
           </div>
 
-          <div className="heroart">
-            <div className="heroRing ringone" />
-            <div className="heroRing ringtwo" />
-            <div className="heroFrame">
-              <div className="heroSky" />
-              <div className="heroBuilding bOne" />
-              <div className="heroBuilding bTwo" />
-              <div className="heroRoad" />
-              <div className="heroDash dashOne" />
-              <div className="heroDash dashTwo" />
-              <div className="heroDash dashThree" />
-              <div className="heroCar" />
-              <div className="heroFramecopy">
-                <small>YOUR NEXT MILE</small>
-                <b>Starts here.</b>
-              </div>
-            </div>
-            <div className="floatingCard">
-              <span className="ey">Learning path</span>
-              <b>Beginner → Road-ready</b>
-              <i>
-                <span />
-              </i>
-            </div>
-          </div>
         </div>
       </section>
 
