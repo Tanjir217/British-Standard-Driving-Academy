@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getHomeFeaturedVideo } from "../services/videoLibraryService";
 
 function getYouTubeId(value: string) {
@@ -38,6 +38,8 @@ export function VideoShowcase() {
   const [videoTitle, setVideoTitle] = useState("Inside the learning journey");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +65,19 @@ export function VideoShowcase() {
     return () => {
       active = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting && entry.intersectionRatio >= 0.35),
+      { threshold: [0, 0.35, 0.6] },
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
   }, []);
 
   const youtubeId = useMemo(() => getYouTubeId(url), [url]);
@@ -98,10 +113,12 @@ export function VideoShowcase() {
     );
   }
 
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&playsinline=1&autoplay=${isVisible ? 1 : 0}&mute=1`;
+
   return (
-    <div className="video videoYoutube">
+    <div ref={sectionRef} className="video videoYoutube">
       <iframe
-        src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&playsinline=1`}
+        src={embedUrl}
         title={videoTitle}
         loading="lazy"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
