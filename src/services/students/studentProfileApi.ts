@@ -1,4 +1,4 @@
-import { httpClient } from "@wix/essentials";
+import { getWixTokens } from "../wix/client";
 
 export interface StudentProfileApiRecord {
   id: string;
@@ -47,6 +47,30 @@ export class StudentProfileApiError extends Error {
   }
 }
 
+async function fetchAuthenticatedProfile(input: RequestInit): Promise<Response> {
+  const accessToken = getWixTokens()?.accessToken?.value;
+  if (!accessToken) {
+    throw new StudentProfileApiError(
+      "Your Wix sign-in session is not available in this browser. Please sign in again.",
+      "UNAUTHENTICATED",
+      401,
+    );
+  }
+
+  // Send the active Headless OAuth access token to our same-origin API.
+  // The server validates it with Wix before resolving the FullData record.
+  return fetch("/api/students/profile", {
+    ...input,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      ...(input.headers || {}),
+    },
+  });
+}
+
 async function readResponse(response: Response): Promise<ProfileResponse> {
   const payload = (await response.json().catch(() => null)) as ProfileResponse | null;
   if (!payload || typeof payload !== "object") {
@@ -69,10 +93,7 @@ async function readResponse(response: Response): Promise<ProfileResponse> {
 }
 
 export async function getStudentProfile(): Promise<ProfileResponse> {
-  const response = await httpClient.fetchWithAuth("/api/students/profile", {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
+  const response = await fetchAuthenticatedProfile({ method: "GET" });
   return readResponse(response);
 }
 
@@ -81,12 +102,9 @@ export async function createStudentProfile(input: {
   lastName: string;
   phone?: string;
 }): Promise<ProfileResponse> {
-  const response = await httpClient.fetchWithAuth("/api/students/profile", {
+  const response = await fetchAuthenticatedProfile({
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   return readResponse(response);
@@ -98,12 +116,9 @@ export async function updateStudentProfile(input: {
   phone?: string;
   transmission?: "manual" | "automatic" | "either";
 }): Promise<ProfileResponse> {
-  const response = await httpClient.fetchWithAuth("/api/students/profile", {
+  const response = await fetchAuthenticatedProfile({
     method: "PATCH",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   return readResponse(response);
