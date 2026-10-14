@@ -17,8 +17,6 @@ export type VideoLibraryItem = {
 /**
  * Loads the single active, featured, full-length video assigned to the
  * homepage's home-featured section from the public Wix VideoLibrary CMS.
- *
- * This is a read-only browser request using the existing Wix Headless client.
  */
 export async function getHomeFeaturedVideo(): Promise<VideoLibraryItem | null> {
   const result = await wixClient.items
@@ -33,4 +31,21 @@ export async function getHomeFeaturedVideo(): Promise<VideoLibraryItem | null> {
 
   const item = result.items?.[0] as VideoLibraryItem | undefined;
   return item ?? null;
+}
+
+/**
+ * Loads active YouTube Shorts/Reels assigned to the homepage social-reels
+ * section. Collection items are read-only and sorted in CMS display order.
+ */
+export async function getHomeReels(limit = 6): Promise<VideoLibraryItem[]> {
+  const result = await wixClient.items
+    .query("VideoLibrary")
+    .eq("sectionKey", "home-reels")
+    .eq("videoType", "reel")
+    .eq("isActive", true)
+    .ascending("displayOrder")
+    .limit(Math.min(Math.max(limit, 1), 20))
+    .find();
+
+  return (result.items ?? []) as VideoLibraryItem[];
 }
