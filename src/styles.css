@@ -194,16 +194,28 @@ nav .navbook:hover {
   color: var(--navy);
 }
 .hero {
-  background: var(--cream);
-  padding: 72px 0 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247, 244, 237, 0.98) 0%,
+      rgba(247, 244, 237, 0.94) 32%,
+      rgba(247, 244, 237, 0.68) 54%,
+      rgba(247, 244, 237, 0.18) 100%
+    ),
+    url("/heroMainImg.jpg") center 42% / cover no-repeat;
+  min-height: 560px;
+  padding: 72px 0 64px;
   border-bottom: 1px solid var(--line);
   overflow: hidden;
 }
 .herogrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   align-items: center;
+}
+.heroCopy {
+  max-width: 680px;
 }
 .heroCopy {
   animation: heroIn 0.8s ease both;
@@ -2486,7 +2498,17 @@ footer {
     display: none;
   }
   .hero {
-    padding-top: 45px;
+    min-height: 0;
+    padding: 45px 0 48px;
+    background-position: 58% center;
+    background-image:
+      linear-gradient(
+        90deg,
+        rgba(247, 244, 237, 0.96) 0%,
+        rgba(247, 244, 237, 0.88) 48%,
+        rgba(247, 244, 237, 0.54) 100%
+      ),
+      url("/heroMainImg.jpg");
   }
   .hero h1 {
     font-size: 49px;
