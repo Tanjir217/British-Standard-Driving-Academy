@@ -223,7 +223,7 @@ export function Home() {
   useEffect(() => {
     let active = true;
 
-    getHomeReels(20)
+    getHomeReels(6)
       .then((items) => {
         if (active) setReelUrls(items);
       })
