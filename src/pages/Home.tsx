@@ -12,10 +12,8 @@ import {
   getHomeReels,
   type VideoLibraryItem,
 } from "../services/videoLibraryService";
-import { lessons, instructors } from "../data/site";
+import { lessons } from "../data/site";
 import { packageService } from "../services/packages/packageService";
-import { bookingService } from "../services/bookings/bookingService";
-import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 
 function formatMoney(amountMinor: number, currency: string) {
@@ -38,66 +36,6 @@ function toPackageCard(plan: Package) {
   };
 }
 
-function AnimatedStat({
-  target,
-  suffix = "",
-}: {
-  target: number;
-  suffix?: string;
-}) {
-  const ref = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    let frame = 0;
-    let started = false;
-
-    const animate = () => {
-      const duration = 1300;
-      const start = performance.now();
-
-      const tick = (now: number) => {
-        const progress = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const value = Math.round(target * eased);
-        if (element) {
-          element.textContent =
-            value.toString().padStart(target < 10 ? 2 : 1, "0") + suffix;
-        }
-        if (progress < 1) frame = requestAnimationFrame(tick);
-      };
-
-      frame = requestAnimationFrame(tick);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started) {
-          started = true;
-          animate();
-        }
-      },
-      { threshold: 0.45 },
-    );
-
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-    };
-  }, [target, suffix]);
-
-  return (
-    <strong ref={ref}>
-      {target < 10 ? "0" : ""}
-      {target}
-      {suffix}
-    </strong>
-  );
-}
-
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(
@@ -106,11 +44,6 @@ export function Home() {
       window.matchMedia("(max-width: 600px)").matches,
   );
   const [packages, setPackages] = useState<Package[]>([]);
-  const [bookingServices, setBookingServices] = useState<
-    BookingServiceCatalogItem[]
-  >([]);
-  const [servicesLoading, setServicesLoading] = useState(true);
-  const [servicesError, setServicesError] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
@@ -138,26 +71,16 @@ export function Home() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([packageService.list(), bookingService.listServices()])
-      .then(([packageResult, serviceResult]) => {
-        if (!active) return;
-        if (packageResult.ok) setPackages(packageResult.data);
-        if (serviceResult.ok) {
-          setBookingServices(serviceResult.data);
-          setServicesError("");
-        } else {
-          setServicesError(serviceResult.error.message);
-        }
+
+    packageService
+      .list()
+      .then((result) => {
+        if (active && result.ok) setPackages(result.data);
       })
       .catch((error) => {
-        if (active)
-          setServicesError(
-            error instanceof Error ? error.message : "Unable to load services.",
-          );
-      })
-      .finally(() => {
-        if (active) setServicesLoading(false);
+        console.error("Unable to load driving packages.", error);
       });
+
     return () => {
       active = false;
     };
@@ -458,30 +381,22 @@ export function Home() {
                       </ul>
                     )}
 
-                    {item.title === "Get Ready For" && (
+                    {item.title === "BSDA Learning Hub" && (
                       <ul
                         className="quickLinkLessonList"
                         aria-label="Learning portal features"
                       >
-                    {item.title ==="BSDA Learning Hub" && (
-                      <ul className="quickLinkLessonList" aria-label="Learning portal features">
-
                         <li>Theory Test</li>
                         <li>Practical Test</li>
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
                     )}
-
-                    {item.title === "Government Info Links" && (
+                    {item.title === "Student Support & Information Center" && (
                       <ul
                         className="quickLinkLessonList"
-                        aria-label="Government information links"
+                        aria-label="Student support and information"
                       >
-
-                    {item.title ==="Student Support & Information Center" && (
-                      <ul className="quickLinkLessonList" aria-label="Government information links">
-
                         <li>DVLA</li>
                         <li>Theory Test Booking</li>
                         <li>Practical Exam</li>
