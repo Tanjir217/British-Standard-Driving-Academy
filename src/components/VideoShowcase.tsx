@@ -102,7 +102,7 @@ export function VideoShowcase() {
   // to 1 after IntersectionObserver fires can be too late for some browsers.
   // Muted autoplay is the browser-compatible default; viewers can unmute using
   // the YouTube player controls if desired.
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0`;
 
   return (
     <div className="video videoYoutube">
