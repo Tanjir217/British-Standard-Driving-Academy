@@ -10670,3 +10670,35 @@ nav .navbook {
     cursor: not-allowed;
   }
 }
+
+/* Reel navigation uses the same active-pill dots as the homepage package carousel. */
+@media (max-width: 600px) {
+  .socialReelsControls.package-home-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .socialReelsControls.package-home-dots button {
+    display: block;
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    min-height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #c9c6c0;
+    box-shadow: none;
+    transition: width .2s ease, background .2s ease;
+  }
+
+  .socialReelsControls.package-home-dots button.is-active {
+    width: 24px;
+    min-width: 24px;
+    border-radius: 8px;
+    background: var(--red);
+  }
+}
