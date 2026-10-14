@@ -8,7 +8,6 @@ import {
   loginWithEmail,
   registerWithEmail,
   verifyMemberEmail,
-  exchangeDirectLoginSession,
   sendWixPasswordResetEmail,
   getWixLogoutUrl,
   getWixTokens,
