@@ -147,17 +147,21 @@ export async function createMemberAccount(
   email: string,
   password: string,
   profile: { firstName: string; lastName: string; phones?: string[] },
+  returnTo = "/portal",
 ) {
   return finishDirectAuthentication(
     await registerWithEmail(email, password, profile),
-    "/portal",
+    returnTo,
   );
 }
 
-export async function completeMemberVerification(verificationCode: string) {
+export async function completeMemberVerification(
+  verificationCode: string,
+  returnTo = "/portal",
+) {
   return finishDirectAuthentication(
     await verifyMemberEmail(verificationCode),
-    "/portal",
+    returnTo,
   );
 }
 
