@@ -10719,6 +10719,16 @@ nav .navbook {
     gap: 18px;
   }
 
+  /* Fit exactly four cards inside the viewport remaining between the side arrows. */
+  .socialReelsDesktopNav .socialReelsGrid {
+    width: 100%;
+  }
+
+  .socialReelsDesktopNav .socialReelCard {
+    flex: 0 0 calc((100% - 54px) / 4);
+    min-width: 0;
+  }
+
   .socialReelsDesktopNav .socialReelsViewport {
     flex: 1 1 auto;
     min-width: 0;
