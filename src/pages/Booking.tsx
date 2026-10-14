@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { beginManagedMemberLogin } from "../services/auth/authService";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
@@ -132,13 +133,6 @@ export function Booking() {
 
     return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (!accountLoading && (accountMissing || accountError)) {
-      // After account creation or sign-in, continue to the student profile.
-      navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo), { replace: true });
-    }
-  }, [accountLoading, accountMissing, accountError, navigate]);
 
   useEffect(() => {
     let active = true;
@@ -281,6 +275,39 @@ export function Booking() {
           <span className="ey">Account verification</span>
           <h1>Checking your BSDA account...</h1>
           <p>Bookings are available only to signed-in users with a matching FullData record.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!accountLoading && (accountMissing || accountError)) {
+    const accountMessage = accountMissing
+      ? "Your Wix account is signed in, but no matching FullData record was found. Create or verify your BSDA account before booking."
+      : accountError;
+
+    return (
+      <section className="page">
+        <div className="container authloading">
+          <span className="ey">Account required</span>
+          <h1>We need to verify your BSDA account.</h1>
+          <p>{accountMessage}</p>
+          <div className="bookingAccountActions">
+            <button
+              className="btn red"
+              onClick={() => beginManagedMemberLogin(bookingReturnTo)}
+            >
+              Continue with Wix secure sign-in <Icon n="arrow" />
+            </button>
+            <button
+              className="btn light"
+              onClick={() => navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo))}
+            >
+              Sign in or create an account
+            </button>
+            <button className="btn light" onClick={() => navigate("/packages")}>
+              Back to packages
+            </button>
+          </div>
         </div>
       </section>
     );
