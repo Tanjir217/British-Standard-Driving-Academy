@@ -378,7 +378,7 @@ export function Booking() {
               </label>
               <label>
                 Phone number
-                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} />
+                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" value={customerPhone} readOnly={Boolean(studentRecord?.phone)} onChange={(event) => setCustomerPhone(event.target.value)} />
               </label>
             </div>
 
