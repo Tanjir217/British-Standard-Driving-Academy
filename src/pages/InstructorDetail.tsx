@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { InstructorCard } from "../components/InstructorCard";
 import { Reveal } from "../components/Reveal";
 import { instructors } from "../data/site";
 
