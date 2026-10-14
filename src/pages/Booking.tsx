@@ -9,6 +9,8 @@ import type { BookingServiceCatalogItem } from "../services/bookings/bookingServ
 import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import { submitBooking } from "../services/bookingService";
 import type { Package } from "../services/domain/types";
+import { beginManagedMemberLogin } from "../services/auth/authService";
+import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
@@ -89,6 +91,48 @@ export function Booking() {
   const [pay, setPay] = useState("bank");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [studentRecord, setStudentRecord] = useState<StudentProfileApiRecord | null>(null);
+  const [accountError, setAccountError] = useState("");
+  const [accountMissing, setAccountMissing] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const bookingReturnTo = "/booking" + (sp.toString() ? "?" + sp.toString() : "");
+
+  useEffect(() => {
+    let active = true;
+
+    getStudentProfile()
+      .then((response) => {
+        if (!active) return;
+        if (response.profileState !== "ready" || !response.profile) {
+          setAccountMissing(true);
+          return;
+        }
+        const profile = response.profile;
+        setStudentRecord(profile);
+        const name = profile.fullName || [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+        setCustomerName(name);
+        setCustomerEmail(profile.email || "");
+        setCustomerPhone(profile.phone || "");
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error instanceof StudentProfileApiError && error.status === 401) {
+          setAccountError("Sign in with your Wix account to book a lesson.");
+        } else if (error instanceof StudentProfileApiError && error.status === 409) {
+          setAccountError("We found conflicting student records. Please contact BSDA before booking.");
+        } else {
+          setAccountError("We couldn't verify your BSDA account. Please try again before booking.");
+        }
+      })
+      .finally(() => {
+        if (active) setAccountLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -186,7 +230,12 @@ export function Booking() {
     setBookingReference("");
     setDone(false);
 
-    if (!selectedPackage || !selectedSlot) {
+    if (!studentRecord || accountLoading || accountError || accountMissing) {
+      setBookingError("Sign in with a valid BSDA account before booking. No booking was created.");
+      return;
+    }
+
+    if (!selectedSlot) {
       setBookingError("Choose a current available time slot before submitting. No booking was created.");
       return;
     }
@@ -195,9 +244,9 @@ export function Booking() {
     const f = new FormData(e.currentTarget);
     try {
       const result = await submitBooking({
-        name: String(f.get("name") || ""),
-        phone: String(f.get("phone") || ""),
-        email: String(f.get("email") || ""),
+        name: customerName,
+        phone: String(f.get("phone") || customerPhone),
+        email: customerEmail,
         date: lessonDate,
         serviceId: selectedServiceId,
         slot: selectedSlot,
@@ -218,6 +267,43 @@ export function Booking() {
       setBusy(false);
     }
   };
+
+  if (accountLoading) {
+    return (
+      <section className="page">
+        <div className="container authloading">
+          <span className="ey">Account verification</span>
+          <h1>Checking your BSDA account...</h1>
+          <p>Bookings are available only to signed-in users with a matching FullData record.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (accountMissing || accountError) {
+    return (
+      <section className="page">
+        <div className="container authloading">
+          <span className="ey">Account required</span>
+          <h1>{accountMissing ? "Create or connect your BSDA account first." : "We couldn't verify your account."}</h1>
+          <p>{accountMissing
+            ? "You must sign in with an account linked to a student record in FullData before booking a package or service."
+            : accountError}</p>
+          <div className="bookingAccountActions">
+            <button type="button" className="btn red" onClick={() => beginManagedMemberLogin(bookingReturnTo)}>
+              Sign in <Icon n="arrow" />
+            </button>
+            <button type="button" className="btn light" onClick={() => navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo))}>
+              Create an account <Icon n="arrow" />
+            </button>
+            <button type="button" className="btn light" onClick={() => navigate("/packages")}>
+              Back to packages
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) {
     return (
@@ -288,17 +374,17 @@ export function Booking() {
             <div className="twocol">
               <label>
                 Full name
-                <input name="name" required placeholder="Your full name" autoComplete="name" />
+                <input name="name" required placeholder="Your full name" autoComplete="name" value={customerName} readOnly />
               </label>
               <label>
                 Phone number
-                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" />
+                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} />
               </label>
             </div>
 
               <label>
                 Email
-                <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
+                <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" value={customerEmail} readOnly />
               </label>
               <label className="bookingDateField">
                 Preferred lesson date
