@@ -59,12 +59,15 @@ export function VideoEmbed({
   title,
   className = "",
   autoPlayWhenVisible = false,
+  onEnded,
 }: {
   url: string;
   title: string;
   className?: string;
   /** Automatically play muted YouTube embeds while the iframe is in view. */
   autoPlayWhenVisible?: boolean;
+  /** Called when the embedded YouTube video reaches its natural end. */
+  onEnded?: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -90,9 +93,47 @@ export function VideoEmbed({
     target.searchParams.set("autoplay", isVisible ? "1" : "0");
     target.searchParams.set("mute", "1");
     target.searchParams.set("playsinline", "1");
-    target.searchParams.set("controls", "0");
+    target.searchParams.set("controls", "1");
+    target.searchParams.set("enablejsapi", "1");
+    if (typeof window !== "undefined") target.searchParams.set("origin", window.location.origin);
     return target.toString();
   }, [embedUrl, autoPlayWhenVisible, isYouTube, isVisible]);
+
+  useEffect(() => {
+    if (!isYouTube || !onEnded) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const subscribeToPlayerState = () => {
+      iframe.contentWindow?.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: "addEventListener",
+          args: ["onStateChange"],
+        }),
+        "*",
+      );
+    };
+
+    const handlePlayerMessage = (event: MessageEvent) => {
+      if (event.source !== iframe.contentWindow || typeof event.data !== "string") return;
+      try {
+        const message = JSON.parse(event.data) as { event?: string; info?: number | string };
+        if (message.event === "onStateChange" && Number(message.info) === 0) onEnded();
+      } catch {
+        // Ignore unrelated YouTube player messages.
+      }
+    };
+
+    iframe.addEventListener("load", subscribeToPlayerState);
+    window.addEventListener("message", handlePlayerMessage);
+    subscribeToPlayerState();
+
+    return () => {
+      iframe.removeEventListener("load", subscribeToPlayerState);
+      window.removeEventListener("message", handlePlayerMessage);
+    };
+  }, [isYouTube, onEnded, effectiveEmbedUrl]);
 
   if (!embedUrl) {
     return (
