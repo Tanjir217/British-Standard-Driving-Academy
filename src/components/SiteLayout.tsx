@@ -67,19 +67,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             to="/"
             onClick={() => setHeaderOpen(false)}
             aria-label="BSDA home"
-            className="siteBrandLink"
           >
             <Brand />
           </Link>
-
-          <div className="mobileNavActions">
-            <Link className="mobileLoginLink" to="/login" onClick={() => setHeaderOpen(false)}>
-              Log In
-            </Link>
-            <Link className="mobileBookLink" to="/booking" onClick={() => setHeaderOpen(false)}>
-              Book Now
-            </Link>
-          </div>
 
           <button
             className="menu"
