@@ -10615,3 +10615,58 @@ nav .navbook {
   }
 }
 
+
+/* Reels carousel fixes: keep every CMS reel reachable on mobile and match the compact package arrows. */
+@media (max-width: 600px) {
+  .socialReelsViewport {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+  }
+
+  .socialReelsGrid {
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    width: max-content !important;
+    min-width: 0;
+  }
+
+  .socialReelCard {
+    display: block;
+    flex: 0 0 calc(100vw - 24px) !important;
+    width: calc(100vw - 24px) !important;
+    min-width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px);
+  }
+
+  .socialReelsControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+  }
+
+  .socialReelArrow {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    padding: 0;
+    border: 1px solid #d6d3ce;
+    border-radius: 0;
+    background: #fffdfa;
+    color: #b7b4ae;
+    font: 16px/1 Arial, sans-serif;
+    box-shadow: none;
+  }
+
+  .socialReelArrow:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+}
