@@ -96,7 +96,7 @@ export function Booking() {
   useEffect(() => {
     let active = true;
 
-    Promise.all([packageId ? packageService.getById(packageId) : packageService.list().then((result) => result.ok ? ({ ok: true as const, data: null }) : result), bookingService.listServices()])
+    Promise.all([packageId ? packageService.getById(packageId) : Promise.resolve({ ok: true as const, data: null }), bookingService.listServices()])
       .then(([packageResult, serviceResult]) => {
         if (!active) return;
 
@@ -235,7 +235,7 @@ export function Booking() {
     );
   }
 
-  if (catalogError || !selectedPackage) {
+  if (catalogError) {
     return (
       <section className="page">
         <div className="container authloading">
