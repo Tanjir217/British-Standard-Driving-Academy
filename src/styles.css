@@ -10996,6 +10996,10 @@ nav .navbook {
     align-items: flex-start;
   }
 
+  .heroCopy .ey {
+    margin-top: auto;
+  }
+
   .heroCopy .actions {
     width: 100%;
     flex-direction: row-reverse;
