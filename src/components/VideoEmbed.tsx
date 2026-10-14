@@ -93,7 +93,7 @@ export function VideoEmbed({
     target.searchParams.set("autoplay", isVisible ? "1" : "0");
     target.searchParams.set("mute", "1");
     target.searchParams.set("playsinline", "1");
-    target.searchParams.set("controls", "1");
+    target.searchParams.set("controls", "0");
     target.searchParams.set("enablejsapi", "1");
     if (typeof window !== "undefined") target.searchParams.set("origin", window.location.origin);
     return target.toString();
