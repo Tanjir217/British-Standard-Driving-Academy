@@ -1352,6 +1352,172 @@ textarea:focus {
   border-color: var(--red);
   box-shadow: 0 0 0 3px rgba(213, 31, 42, 0.08);
 }
+
+/* Booking-specific custom date picker and select controls. */
+.bookingSelect {
+  position: relative;
+  width: 100%;
+}
+.bookingSelect::after {
+  content: "";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid #60697a;
+  border-bottom: 1.5px solid #60697a;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+.bookingSelect select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 38px;
+  cursor: pointer;
+  min-height: 44px;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.bookingSelect select:hover:not(:disabled) {
+  border-color: #b8b1a6;
+  background: #fff;
+}
+.bookingSelect select:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+.bookingDateField {
+  position: relative;
+}
+.bookingDateTrigger {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d9d6cf;
+  border-radius: 7px;
+  padding: 11px 12px;
+  background: #fcfbf8;
+  color: var(--ink);
+  text-align: left;
+  font-size: 12px;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.bookingDateTrigger svg {
+  color: var(--red);
+  flex: 0 0 auto;
+}
+.bookingDateTrigger:hover,
+.bookingDateTrigger.is-open {
+  border-color: var(--red);
+  background: #fff;
+}
+.bookingDateTrigger.is-open {
+  box-shadow: 0 0 0 3px rgba(213, 31, 42, .08);
+}
+.bookingCalendar {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, calc(100vw - 48px));
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdfa;
+  box-shadow: 0 18px 45px rgba(17, 24, 39, .18);
+  color: var(--ink);
+}
+.bookingCalendarHeader {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+.bookingCalendarHeader strong {
+  text-align: center;
+  font-size: 13px;
+}
+.bookingCalendarHeader button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 23px;
+  line-height: 1;
+}
+.bookingCalendarHeader button:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.bookingCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.bookingCalendarGrid > span,
+.bookingCalendarGrid > button {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  border-radius: 7px;
+  font-size: 11px;
+}
+.bookingCalendarWeekdays {
+  margin-bottom: 5px;
+}
+.bookingCalendarWeekdays > span {
+  aspect-ratio: auto;
+  min-height: 25px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.bookingCalendarGrid > button {
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+}
+.bookingCalendarGrid > button:hover:not(:disabled) {
+  border-color: rgba(213, 31, 42, .25);
+  background: #f8eceb;
+  color: var(--red);
+}
+.bookingCalendarGrid > button.is-selected {
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+}
+.bookingCalendarGrid > button:disabled {
+  color: #c7c3bc;
+  cursor: not-allowed;
+}
+.bookingCalendarBlank {
+  pointer-events: none;
+}
+.bookingCalendarFooter {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.bookingCalendarFooter button {
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 2px;
+}
+
 .payment {
   background: #f5f2eb;
   border: 1px solid var(--line);
