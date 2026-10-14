@@ -255,7 +255,7 @@ export function Home() {
       <section className="hero">
         <div className="container herogrid">
           <div className="heroCopy">
-            <span className="ey">British-standard driving education</span>
+            <span className="ey">British-standard driving Academy</span>
             <h1>
               Learn to drive.
               <br />

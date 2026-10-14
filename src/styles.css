@@ -8212,8 +8212,7 @@ footer {
     letter-spacing: -2.2px;
   }
   .hero p {
-    font-size: 13px;
-    display: none;
+    font-size: 16px;
   }
   .heroart {
     min-height: 320px;
@@ -10997,19 +10996,20 @@ nav .navbook {
   }
 
   .heroCopy .ey {
-    margin-top: 0;
+    margin-top: 20px;
+    font-size: 18px !important;
   }
 
   .heroCopy h1 {
     margin-top: auto;
-    margin-bottom: 0;
+    margin-bottom: 20px;
   }
 
   .heroCopy .actions {
     width: 100%;
     flex-direction: row-reverse;
-    margin-top: 12px;
-    margin-bottom: 70px;
+    margin-top: 15px;
+    margin-bottom: 50px;
     padding-top: 0;
     gap: 8px;
   }
@@ -11017,7 +11017,7 @@ nav .navbook {
   .heroCopy .actions .btn {
     font-size: 15px !important;
     min-height: 46px;
-    padding: 12px 13px;
+    padding: 10px 13px;
   }
 
   .heroCopy .heroTrust {
