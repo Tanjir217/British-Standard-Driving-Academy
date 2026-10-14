@@ -71,15 +71,33 @@ function safeProfile(record: WixRecord) {
   };
 }
 
-type AuthenticatedMember = { _id: string; loginEmail?: string | null; contactId?: string | null };
+type AuthenticatedMember = {
+  _id: string;
+  loginEmail?: string | null;
+  email?: string | null;
+  contactId?: string | null;
+  contact?: { contactId?: string | null; email?: string | null } | null;
+};
 
 async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
-  // The Wix Astro integration binds SDK calls to the request's authenticated
-  // visitor/member session. Never accept a member ID from the request body.
+  // Resolve identity only from the Wix Astro integration's authenticated
+  // request session. Wix may expose contactId on the nested contact object,
+  // while the browser diagnostic reads that same nested field. Normalize both
+  // shapes here so the protected API and diagnostic use the same identifier.
+  // Never accept a member ID or contactId supplied by the request body/query.
   const response = await members.getCurrentMember();
-  const member = response.member;
+  const member = response.member as (typeof response.member & {
+    email?: string | null;
+    contactId?: string | null;
+    contact?: { contactId?: string | null; email?: string | null } | null;
+  }) | undefined;
   if (!member || typeof member._id !== "string" || !member._id) return null;
-  return member as AuthenticatedMember;
+
+  return {
+    ...member,
+    loginEmail: member.loginEmail ?? member.email ?? member.contact?.email ?? null,
+    contactId: member.contactId ?? member.contact?.contactId ?? null,
+  } as AuthenticatedMember;
 }
 
 async function findProfileByMemberId(memberId: string): Promise<WixRecord | null> {
@@ -168,11 +186,13 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
   }
 
-  const result = await elevatedQuery(collectionId).limit(100).find();
+  // Match the working local diagnostic's bounded scan window. The earlier
+  // 100-row limit could miss a valid member later in FullData.
+  const result = await elevatedQuery(collectionId).limit(500).find();
   const records = recordsFromQuery(result);
 
   const contactMatches = contactId
-    ? records.filter((record) => String(record.contactId ?? "").trim() === contactId)
+    ? records.filter((record) => String(record.contactId ?? "").trim().toLowerCase() === contactId.toLowerCase())
     : [];
   if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
   if (contactMatches.length === 1) {
