@@ -70,6 +70,7 @@ export function Booking() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [lessonDate, setLessonDate] = useState(localToday);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => {
@@ -275,21 +276,39 @@ export function Booking() {
 
             <label>
               Lesson service
-              <div className="bookingSelect">
-                <select
-                  name="serviceId"
-                  required
-                  value={selectedServiceId}
-                  onChange={(event) => setSelectedServiceId(event.target.value)}
+              <div className="bookingCustomSelect">
+                <input type="hidden" name="serviceId" value={selectedServiceId} required />
+                <button
+                  type="button"
+                  className={serviceDropdownOpen ? "bookingCustomSelectTrigger is-open" : "bookingCustomSelectTrigger"}
+                  aria-haspopup="listbox"
+                  aria-expanded={serviceDropdownOpen}
                   disabled={services.length === 0}
+                  onClick={() => setServiceDropdownOpen((open) => !open)}
                 >
-                  {services.length === 0 && <option value="">No Wix services available</option>}
-                  {services.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name}
-                    </option>
-                  ))}
-                </select>
+                  <span>{services.find((service) => service.id === selectedServiceId)?.name || "No Wix services available"}</span>
+                  <span className="bookingCustomSelectChevron" aria-hidden="true" />
+                </button>
+                {serviceDropdownOpen && services.length > 0 && (
+                  <div className="bookingCustomSelectMenu" role="listbox" aria-label="Lesson service">
+                    {services.map((service) => (
+                      <button
+                        key={service.id}
+                        type="button"
+                        role="option"
+                        aria-selected={service.id === selectedServiceId}
+                        className={service.id === selectedServiceId ? "bookingCustomSelectOption is-selected" : "bookingCustomSelectOption"}
+                        onClick={() => {
+                          setSelectedServiceId(service.id);
+                          setServiceDropdownOpen(false);
+                        }}
+                      >
+                        <span>{service.name}</span>
+                        {service.id === selectedServiceId && <span className="bookingCustomSelectCheck" aria-hidden="true">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </label>
 
