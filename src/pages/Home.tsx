@@ -8,7 +8,7 @@ import { PackageCard } from "../components/PackageCard";
 import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
 import { VideoEmbed } from "../components/VideoEmbed";
-import { getSiteContent } from "../services/siteContentService";
+import { getHomeReels, type VideoLibraryItem } from "../services/videoLibraryService";
 import { lessons, instructors } from "../data/site";
 import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
@@ -93,7 +93,7 @@ export function Home() {
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
-  const [reelUrls, setReelUrls] = useState<string[]>([]);
+  const [reelUrls, setReelUrls] = useState<VideoLibraryItem[]>([]);
   const [packageActiveIndex, setPackageActiveIndex] = useState(0);
   const [packageInteracted, setPackageInteracted] = useState(false);
   const packageTouchStartX = useRef<number | null>(null);
@@ -211,19 +211,17 @@ export function Home() {
     return () => window.cancelAnimationFrame(frame);
   }, [testimonialResetting]);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
-  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];
+  const reelItems = reelUrls.length ? reelUrls : [];
 
   useEffect(() => {
     let active = true;
 
-    getSiteContent()
-      .then((content) => {
-        if (!active) return;
-        setReelUrls(
-          Array.from({ length: 6 }, (_, index) => content[`reel-${index + 1}`]?.url || ""),
-        );
+    getHomeReels(6)
+      .then((items) => {
+        if (active) setReelUrls(items);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Unable to load homepage reels from Wix VideoLibrary.", error);
         if (active) setReelUrls([]);
       });
 
@@ -594,13 +592,13 @@ export function Home() {
             onPointerDown={() => setReelsInteracted(true)}
           >
             <div className="socialReelsGrid">
-              {reelItems.map((url, index) => (
-                <article className="socialReelCard" key={"reel-" + (index + 1)}>
-                  <div className="socialReelFrame" aria-label={"Short video " + (index + 1)}>
-                    {url ? (
+              {reelItems.map((reel, index) => (
+                <article className="socialReelCard" key={reel._id || "reel-" + (index + 1)}>
+                  <div className="socialReelFrame" aria-label={reel.title || "Short video " + (index + 1)}>
+                    {reel.videoUrl ? (
                       <VideoEmbed
-                        url={url}
-                        title={"BSDA short video " + (index + 1)}
+                        url={reel.videoUrl}
+                        title={reel.title || "BSDA short video " + (index + 1)}
                         className="socialReelEmbed"
                       />
                     ) : (
@@ -611,6 +609,11 @@ export function Home() {
                   </div>
                 </article>
               ))}
+              {reelItems.length === 0 && (
+                <div className="socialReelPlaceholder socialReelPlaceholderEmpty">
+                  <span>New reels coming soon</span>
+                </div>
+              )}
             </div>
           </div>
 
