@@ -11927,3 +11927,27 @@ to {
     box-shadow: none;
   }
 }
+
+/* Mobile homepage quick actions: move the existing rail into the navbar only while the hero is visible. */
+@media (max-width: 560px) {
+  .site.hero-in-view .floatingQuickActions {
+    top: 8px;
+    right: 50px;
+    bottom: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .site.hero-in-view .floatingQuickAction {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .site.hero-in-view .floatingQuickAction span {
+    display: none;
+  }
+}
