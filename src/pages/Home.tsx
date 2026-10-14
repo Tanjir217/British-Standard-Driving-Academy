@@ -250,7 +250,8 @@ export function Home() {
     );
     const step = card.getBoundingClientRect().width + gap;
     const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
-    setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
+    const maxPage = Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4));
+    setReelPage(Math.max(0, Math.min(maxPage, page)));
   };
   return (
     <>
@@ -754,7 +755,7 @@ export function Home() {
               type="button"
               className="socialReelArrow"
               onClick={() => scrollReels(1)}
-              disabled={reelPage === reelItems.length - 4}
+              disabled={reelPage >= Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4))}
               aria-label="Show next short videos"
             >
               <span aria-hidden="true">›</span>
