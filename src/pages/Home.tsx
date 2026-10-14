@@ -738,28 +738,17 @@ export function Home() {
             </div>
           </div>
 
-          <div
-            className="socialReelsControls"
-            aria-label="Short video navigation"
-          >
-            <button
-              type="button"
-              className="socialReelArrow"
-              onClick={() => scrollReels(-1)}
-              disabled={reelPage === 0}
-              aria-label="Show previous short videos"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              type="button"
-              className="socialReelArrow"
-              onClick={() => scrollReels(1)}
-              disabled={reelPage >= Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4))}
-              aria-label="Show next short videos"
-            >
-              <span aria-hidden="true">›</span>
-            </button>
+          <div className="socialReelsControls package-home-dots" aria-label="Choose a reel">
+            {reelItems.map((reel, index) => (
+              <button
+                key={reel._id || "reel-dot-" + (index + 1)}
+                type="button"
+                className={reelPage === index ? "is-active" : ""}
+                aria-label={"Show reel " + (index + 1)}
+                aria-pressed={reelPage === index}
+                onClick={() => scrollReels(index - reelPage)}
+              />
+            ))}
           </div>
         </div>
       </section>
