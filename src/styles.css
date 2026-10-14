@@ -6619,6 +6619,10 @@ nav .navbook:hover {
 .full {
   width: 100%;
 }
+.mobileNavActions {
+  display: none;
+}
+
 /* Mobile header and hero layout are defined once in this final responsive block. */
 @media (max-width: 560px) {
   header {
