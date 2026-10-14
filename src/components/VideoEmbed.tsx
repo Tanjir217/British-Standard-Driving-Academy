@@ -115,11 +115,29 @@ export function VideoEmbed({
       );
     };
 
+    let hasEnded = false;
     const handlePlayerMessage = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow || typeof event.data !== "string") return;
       try {
-        const message = JSON.parse(event.data) as { event?: string; info?: number | string };
-        if (message.event === "onStateChange" && Number(message.info) === 0) onEnded();
+        const message = JSON.parse(event.data) as {
+          event?: string;
+          info?: number | string | { playerState?: number | string };
+        };
+        // YouTube's iframe API normally reports state changes as infoDelivery
+        // messages whose info.playerState is 0 (ended). Keep the legacy shape
+        // as a fallback and fire only once per playback.
+        const playerState =
+          typeof message.info === "object" && message.info !== null
+            ? message.info.playerState
+            : message.info;
+        const ended = Number(playerState) === 0 &&
+          (message.event === "infoDelivery" || message.event === "onStateChange");
+        if (ended && !hasEnded) {
+          hasEnded = true;
+          onEnded();
+        } else if (Number(playerState) === 1) {
+          hasEnded = false;
+        }
       } catch {
         // Ignore unrelated YouTube player messages.
       }
