@@ -600,6 +600,7 @@ export function Home() {
                         url={reel.videoUrl}
                         title={reel.title || "BSDA short video " + (index + 1)}
                         className="socialReelEmbed"
+                        autoPlayWhenVisible
                       />
                     ) : (
                       <div className="socialReelPlaceholder" aria-hidden="true">
