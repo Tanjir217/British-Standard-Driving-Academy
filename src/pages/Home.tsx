@@ -710,12 +710,22 @@ export function Home() {
             />
           </div>
 
-          <div
-            className="socialReelsViewport"
-            ref={reelViewportRef}
-            onScroll={syncReelPage}
-          >
-            <div className="socialReelsGrid">
+          <div className="socialReelsDesktopNav">
+            <button
+              type="button"
+              className="socialReelsSideArrow socialReelsSideArrowPrev"
+              onClick={() => scrollReels(-1)}
+              disabled={reelPage === 0}
+              aria-label="Show previous reels"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <div
+              className="socialReelsViewport"
+              ref={reelViewportRef}
+              onScroll={syncReelPage}
+            >
+              <div className="socialReelsGrid">
               {reelItems.map((reel, index) => (
                 <article
                   className="socialReelCard"
@@ -748,7 +758,17 @@ export function Home() {
                   <span>New reels coming soon</span>
                 </div>
               )}
+              </div>
             </div>
+            <button
+              type="button"
+              className="socialReelsSideArrow socialReelsSideArrowNext"
+              onClick={() => scrollReels(1)}
+              disabled={reelPage >= Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4))}
+              aria-label="Show next reels"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
           </div>
 
           <div className="socialReelsControls package-home-dots" aria-label="Choose a reel">
