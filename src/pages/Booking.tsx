@@ -24,6 +24,18 @@ function localToday() {
   return local.toISOString().slice(0, 10);
 }
 
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function slotKey(slot: BookingApiSlot) {
   return `${slot.scheduleId}|${slot.startDate}`;
 }
@@ -59,6 +71,11 @@ export function Booking() {
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [lessonDate, setLessonDate] = useState(localToday);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const [year, month] = localToday().split("-").map(Number);
+    return new Date(year, month - 1, 1, 12);
+  });
   const [availableSlots, setAvailableSlots] = useState<BookingApiSlot[]>([]);
   const [selectedSlotKey, setSelectedSlotKey] = useState("");
   const [loading, setLoading] = useState(true);
@@ -258,20 +275,22 @@ export function Booking() {
 
             <label>
               Lesson service
-              <select
-                name="serviceId"
-                required
-                value={selectedServiceId}
-                onChange={(event) => setSelectedServiceId(event.target.value)}
-                disabled={services.length === 0}
-              >
-                {services.length === 0 && <option value="">No Wix services available</option>}
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
+              <div className="bookingSelect">
+                <select
+                  name="serviceId"
+                  required
+                  value={selectedServiceId}
+                  onChange={(event) => setSelectedServiceId(event.target.value)}
+                  disabled={services.length === 0}
+                >
+                  {services.length === 0 && <option value="">No Wix services available</option>}
+                  {services.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </label>
 
             <div className="twocol">
@@ -290,37 +309,90 @@ export function Booking() {
                 Email
                 <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
               </label>
-              <label>
+              <label className="bookingDateField">
                 Preferred lesson date
-                <input
-                  name="date"
-                  type="date"
-                  required
-                  min={localToday()}
-                  value={lessonDate}
-                  onChange={(event) => setLessonDate(event.target.value)}
-                />
+                <input type="hidden" name="date" value={lessonDate} required />
+                <button
+                  type="button"
+                  className={calendarOpen ? "bookingDateTrigger is-open" : "bookingDateTrigger"}
+                  aria-haspopup="dialog"
+                  aria-expanded={calendarOpen}
+                  onClick={() => setCalendarOpen((open) => !open)}
+                >
+                  <span>{lessonDate ? parseLocalDate(lessonDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "Choose a date"}</span>
+                  <Icon n="calendar" s={17} />
+                </button>
+                {calendarOpen && (
+                  <div className="bookingCalendar" role="dialog" aria-label="Choose preferred lesson date">
+                    <div className="bookingCalendarHeader">
+                      <button type="button" aria-label="Previous month" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1, 12))}>‹</button>
+                      <strong>{visibleMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong>
+                      <button type="button" aria-label="Next month" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1, 12))}>›</button>
+                    </div>
+                    <div className="bookingCalendarGrid bookingCalendarWeekdays" aria-hidden="true">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <span key={day}>{day}</span>)}
+                    </div>
+                    <div className="bookingCalendarGrid">
+                      {Array.from({ length: (new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1, 12).getDay() + 6) % 7 }, (_, index) => (
+                        <span className="bookingCalendarBlank" key={"blank-" + index} />
+                      ))}
+                      {Array.from({ length: new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0, 12).getDate() }, (_, index) => {
+                        const day = index + 1;
+                        const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day, 12);
+                        const key = toDateKey(date);
+                        const disabled = key < localToday();
+                        const selected = key === lessonDate;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            className={selected ? "is-selected" : ""}
+                            disabled={disabled}
+                            aria-pressed={selected}
+                            onClick={() => {
+                              setLessonDate(key);
+                              setCalendarOpen(false);
+                            }}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="bookingCalendarFooter">
+                      <button type="button" onClick={() => setCalendarOpen(false)}>Close</button>
+                      <button type="button" onClick={() => {
+                        const today = parseLocalDate(localToday());
+                        setLessonDate(localToday());
+                        setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1, 12));
+                        setCalendarOpen(false);
+                      }}>Today</button>
+                    </div>
+                  </div>
+                )}
               </label>
             </div>
 
             <label>
               Available time slot
-              <select
-                name="slot"
-                required
-                value={selectedSlotKey}
-                onChange={(event) => setSelectedSlotKey(event.target.value)}
-                disabled={availabilityLoading || availableSlots.length === 0}
-              >
-                <option value="">
-                  {availabilityLoading ? "Checking Wix availability..." : "Choose an available time"}
-                </option>
-                {availableSlots.map((slot) => (
-                  <option key={slotKey(slot)} value={slotKey(slot)}>
-                    {formatSlot(slot)}
+              <div className="bookingSelect">
+                <select
+                  name="slot"
+                  required
+                  value={selectedSlotKey}
+                  onChange={(event) => setSelectedSlotKey(event.target.value)}
+                  disabled={availabilityLoading || availableSlots.length === 0}
+                >
+                  <option value="">
+                    {availabilityLoading ? "Checking Wix availability..." : "Choose an available time"}
                   </option>
-                ))}
-              </select>
+                  {availableSlots.map((slot) => (
+                    <option key={slotKey(slot)} value={slotKey(slot)}>
+                      {formatSlot(slot)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </label>
 
             {availabilityError && <p className="formerror" role="status">{availabilityError}</p>}
