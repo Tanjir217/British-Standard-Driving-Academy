@@ -8208,8 +8208,12 @@ footer {
     padding-top: 45px;
   }
   .hero h1 {
-    font-size: 49px;
+    font-size: 40px;
     letter-spacing: -2.2px;
+  }
+  .hero p {
+    font-size: 13px;
+    display: none;
   }
   .heroart {
     min-height: 320px;
@@ -10994,8 +10998,9 @@ nav .navbook {
 
   .heroCopy .actions {
     width: 100%;
+    flex-direction: row-reverse;
     margin-top: auto;
-    margin-bottom: 0;
+    margin-bottom: 70px;
     padding-top: 30px;
     gap: 8px;
   }
