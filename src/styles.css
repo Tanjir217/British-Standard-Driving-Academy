@@ -10702,3 +10702,64 @@ nav .navbook {
     background: var(--red);
   }
 }
+
+/* Desktop-only side arrows for the homepage reels carousel. Mobile layout and dot navigation remain unchanged. */
+.socialReelsDesktopNav {
+  position: relative;
+}
+
+.socialReelsSideArrow {
+  display: none;
+}
+
+@media (min-width: 601px) {
+  .socialReelsDesktopNav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .socialReelsDesktopNav .socialReelsViewport {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .socialReelsSideArrow {
+    display: inline-flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid #d9d5cf;
+    border-radius: 50%;
+    background: #fffdfa;
+    color: #222;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
+  }
+
+  .socialReelsSideArrow:hover:not(:disabled) {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+
+  .socialReelsSideArrow:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 600px) {
+  .socialReelsDesktopNav {
+    display: block;
+  }
+
+  .socialReelsSideArrow {
+    display: none !important;
+  }
+}
