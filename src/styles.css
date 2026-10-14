@@ -10012,14 +10012,13 @@ nav .navbook {
   .socialReelsGrid {
     display: flex;
     gap: 10px;
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
   }
 
   .socialReelCard {
-    flex: 0 0 calc(100vw - 24px);
-    width: calc(100vw - 24px);
-    min-width: calc(100vw - 24px);
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
     scroll-snap-align: start;
     scroll-snap-stop: always;
     overflow: hidden;
