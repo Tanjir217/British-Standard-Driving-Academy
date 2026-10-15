@@ -11023,6 +11023,9 @@ to {
   gap: 18px;
   transition: transform .55s cubic-bezier(.22,.75,.25,1);
 }
+.package-home-track .card p{
+  display: none;
+}
 .package-home-slide {
   min-width: 0;
 }
@@ -11951,7 +11954,8 @@ to {
 
   .site.hero-in-view .floatingQuickAction span {
     display: none;
-
+  }
+}
 /* Reels carousel fixes: keep every CMS reel reachable on mobile and match the compact package arrows. */
 @media (max-width: 600px) {
   .socialReelsViewport {
