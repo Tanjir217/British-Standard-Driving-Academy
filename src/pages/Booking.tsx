@@ -234,8 +234,7 @@ export function Booking() {
       }
     };
 
-    void loadAvailability();
-      .finally(() => {
+    void loadAvailability().finally(() => {
         if (active) setAvailabilityLoading(false);
       });
 
