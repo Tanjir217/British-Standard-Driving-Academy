@@ -5,6 +5,7 @@ import { beginManagedMemberLogin } from "../services/auth/authService";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
+import { createWixPricingPlanCheckout } from "../services/packages/packageCheckoutApi";
 import { bookingService } from "../services/bookings/bookingService";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import { createWixBookingCheckout, fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
@@ -276,6 +277,23 @@ export function Booking() {
     }
   };
 
+  const startPackageCheckout = async () => {
+    if (!selectedPackage || !studentRecord || accountLoading || accountError || accountMissing) {
+      setBookingError("Sign in with a valid BSDA student account before purchasing a package.");
+      return;
+    }
+
+    setBookingError("");
+    setBusy(true);
+    try {
+      const result = await createWixPricingPlanCheckout(selectedPackage.id);
+      window.location.assign(result.redirectUrl);
+    } catch (error) {
+      setBookingError(error instanceof Error ? error.message : "Wix could not prepare package checkout.");
+      setBusy(false);
+    }
+  };
+
   if (accountLoading) {
     return (
       <section className="page">
@@ -343,6 +361,57 @@ export function Booking() {
           <button className="btn red" onClick={() => navigate("/packages")}>
             View packages <Icon n="arrow" />
           </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (selectedPackage) {
+    return (
+      <section className="page">
+        <div className="container">
+          <Heading
+            center
+            ey="Wix Pricing Plans"
+            title="Purchase your lesson package."
+            text="Review your selected package, then continue to Wix's secure checkout. After checkout, return to BSDA to schedule your lessons."
+          />
+          <div className="booking booking--spaced">
+            <div className="form">
+              <div className="payment">
+                <span className="ey">Selected package</span>
+                <h3>{selectedPackage.name}</h3>
+                <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
+                {selectedPackage.description && <p>{selectedPackage.description}</p>}
+                {selectedPackage.features.length > 0 && (
+                  <ul>
+                    {selectedPackage.features.map((feature) => <li key={feature}>{feature}</li>)}
+                  </ul>
+                )}
+              </div>
+              <div className="payment">
+                <span className="ey">Secure payment</span>
+                <h3>Checkout with Wix</h3>
+                <p>Wix will handle the package checkout. This return page will not assume payment succeeded; the purchase must be confirmed by Wix before package benefits are considered active.</p>
+              </div>
+              <button type="button" className="btn red full" disabled={busy} onClick={() => void startPackageCheckout()}>
+                {busy ? "Preparing secure checkout..." : "Purchase package securely"} <Icon n="arrow" />
+              </button>
+              {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
+              <button type="button" className="btn light full" onClick={() => navigate("/packages")}>Choose a different package</button>
+            </div>
+            <aside className="aside">
+              <Icon n="calendar" s={27} />
+              <h3>What happens next?</h3>
+              <ol>
+                <li>Wix processes your package purchase.</li>
+                <li>Return to BSDA after the Wix checkout flow.</li>
+                <li>Open the booking page and choose an eligible lesson time using your purchased plan.</li>
+              </ol>
+              <p>If you already own an eligible plan, choose a lesson service instead to see Wix's supported booking checkout options.</p>
+              <button type="button" className="btn light" onClick={() => navigate("/booking")}>Book an individual lesson <Icon n="arrow" s={15} /></button>
+            </aside>
+          </div>
         </div>
       </section>
     );
