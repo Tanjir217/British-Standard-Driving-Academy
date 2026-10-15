@@ -51,7 +51,7 @@ async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMe
   // explicitly; members.getCurrentMember() does not reliably inherit the
   // external browser session in this request context.
   const authorization = request.headers.get("authorization") || "";
-  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
   const accessToken = match?.[1]?.trim();
   if (!accessToken) return null;
 
