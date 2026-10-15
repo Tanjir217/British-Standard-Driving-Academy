@@ -7,8 +7,7 @@ import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
-import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
-import { createWixBookingCheckout } from "../services/bookings/bookingApi";
+import { createWixBookingCheckout, fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import type { Package } from "../services/domain/types";
 import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
@@ -469,6 +468,7 @@ export function Booking() {
               <span className="ey">Secure payment</span>
               <h3>Pay securely with Wix</h3>
               <p>After confirming your booking details, you’ll continue to Wix’s secure checkout to review the service price and complete payment. BSDA never collects or stores your card or bank details.</p>
+              {selectedPackage && <p className="formerror" role="status">This flow checks out an individual Wix Bookings service, not the selected package. Package checkout must be connected separately, so this payment action is disabled to prevent charging the wrong amount.</p>}
             </div>
 
             <button disabled={busy || availabilityLoading || !selectedSlot || done} className="btn red full">
