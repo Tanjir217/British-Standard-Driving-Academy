@@ -214,7 +214,10 @@ export const POST: APIRoute = async ({ request }) => {
       details: wixError?.details ?? cause?.details ?? undefined,
     };
     console.error("[BSDA pricing plans] Checkout session creation failed:", diagnostic);
-    if (reason === "INVALID_CHECKOUT_RETURN_URL") {\n      return json({ ok: false, code: "INVALID_CHECKOUT_RETURN_URL", message: "The configured checkout return URL must be a valid HTTPS URL." }, 500);\n    }\n    if (reason === "MEMBER_IDENTIFIERS_MISSING") {
+    if (reason === "INVALID_CHECKOUT_RETURN_URL") {
+      return json({ ok: false, code: "INVALID_CHECKOUT_RETURN_URL", message: "The configured checkout return URL must be a valid HTTPS URL." }, 500);
+    }
+    if (reason === "MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "We couldn't verify your BSDA account. Please sign in again." }, 422);
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
@@ -224,7 +227,13 @@ export const POST: APIRoute = async ({ request }) => {
       ok: false,
       code: "PLAN_CHECKOUT_FAILED",
       message: "Wix could not prepare package checkout. Verify the member session, plan access, and allowed redirect domain, then try again.",
-      ...(import.meta.env.DEV ? {\n        diagnosticStage: stage,\n        diagnosticMessage: [reason, diagnostic.errorCode, diagnostic.httpStatus, diagnostic.causeMessage]\n          .filter((value) => value !== undefined && value !== "")\n          .join(" | ")\n          .slice(0, 500),\n      } : {}),
+      ...(import.meta.env.DEV ? {
+        diagnosticStage: stage,
+        diagnosticMessage: [reason, diagnostic.errorCode, diagnostic.httpStatus, diagnostic.causeMessage]
+          .filter((value) => value !== undefined && value !== "")
+          .join(" | ")
+          .slice(0, 500),
+      } : {}),
     }, 502);
   }
 };
