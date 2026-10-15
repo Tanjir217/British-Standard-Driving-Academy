@@ -368,7 +368,12 @@ export function Booking() {
     );
   }
 
-  if (selectedPackage) {
+  // Capture the async-loaded package in a render-local value with its
+  // declared domain type. This avoids TypeScript incorrectly narrowing the
+  // state value to never in this conditional JSX branch.
+  const packageForCheckout: Package | null = selectedPackage;
+
+  if (packageForCheckout !== null) {
     return (
       <section className="page">
         <div className="container">
@@ -382,12 +387,12 @@ export function Booking() {
             <div className="form">
               <div className="payment">
                 <span className="ey">Selected package</span>
-                <h3>{selectedPackage.name}</h3>
-                <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
-                {selectedPackage.description && <p>{selectedPackage.description}</p>}
-                {selectedPackage.features.length > 0 && (
+                <h3>{packageForCheckout.name}</h3>
+                <p>{packageForCheckout.lessonHours > 0 ? `${packageForCheckout.lessonHours} hours · ` : ""}{formatMoney(packageForCheckout.priceMinor, packageForCheckout.currency)}</p>
+                {packageForCheckout.description && <p>{packageForCheckout.description}</p>}
+                {packageForCheckout.features.length > 0 && (
                   <ul>
-                    {selectedPackage.features.map((feature) => <li key={feature}>{feature}</li>)}
+                    {packageForCheckout.features.map((feature) => <li key={feature}>{feature}</li>)}
                   </ul>
                 )}
               </div>
