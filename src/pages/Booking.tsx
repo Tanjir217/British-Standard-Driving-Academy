@@ -437,19 +437,10 @@ export function Booking() {
         <div className="booking booking--spaced">
           <form className="form" onSubmit={submit}>
             <div className="payment">
-              <span className="ey">{selectedPackage ? "Selected package" : "Selected service"}</span>
-              {selectedPackage ? (
-                <>
-                  <h3>{selectedPackage.name}</h3>
-                  <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
-                </>
-              ) : (
-                <>
-                  <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
-                  <p>You can continue with this service, or select a package from the packages page.</p>
-                  <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
-                </>
-              )}
+              <span className="ey">Selected service</span>
+              <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
+              <p>You can continue with this service, or select a package from the packages page.</p>
+              <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
             </div>
 
             <div className="payment bookingSelectedServiceSummary">
@@ -569,10 +560,9 @@ export function Booking() {
               <span className="ey">Secure payment</span>
               <h3>Pay securely with Wix</h3>
               <p>After confirming your booking details, you’ll continue to Wix’s secure checkout to review the service price and complete payment. BSDA never collects or stores your card or bank details.</p>
-              {selectedPackage && <p className="formerror" role="status">This flow checks out an individual Wix Bookings service, not the selected package. Package checkout must be connected separately, so this payment action is disabled to prevent charging the wrong amount.</p>}
             </div>
 
-            <button disabled={busy || availabilityLoading || !selectedSlot || Boolean(selectedPackage)} className="btn red full">
+            <button disabled={busy || availabilityLoading || !selectedSlot} className="btn red full">
               {busy ? "Preparing secure checkout..." : "Confirm Booking"} <Icon n="arrow" />
             </button>
 
