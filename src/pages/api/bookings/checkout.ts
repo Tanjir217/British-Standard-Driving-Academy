@@ -141,11 +141,20 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ ok: false, code: "SLOT_UNAVAILABLE", message: "That time is no longer available. Refresh availability and choose another slot." }, 409);
     }
 
+    // The generated Redirects SDK expects SlotAvailability.bookable to be
+    // boolean | undefined, while the availability API's TimeSlot permits null.
+    // Normalize the server-verified slot instead of passing the incompatible
+    // SDK response object directly. The request timezone is authoritative here.
+    const slotAvailability = {
+      ...freshSlot,
+      bookable: freshSlot.bookable === true,
+    };
+
     // Wix owns the booking checkout and payment UI. The return URL is not proof of payment.
     const response = await redirects.createRedirectSession({
       bookingsCheckout: {
-        slotAvailability: freshSlot,
-        timezone: freshSlot.timeZone || timeZone,
+        slotAvailability,
+        timezone: timeZone,
       },
       callbacks: {
         postFlowUrl: "https://www.bsda.online/?bsdaPayment=return",
