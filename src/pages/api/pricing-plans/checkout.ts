@@ -186,7 +186,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Call the documented Redirects REST endpoint directly so Wix HTTP errors
     // are visible instead of being collapsed into the SDK generic error wrapper.
     const authorization = request.headers.get("authorization") || "";
-    const accessToken = authorization.match(/^Bearer\\s+(.+)$/i)?.[1]?.trim();
+    const accessToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
     if (!accessToken) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in with your BSDA account before purchasing a package." }, 401);
     }
