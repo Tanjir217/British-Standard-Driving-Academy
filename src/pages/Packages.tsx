@@ -70,7 +70,7 @@ function ServiceCard({
           <p>{description || "Driving service available through BSDA."}</p>
         )}
       </div>
-      <Link className="btn red servicecardContinue" to={`/booking?service=${encodeURIComponent(service.id)}`}>
+      <Link className="btn red full servicecardContinue" to={`/booking?service=${encodeURIComponent(service.id)}`}>
         Select &amp; continue <span>→</span>
       </Link>
     </article>
