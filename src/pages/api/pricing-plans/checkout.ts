@@ -210,9 +210,9 @@ export const POST: APIRoute = async ({ request }) => {
       errorName: error instanceof Error ? error.name : typeof error,
       errorCode: stringField(wixError?.code ?? cause?.code, 120) || undefined,
       causeMessage: stringField(cause?.message, 300) || undefined,
-      httpStatus: Number.isFinite(wixError?.status)
+      httpStatus: wixError && typeof wixError.status === "number" && Number.isFinite(wixError.status)
         ? wixError.status
-        : Number.isFinite(cause?.status)
+        : cause && typeof cause.status === "number" && Number.isFinite(cause.status)
           ? cause.status
           : undefined,
       details: wixError?.details ?? cause?.details ?? undefined,
