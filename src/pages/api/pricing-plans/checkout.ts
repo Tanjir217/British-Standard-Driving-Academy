@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
-import { members } from "@wix/members";
 import { plansV3 } from "@wix/pricing-plans";
 import { redirects } from "@wix/redirects";
 
@@ -47,6 +46,41 @@ function recordsFromQuery(value: unknown): WixRecord[] {
     : [];
 }
 
+async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMember | null> {
+  // The self-managed Astro API must validate the browser's Headless token
+  // explicitly; members.getCurrentMember() does not reliably inherit the
+  // external browser session in this request context.
+  const authorization = request.headers.get("authorization") || "";
+  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  const accessToken = match?.[1]?.trim();
+  if (!accessToken) return null;
+
+  const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (response.status === 401 || response.status === 403) return null;
+  if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
+
+  const payload = await response.json() as Record<string, any>;
+  const member = (payload.member ?? payload) as Record<string, any>;
+  const id = member._id ?? member.id;
+  if (typeof id !== "string" || !id) return null;
+  const contact = member.contact && typeof member.contact === "object" ? member.contact : null;
+
+  return {
+    ...member,
+    _id: id,
+    loginEmail: member.loginEmail ?? member.email ?? contact?.email ?? null,
+    contactId: member.contactId ?? contact?.contactId ?? null,
+  } as AuthenticatedMember;
+}
+
 async function hasVerifiedFullDataRecord(member: AuthenticatedMember): Promise<boolean> {
   const contactId = stringField(member.contactId ?? member.contact?.contactId, 160);
   const email = stringField(member.loginEmail ?? member.email, 254).toLowerCase();
@@ -54,23 +88,36 @@ async function hasVerifiedFullDataRecord(member: AuthenticatedMember): Promise<b
 
   const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-  const records = recordsFromQuery(await elevatedQuery(collectionId).limit(100).find());
-  const matches = records.filter((record) => {
-    const recordContactId = stringField(record.contactId, 160);
-    const recordEmail = stringField(record.loginEmail ?? record.email, 254).toLowerCase();
-    return Boolean(contactId && recordContactId === contactId)
-      || Boolean(email && recordEmail === email);
-  });
+  // Match the student-profile endpoint's bounded lookup so valid records are
+  // not missed merely because they occur after the first 100 CMS rows.
+  const records = recordsFromQuery(await elevatedQuery(collectionId).limit(500).find());
 
-  if (matches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-  if (!matches.length) return false;
+  // Prefer contactId exactly as the student profile flow does. Only fall back
+  // to email when no contactId match exists; otherwise a duplicate email on an
+  // old record could incorrectly block the correct member.
+  let match: WixRecord | undefined;
+  if (contactId) {
+    const contactMatches = records.filter(
+      (record) => stringField(record.contactId, 160).toLowerCase() === contactId.toLowerCase(),
+    );
+    if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    match = contactMatches[0];
+  }
+  if (!match && email) {
+    const emailMatches = records.filter(
+      (record) => stringField(record.loginEmail ?? record.email, 254).toLowerCase() === email,
+    );
+    if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    match = emailMatches[0];
+  }
+  if (!match) return false;
 
-  const recordContactId = stringField(matches[0].contactId, 160);
+  const recordContactId = stringField(match.contactId, 160);
   const recordName = [
-    stringField(matches[0].firstName, 80),
-    stringField(matches[0].lastName, 80),
-  ].filter(Boolean).join(" ") || stringField(matches[0].nickname, 160);
-  const recordEmail = stringField(matches[0].loginEmail ?? matches[0].email ?? email, 254);
+    stringField(match.firstName, 80),
+    stringField(match.lastName, 80),
+  ].filter(Boolean).join(" ") || stringField(match.nickname, 160);
+  const recordEmail = stringField(match.loginEmail ?? match.email ?? email, 254);
   return Boolean(recordContactId && recordName && recordEmail);
 }
 
@@ -95,23 +142,26 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, code: "VALIDATION_ERROR", message: "Choose a valid pricing plan." }, 400);
   }
 
+  let stage = "member-authentication";
   try {
-    const currentResponse = await members.getCurrentMember();
-    const member = currentResponse.member as AuthenticatedMember | undefined;
+    const member = await getAuthenticatedMember(request);
     if (!member?._id) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in with your BSDA account before purchasing a package." }, 401);
     }
 
+    stage = "fulldata-verification";
     if (!(await hasVerifiedFullDataRecord(member))) {
       return json({ ok: false, code: "FULLDATA_PROFILE_REQUIRED", message: "No complete matching BSDA student record was found. Please contact the academy before purchasing a package." }, 403);
     }
 
+    stage = "plan-lookup";
     const plan = await plansV3.getPlan(planId) as any;
     const actualPlanId = stringField(plan?._id ?? plan?.id, 120);
     if (actualPlanId !== planId || plan?.visibility !== "PUBLIC" || plan?.archived === true) {
       return json({ ok: false, code: "PLAN_NOT_AVAILABLE", message: "That package is no longer available. Return to packages and choose a current plan." }, 404);
     }
 
+    stage = "wix-redirect-session";
     const baseUrl = import.meta.env.DEV ? new URL(request.url).origin : "https://www.bsda.online";
     const response = await redirects.createRedirectSession({
       paidPlansCheckout: { planId },
@@ -129,13 +179,18 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: true, redirectUrl });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA pricing plans] Checkout session creation failed:", reason);
+    console.error("[BSDA pricing plans] Checkout session creation failed:", { stage, reason });
     if (reason === "MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "We couldn't verify your BSDA account. Please sign in again." }, 422);
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your BSDA account has conflicting student records. Please contact the academy." }, 409);
     }
-    return json({ ok: false, code: "PLAN_CHECKOUT_FAILED", message: "Wix could not prepare package checkout. Verify that the plan is public and online payments are enabled, then try again." }, 502);
+    return json({
+      ok: false,
+      code: "PLAN_CHECKOUT_FAILED",
+      message: "Wix could not prepare package checkout. Verify the member session, plan access, and allowed redirect domain, then try again.",
+      ...(import.meta.env.DEV ? { diagnosticStage: stage, diagnosticMessage: reason.slice(0, 300) } : {}),
+    }, 502);
   }
 };
