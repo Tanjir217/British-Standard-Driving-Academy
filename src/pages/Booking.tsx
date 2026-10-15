@@ -471,7 +471,7 @@ export function Booking() {
               {selectedPackage && <p className="formerror" role="status">This flow checks out an individual Wix Bookings service, not the selected package. Package checkout must be connected separately, so this payment action is disabled to prevent charging the wrong amount.</p>}
             </div>
 
-            <button disabled={busy || availabilityLoading || !selectedSlot || done} className="btn red full">
+            <button disabled={busy || availabilityLoading || !selectedSlot || Boolean(selectedPackage)} className="btn red full">
               {busy ? "Preparing secure checkout..." : "Confirm Booking"} <Icon n="arrow" />
             </button>
 
