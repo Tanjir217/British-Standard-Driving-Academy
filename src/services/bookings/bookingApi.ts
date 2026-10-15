@@ -61,3 +61,15 @@ export async function createWixBooking(input: {
   });
   return parseResponse<{ booking: { id: string; status: string; startDate: string; endDate: string } }>(response);
 }
+
+export async function createWixBookingCheckout(input: { slot: BookingApiSlot }) {
+  const response = await httpClient.fetchWithAuth("/api/bookings/checkout", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ slot: input.slot }),
+  });
+  return parseResponse<{ redirectUrl: string }>(response);
+}
