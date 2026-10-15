@@ -927,7 +927,11 @@ nav .navbook:hover {
   place-items: center;
   padding: 30px;
   background:
-    radial-gradient(circle at 20% 20%, rgba(213, 31, 42, 0.25), transparent 32%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(213, 31, 42, 0.25),
+      transparent 32%
+    ),
     var(--navy);
   color: #fff;
   text-align: center;
@@ -1138,7 +1142,7 @@ nav .navbook:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform .55s cubic-bezier(.22, .61, .36, 1);
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform;
 }
 
@@ -1185,21 +1189,24 @@ nav .navbook:hover {
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
   color: #fff;
   border-radius: 0;
   padding: 0;
-  transition: background .2s ease, opacity .2s ease, transform .2s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .testimonialArrow:hover:not(:disabled) {
-  background: rgba(255,255,255,.12);
+  background: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
 }
 
 .testimonialArrow:disabled {
-  opacity: .3;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -1388,7 +1395,10 @@ textarea:focus {
   padding-right: 38px;
   cursor: pointer;
   min-height: 44px;
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 .bookingSelect select:hover:not(:disabled) {
   border-color: #b8b1a6;
@@ -1396,7 +1406,7 @@ textarea:focus {
 }
 .bookingSelect select:disabled {
   cursor: not-allowed;
-  opacity: .65;
+  opacity: 0.65;
 }
 .bookingDateField {
   position: relative;
@@ -1415,7 +1425,10 @@ textarea:focus {
   color: var(--ink);
   text-align: left;
   font-size: 12px;
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 .bookingDateTrigger svg {
   color: var(--red);
@@ -1427,7 +1440,7 @@ textarea:focus {
   background: #fff;
 }
 .bookingDateTrigger.is-open {
-  box-shadow: 0 0 0 3px rgba(213, 31, 42, .08);
+  box-shadow: 0 0 0 3px rgba(213, 31, 42, 0.08);
 }
 .bookingCalendar {
   position: absolute;
@@ -1439,7 +1452,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fffdfa;
-  box-shadow: 0 18px 45px rgba(17, 24, 39, .18);
+  box-shadow: 0 18px 45px rgba(17, 24, 39, 0.18);
   color: var(--ink);
 }
 .bookingCalendarHeader {
@@ -1498,7 +1511,7 @@ textarea:focus {
   color: var(--ink);
 }
 .bookingCalendarGrid > button:hover:not(:disabled) {
-  border-color: rgba(213, 31, 42, .25);
+  border-color: rgba(213, 31, 42, 0.25);
   background: #f8eceb;
   color: var(--red);
 }
@@ -2301,7 +2314,7 @@ footer {
     font-size: 11px;
     padding-inline: 7px;
   }
-  .topbar{
+  .topbar {
     display: none;
   }
   .lessoncards {
@@ -3043,7 +3056,6 @@ textarea {
   }
 }
 
-
 /* Final body-copy scale: readable 16px copy across the site, 22px controls. */
 body :where(p, span, a, label, input, select, textarea, li, small, b, strong) {
   font-size: 16px !important;
@@ -3058,7 +3070,6 @@ button,
 nav .navbook {
   font-size: 22px !important;
 }
-
 
 /* Custom dropdown */
 .customDropdown {
@@ -3080,7 +3091,10 @@ nav .navbook {
   gap: 12px;
   text-align: left;
   font-size: 16px !important;
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
 }
 
 .customDropdownTrigger:hover,
@@ -3092,7 +3106,7 @@ nav .navbook {
 .customDropdownTrigger svg {
   flex: none;
   color: #6c7482;
-  transition: transform .2s ease;
+  transition: transform 0.2s ease;
 }
 
 .customDropdown.open .customDropdownTrigger svg {
@@ -3113,8 +3127,8 @@ nav .navbook {
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 6px;
-  box-shadow: 0 18px 40px rgba(17, 24, 39, .14);
-  animation: dropdownIn .16s ease both;
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.14);
+  animation: dropdownIn 0.16s ease both;
 }
 
 .customDropdownOption {
@@ -3131,7 +3145,9 @@ nav .navbook {
   gap: 12px;
   text-align: left;
   font-size: 16px !important;
-  transition: background .16s, color .16s;
+  transition:
+    background 0.16s,
+    color 0.16s;
 }
 
 .customDropdownOption:hover,
@@ -3172,7 +3188,6 @@ nav .navbook {
   }
 }
 
-
 /* Package card alignment: keep all package CTAs on the same baseline. */
 .pagecards .card {
   display: flex;
@@ -3183,11 +3198,10 @@ nav .navbook {
   margin-top: auto;
 }
 
-
 /* Disabled custom dropdown state */
 .customDropdown.disabled .customDropdownTrigger {
   cursor: not-allowed;
-  opacity: .55;
+  opacity: 0.55;
   background: #f3f1ec;
   border-color: #ddd9d0;
 }
@@ -3209,12 +3223,12 @@ nav .navbook {
   min-height: 760px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(460px, .92fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(460px, 0.92fr);
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 28px 80px rgba(17, 24, 39, .12);
+  box-shadow: 0 28px 80px rgba(17, 24, 39, 0.12);
 }
 
 .authvisual {
@@ -3235,9 +3249,9 @@ nav .navbook {
   height: 560px;
   right: -180px;
   bottom: -230px;
-  border: 1px solid rgba(255,255,255,.13);
+  border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 50%;
-  transform: rotate(-15deg) scaleY(.5);
+  transform: rotate(-15deg) scaleY(0.5);
 }
 
 .authvisual:after {
@@ -3247,9 +3261,9 @@ nav .navbook {
   height: 430px;
   left: -250px;
   top: 180px;
-  border: 1px solid rgba(213,31,42,.35);
+  border: 1px solid rgba(213, 31, 42, 0.35);
   border-radius: 50%;
-  transform: rotate(18deg) scaleY(.55);
+  transform: rotate(18deg) scaleY(0.55);
 }
 
 .authvisualtop,
@@ -3275,8 +3289,8 @@ nav .navbook {
 }
 
 .authvisualtop button {
-  border: 1px solid rgba(255,255,255,.2);
-  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
   color: #fff;
   border-radius: 7px;
   padding: 10px 13px;
@@ -3297,7 +3311,10 @@ nav .navbook {
 
 .authvisualbody h1 {
   color: #fff;
-  font: 700 clamp(48px, 5.2vw, 78px)/.98 "Times New Roman", Times, serif;
+  font:
+    700 clamp(48px, 5.2vw, 78px)/0.98 "Times New Roman",
+    Times,
+    serif;
   letter-spacing: -3px;
   margin: 18px 0 20px;
 }
@@ -3320,8 +3337,8 @@ nav .navbook {
   margin: 36px 0 26px;
   position: relative;
   overflow: hidden;
-  border-top: 1px solid rgba(255,255,255,.12);
-  border-bottom: 1px solid rgba(255,255,255,.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .authroad:before {
@@ -3333,7 +3350,7 @@ nav .navbook {
   height: 42px;
   background: #242a34;
   clip-path: polygon(0 100%, 18% 0, 82% 0, 100% 100%);
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .authroadline {
@@ -3360,7 +3377,7 @@ nav .navbook {
   border-radius: 14px 14px 7px 7px;
   color: #fff;
   z-index: 3;
-  box-shadow: 0 12px 20px rgba(0,0,0,.25);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.25);
 }
 
 .authroadcar:before {
@@ -3387,9 +3404,9 @@ nav .navbook {
   color: #d8dde5;
   font-size: 14px !important;
   padding: 8px 10px;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: rgba(255,255,255,.035);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .authbenefits svg {
@@ -3417,7 +3434,10 @@ nav .navbook {
 }
 
 .authformhead h2 {
-  font: 700 48px/1.02 "Times New Roman", Times, serif;
+  font:
+    700 48px/1.02 "Times New Roman",
+    Times,
+    serif;
   letter-spacing: -2px;
   color: var(--navy);
   margin: 8px 0 10px;
@@ -3496,12 +3516,14 @@ nav .navbook {
   color: var(--ink);
   outline: none;
   font-size: 16px !important;
-  transition: border-color .2s, box-shadow .2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .authform input:focus {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px rgba(213,31,42,.08);
+  box-shadow: 0 0 0 3px rgba(213, 31, 42, 0.08);
 }
 
 .authsubmit {
@@ -3569,7 +3591,9 @@ nav .navbook {
   height: 22px;
   display: grid;
   place-items: center;
-  font: 700 17px Arial, sans-serif;
+  font:
+    700 17px Arial,
+    sans-serif;
   color: #4285f4;
 }
 
@@ -3696,7 +3720,6 @@ nav .navbook {
     grid-template-columns: 1fr;
   }
 }
-
 
 /* Login page refinement: keep the authentication form compact while retaining
    the public BSDA header/footer supplied by SiteLayout. */
@@ -3845,7 +3868,6 @@ nav .navbook {
   }
 }
 
-
 /* Keep the desktop authentication screen entirely within one viewport. */
 @media (min-width: 981px) and (max-height: 720px) {
   .authscreen {
@@ -3959,7 +3981,6 @@ nav .navbook {
   }
 }
 
-
 /* Final desktop login fit: no clipped registration controls at 100vh. */
 @media (min-width: 981px) {
   .authscreen {
@@ -4018,7 +4039,7 @@ nav .navbook {
 
   .authroadcar {
     top: 20px;
-    transform: scale(.82);
+    transform: scale(0.82);
     transform-origin: center;
   }
 
@@ -4121,7 +4142,6 @@ nav .navbook {
   }
 }
 
-
 /* Keep the established login composition; only reclaim enough vertical space for the primary CTA. */
 @media (min-width: 981px) {
   .authformarea {
@@ -4170,7 +4190,6 @@ nav .navbook {
   }
 }
 
-
 @media (min-width: 981px) {
   /* Give the eyebrow and heading their own breathing room. */
   .authformhead {
@@ -4204,7 +4223,6 @@ nav .navbook {
   }
 }
 
-
 /* Student portal spacing: keep the dashboard comfortably inset from every edge. */
 .portal > .container {
   padding: 32px;
@@ -4229,7 +4247,6 @@ nav .navbook {
   }
 }
 
-
 /* Floating navigation — persistent access on desktop and mobile. */
 .desktopnav {
   display: none;
@@ -4249,7 +4266,10 @@ nav .navbook {
   place-items: center;
   z-index: 120;
   box-shadow: 0 14px 35px rgba(17, 24, 39, 0.24);
-  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .floatingMenuButton:hover {
@@ -4287,7 +4307,7 @@ nav .navbook {
   border-radius: 16px;
   box-shadow: 0 24px 70px rgba(17, 24, 39, 0.22);
   z-index: 115;
-  animation: floatingMenuIn .2s ease both;
+  animation: floatingMenuIn 0.2s ease both;
 }
 
 .floatingMenuHead {
@@ -4308,7 +4328,10 @@ nav .navbook {
 .floatingMenuHead strong {
   display: block;
   color: var(--navy);
-  font: 700 22px/1.1 "Times New Roman", Times, serif;
+  font:
+    700 22px/1.1 "Times New Roman",
+    Times,
+    serif;
 }
 
 .floatingMenuClose {
@@ -4340,7 +4363,10 @@ nav .navbook {
   gap: 12px;
   font-size: 18px !important;
   font-weight: 700;
-  transition: background .18s ease, color .18s ease, transform .18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .floatingMenuLinks a:hover,
@@ -4367,7 +4393,9 @@ nav .navbook {
   font-size: 18px !important;
   font-weight: 800;
   box-shadow: 0 10px 24px rgba(213, 31, 42, 0.18);
-  transition: background .18s ease, transform .18s ease;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
 }
 
 .floatingMenuBook:hover {
@@ -4378,7 +4406,7 @@ nav .navbook {
 @keyframes floatingMenuIn {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(.98);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -4411,7 +4439,6 @@ nav .navbook {
     font-size: 18px !important;
   }
 }
-
 
 /* Keep both navigation methods available: traditional header navigation + floating navigation. */
 .traditionalnav {
@@ -4482,18 +4509,17 @@ nav .navbook {
   }
 }
 
-
 /* Scroll-aware floating navigation refinement. The floating trigger only
    appears after the top navigation has left the viewport. */
 .floatingMenuButton {
   opacity: 0;
   pointer-events: none;
-  transform: translateY(14px) scale(.92);
+  transform: translateY(14px) scale(0.92);
   transition:
-    opacity .22s ease,
-    transform .22s ease,
-    background .2s ease,
-    box-shadow .2s ease;
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .site.scrolled .floatingMenuButton {
@@ -4519,11 +4545,14 @@ nav .navbook {
     bottom: 24px;
     padding: 0;
     border-radius: 50%;
-    background:
-      radial-gradient(circle at 50% 48%, #fffdfa 0 38%, #f6f2eb 39% 100%);
+    background: radial-gradient(
+      circle at 50% 48%,
+      #fffdfa 0 38%,
+      #f6f2eb 39% 100%
+    );
     border: 1px solid #ddd7cd;
-    box-shadow: 0 30px 90px rgba(17, 24, 39, .24);
-    animation: radialMenuIn .28s cubic-bezier(.22,.8,.24,1) both;
+    box-shadow: 0 30px 90px rgba(17, 24, 39, 0.24);
+    animation: radialMenuIn 0.28s cubic-bezier(0.22, 0.8, 0.24, 1) both;
     overflow: visible;
   }
 
@@ -4531,7 +4560,7 @@ nav .navbook {
     content: "";
     position: absolute;
     inset: 14px;
-    border: 1px dashed rgba(17, 24, 39, .12);
+    border: 1px dashed rgba(17, 24, 39, 0.12);
     border-radius: 50%;
     pointer-events: none;
   }
@@ -4575,8 +4604,8 @@ nav .navbook {
     padding: 9px 10px;
     border: 1px solid #ddd7cd;
     border-radius: 999px;
-    background: rgba(255,255,255,.94);
-    box-shadow: 0 9px 25px rgba(17,24,39,.09);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 9px 25px rgba(17, 24, 39, 0.09);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4584,7 +4613,11 @@ nav .navbook {
     color: var(--navy);
     font-size: 15px !important;
     text-align: center;
-    transition: transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+    transition:
+      transform 0.2s ease,
+      background 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .floatingMenuLinks a:nth-child(1) {
@@ -4615,7 +4648,7 @@ nav .navbook {
   .floatingMenuLinks a.active {
     background: var(--navy);
     color: #fff;
-    box-shadow: 0 13px 30px rgba(17,24,39,.18);
+    box-shadow: 0 13px 30px rgba(17, 24, 39, 0.18);
   }
 
   .floatingMenuLinks a:nth-child(1):hover,
@@ -4652,7 +4685,7 @@ nav .navbook {
     border-radius: 999px;
     font-size: 14px !important;
     z-index: 4;
-    box-shadow: 0 10px 26px rgba(213,31,42,.2);
+    box-shadow: 0 10px 26px rgba(213, 31, 42, 0.2);
   }
 
   .floatingMenuBook:hover {
@@ -4662,7 +4695,7 @@ nav .navbook {
   @keyframes radialMenuIn {
     from {
       opacity: 0;
-      transform: scale(.68) translate(15px, 15px);
+      transform: scale(0.68) translate(15px, 15px);
     }
     to {
       opacity: 1;
@@ -4681,7 +4714,7 @@ nav .navbook {
     max-height: calc(100vh - 110px);
     overflow-y: auto;
     border-radius: 18px;
-    animation: floatingMenuMobileIn .22s ease both;
+    animation: floatingMenuMobileIn 0.22s ease both;
   }
 
   .floatingMenuButton {
@@ -4692,7 +4725,7 @@ nav .navbook {
   @keyframes floatingMenuMobileIn {
     from {
       opacity: 0;
-      transform: translateY(12px) scale(.96);
+      transform: translateY(12px) scale(0.96);
     }
     to {
       opacity: 1;
@@ -4716,7 +4749,6 @@ nav .navbook {
   }
 }
 
-
 /* Desktop radial flyout: use labeled circular destinations, matching the
    reference interaction rather than icon-based menu items. */
 @media (min-width: 981px) {
@@ -4731,7 +4763,7 @@ nav .navbook {
     background: transparent;
     box-shadow: none;
     overflow: visible;
-    animation: radialMenuIn .28s cubic-bezier(.22,.8,.24,1) both;
+    animation: radialMenuIn 0.28s cubic-bezier(0.22, 0.8, 0.24, 1) both;
   }
 
   .floatingMenuPanel:after {
@@ -4745,11 +4777,11 @@ nav .navbook {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border: 1px solid rgba(17, 24, 39, .12);
+    border: 1px solid rgba(17, 24, 39, 0.12);
     border-radius: 50%;
     padding: 15px;
-    background: rgba(255, 253, 250, .96);
-    box-shadow: 0 18px 45px rgba(17, 24, 39, .12);
+    background: rgba(255, 253, 250, 0.96);
+    box-shadow: 0 18px 45px rgba(17, 24, 39, 0.12);
     display: grid;
     place-content: center;
     gap: 3px;
@@ -4784,8 +4816,8 @@ nav .navbook {
     padding: 12px;
     border: 2px solid var(--navy);
     border-radius: 50%;
-    background: rgba(255, 253, 250, .97);
-    box-shadow: 0 12px 30px rgba(17, 24, 39, .12);
+    background: rgba(255, 253, 250, 0.97);
+    box-shadow: 0 12px 30px rgba(17, 24, 39, 0.12);
     display: grid;
     place-items: center;
     text-align: center;
@@ -4794,11 +4826,11 @@ nav .navbook {
     line-height: 1.08;
     font-weight: 800;
     transition:
-      transform .2s ease,
-      background .2s ease,
-      color .2s ease,
-      border-color .2s ease,
-      box-shadow .2s ease;
+      transform 0.2s ease,
+      background 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   /* Five destinations travel around an arc toward the bottom-right X. */
@@ -4831,7 +4863,7 @@ nav .navbook {
     background: var(--navy);
     color: #fff;
     border-color: var(--navy);
-    box-shadow: 0 17px 36px rgba(17, 24, 39, .2);
+    box-shadow: 0 17px 36px rgba(17, 24, 39, 0.2);
   }
 
   .floatingMenuLinks a:nth-child(1):hover,
@@ -4874,7 +4906,7 @@ nav .navbook {
     line-height: 1.08;
     font-weight: 800;
     z-index: 4;
-    box-shadow: 0 15px 34px rgba(213, 31, 42, .22);
+    box-shadow: 0 15px 34px rgba(213, 31, 42, 0.22);
   }
 
   .floatingMenuBook:hover {
@@ -4883,7 +4915,6 @@ nav .navbook {
     transform: translateY(-4px);
   }
 }
-
 
 @media (min-width: 981px) {
   /* The desktop flyout is label-first: no iconography inside the destinations. */
@@ -4896,7 +4927,6 @@ nav .navbook {
     display: none;
   }
 }
-
 
 /* Desktop flyout spacing: keep every circular destination separated on a
    clear diagonal arc, matching the reference composition. */
@@ -4968,7 +4998,6 @@ nav .navbook {
   }
 }
 
-
 /* Final desktop flyout alignment: all five destinations now follow one
    continuous rising diagonal track, with the red booking action integrated
    into the same path. */
@@ -5014,7 +5043,6 @@ nav .navbook {
   }
 }
 
-
 /* Desktop flyout final geometry: tighten the item spacing, increase the
    arc radius, and bring the whole navigation closer to the X trigger. */
 @media (min-width: 981px) {
@@ -5056,7 +5084,6 @@ nav .navbook {
   }
 }
 
-
 /* Put the red booking action directly onto the same rising diagonal as the
    navigation destinations — between Instructors and Learning Portal. */
 @media (min-width: 981px) {
@@ -5067,7 +5094,6 @@ nav .navbook {
     bottom: auto;
   }
 }
-
 
 /* Desktop flyout: text-only diagonal navigation. The links no longer use
    circular buttons; they sit on one clean rising line toward the X trigger. */
@@ -5103,7 +5129,9 @@ nav .navbook {
     font-weight: 800;
     white-space: nowrap;
     text-align: left;
-    transition: color .18s ease, transform .18s ease;
+    transition:
+      color 0.18s ease,
+      transform 0.18s ease;
   }
 
   /* One continuous lower-left → upper-right diagonal. */
@@ -5174,7 +5202,6 @@ nav .navbook {
     display: none;
   }
 }
-
 
 /* Desktop flyout: align the text labels directly along the custom
    quarter-circle track defined by the flyout curve. */
@@ -5272,9 +5299,6 @@ nav .navbook {
   }
 }
 
-
-
-
 /* Contrast-aware desktop flyout text. Inactive labels use difference blending
    so they automatically read dark over light sections and light over navy/dark
    sections. Active links keep the existing red treatment. */
@@ -5293,7 +5317,6 @@ nav .navbook {
     mix-blend-mode: normal;
   }
 }
-
 
 /* The flyout samples the section beneath each label. Keep the normal navy
    treatment on light sections and switch only the labels over dark sections. */
@@ -5317,7 +5340,6 @@ nav .navbook {
     mix-blend-mode: normal;
   }
 }
-
 
 /* Final desktop flyout treatment: turn each label into a compact button
    without changing its position on the existing diagonal track. */
@@ -5366,7 +5388,6 @@ nav .navbook {
   }
 }
 
-
 /* Final desktop flyout: FAQ takes the former booking-action position,
    preserving the existing diagonal composition. */
 @media (min-width: 981px) {
@@ -5377,7 +5398,6 @@ nav .navbook {
     bottom: auto;
   }
 }
-
 
 /* Responsive CTA fixes: keep the footer action compact on tablet widths and
    leave breathing room below package card buttons. */
@@ -5395,7 +5415,6 @@ nav .navbook {
 .offerin > .btn {
   margin-bottom: 20px;
 }
-
 
 /* Header navigation: six primary destinations, including the booking entry. */
 .traditionalnav {
@@ -5432,17 +5451,17 @@ nav .navbook {
   height: 46px;
   padding: 0 13px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
   background: var(--navy);
   color: #fff;
-  box-shadow: 0 12px 28px rgba(17, 24, 39, .2);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.2);
   transition:
-    width .32s cubic-bezier(.22, 1, .36, 1),
-    background .22s ease,
-    color .22s ease,
-    gap .32s cubic-bezier(.22, 1, .36, 1),
-    box-shadow .22s ease;
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.22s ease,
+    color 0.22s ease,
+    gap 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease;
 }
 
 .floatingQuickAction span {
@@ -5454,8 +5473,8 @@ nav .navbook {
   font-size: 14px;
   font-weight: 800;
   transition:
-    max-width .32s cubic-bezier(.22, 1, .36, 1),
-    opacity .2s ease;
+    max-width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
 }
 
 .floatingQuickAction:hover,
@@ -5534,15 +5553,14 @@ nav .navbook {
   }
 }
 
-
 /* Home page intro: the global rail remains sticky; on the home page each
    action briefly expands in sequence when the page first mounts. */
 .floatingQuickActions.home-intro .floatingQuickAction {
-  animation: homeQuickReveal 1.4s cubic-bezier(.16, 1, .3, 1) both;
+  animation: homeQuickReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction:nth-child(2) {
-  animation-delay: .55s;
+  animation-delay: 0.55s;
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction:nth-child(3) {
@@ -5550,11 +5568,11 @@ nav .navbook {
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction span {
-  animation: homeQuickLabelReveal 1.4s cubic-bezier(.16, 1, .3, 1) both;
+  animation: homeQuickLabelReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction:nth-child(2) span {
-  animation-delay: .55s;
+  animation-delay: 0.55s;
 }
 
 .floatingQuickActions.home-intro .floatingQuickAction:nth-child(3) span {
@@ -5562,15 +5580,39 @@ nav .navbook {
 }
 
 @keyframes homeQuickReveal {
-  0%, 16% { width: 46px; gap: 0; }
-  34%, 66% { width: 132px; gap: 9px; }
-  84%, 100% { width: 46px; gap: 0; }
+  0%,
+  16% {
+    width: 46px;
+    gap: 0;
+  }
+  34%,
+  66% {
+    width: 132px;
+    gap: 9px;
+  }
+  84%,
+  100% {
+    width: 46px;
+    gap: 0;
+  }
 }
 
 @keyframes homeQuickLabelReveal {
-  0%, 16% { max-width: 0; opacity: 0; }
-  34%, 66% { max-width: 90px; opacity: 1; }
-  84%, 100% { max-width: 0; opacity: 0; }
+  0%,
+  16% {
+    max-width: 0;
+    opacity: 0;
+  }
+  34%,
+  66% {
+    max-width: 90px;
+    opacity: 1;
+  }
+  84%,
+  100% {
+    max-width: 0;
+    opacity: 0;
+  }
 }
 
 @media (max-width: 980px) {
@@ -5580,9 +5622,21 @@ nav .navbook {
 }
 
 @keyframes homeQuickRevealTablet {
-  0%, 16% { width: 44px; gap: 0; }
-  34%, 66% { width: 124px; gap: 9px; }
-  84%, 100% { width: 44px; gap: 0; }
+  0%,
+  16% {
+    width: 44px;
+    gap: 0;
+  }
+  34%,
+  66% {
+    width: 124px;
+    gap: 9px;
+  }
+  84%,
+  100% {
+    width: 44px;
+    gap: 0;
+  }
 }
 
 @media (max-width: 560px) {
@@ -5592,11 +5646,22 @@ nav .navbook {
 }
 
 @keyframes homeQuickRevealMobile {
-  0%, 16% { width: 42px; gap: 0; }
-  34%, 66% { width: 116px; gap: 9px; }
-  84%, 100% { width: 42px; gap: 0; }
+  0%,
+  16% {
+    width: 42px;
+    gap: 0;
+  }
+  34%,
+  66% {
+    width: 116px;
+    gap: 9px;
+  }
+  84%,
+  100% {
+    width: 42px;
+    gap: 0;
+  }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   .floatingQuickActions.home-intro .floatingQuickAction,
@@ -5604,7 +5669,6 @@ nav .navbook {
     animation: none;
   }
 }
-
 
 /* Authentication responsive correction:
    the form must be allowed to grow naturally, while the decorative left
@@ -5638,14 +5702,17 @@ nav .navbook {
 
 .careershero {
   display: grid;
-  grid-template-columns: 1.08fr .92fr;
+  grid-template-columns: 1.08fr 0.92fr;
   gap: 65px;
   align-items: center;
   padding: 25px 0 75px;
 }
 
 .careershero h1 {
-  font: 700 clamp(48px, 5.8vw, 78px)/1 "Times New Roman", Times, serif;
+  font:
+    700 clamp(48px, 5.8vw, 78px)/1 "Times New Roman",
+    Times,
+    serif;
   letter-spacing: -3px;
   color: var(--navy);
   margin: 15px 0;
@@ -5675,7 +5742,7 @@ nav .navbook {
   height: 430px;
   border: 1px solid #d8d2c6;
   border-radius: 50%;
-  transform: rotate(-15deg) scaleY(.5);
+  transform: rotate(-15deg) scaleY(0.5);
 }
 
 .careersroad {
@@ -5716,7 +5783,10 @@ nav .navbook {
 }
 
 .careersbadge strong {
-  font: 700 54px/1 "Times New Roman", Times, serif;
+  font:
+    700 54px/1 "Times New Roman",
+    Times,
+    serif;
   color: var(--red);
   letter-spacing: -2px;
 }
@@ -5780,7 +5850,7 @@ nav .navbook {
   background: #fffdfa;
   border: 1px solid var(--line);
   border-radius: 13px;
-  transition: .25s;
+  transition: 0.25s;
 }
 
 .careercard:hover {
@@ -5794,7 +5864,10 @@ nav .navbook {
 }
 
 .careercard h2 {
-  font: 700 29px/1.08 "Times New Roman", Times, serif;
+  font:
+    700 29px/1.08 "Times New Roman",
+    Times,
+    serif;
   margin: 38px 0 12px;
 }
 
@@ -5841,7 +5914,10 @@ nav .navbook {
 }
 
 .careercta h2 {
-  font: 700 34px/1.05 "Times New Roman", Times, serif;
+  font:
+    700 34px/1.05 "Times New Roman",
+    Times,
+    serif;
   margin: 7px 0;
 }
 
@@ -5928,7 +6004,7 @@ nav .navbook {
 
 .contact-grid {
   display: grid;
-  grid-template-columns: .85fr 1.15fr;
+  grid-template-columns: 0.85fr 1.15fr;
   gap: 25px;
   max-width: 1040px;
   margin: 55px auto 0;
@@ -5948,7 +6024,10 @@ nav .navbook {
 }
 
 .contact-card h3 {
-  font: 700 24px/1.1 "Times New Roman", Times, serif;
+  font:
+    700 24px/1.1 "Times New Roman",
+    Times,
+    serif;
   margin: 8px 0;
 }
 
@@ -5991,7 +6070,10 @@ nav .navbook {
 }
 
 .contact-form h3 {
-  font: 700 29px/1.1 "Times New Roman", Times, serif;
+  font:
+    700 29px/1.1 "Times New Roman",
+    Times,
+    serif;
   margin: 8px 0 22px;
 }
 
@@ -6005,7 +6087,6 @@ nav .navbook {
     grid-template-columns: 1fr;
   }
 }
-
 
 .authmobileback {
   display: none;
@@ -6054,10 +6135,10 @@ nav .navbook {
     font-weight: 700;
     line-height: 1.2;
     transition:
-      background .18s ease,
-      border-color .18s ease,
-      box-shadow .18s ease,
-      transform .18s ease;
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
   }
 
   .authmobileback:hover,
@@ -6085,7 +6166,6 @@ nav .navbook {
     border-radius: 7px;
   }
 }
-
 
 /* ADI pathway and qualified instructor sections */
 .adi-section {
@@ -6126,7 +6206,10 @@ nav .navbook {
 }
 
 .adi-step h3 {
-  font: 700 23px/1.1 "Times New Roman", Times, serif;
+  font:
+    700 23px/1.1 "Times New Roman",
+    Times,
+    serif;
   margin: 28px 0 12px;
 }
 
@@ -6139,7 +6222,7 @@ nav .navbook {
 
 .qualified-adi {
   display: grid;
-  grid-template-columns: 1.1fr .9fr;
+  grid-template-columns: 1.1fr 0.9fr;
   gap: 45px;
   align-items: center;
   margin: 0 0 80px;
@@ -6154,7 +6237,10 @@ nav .navbook {
 }
 
 .qualified-adi h2 {
-  font: 700 36px/1.08 "Times New Roman", Times, serif;
+  font:
+    700 36px/1.08 "Times New Roman",
+    Times,
+    serif;
   margin: 9px 0 0;
 }
 
@@ -6197,7 +6283,6 @@ nav .navbook {
   }
 }
 
-
 /* Contact channels */
 .contact-channels {
   display: grid;
@@ -6215,7 +6300,7 @@ nav .navbook {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  transition: .25s;
+  transition: 0.25s;
 }
 
 .contact-channel:hover {
@@ -6238,13 +6323,13 @@ nav .navbook {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(213, 31, 42, .1);
+  background: rgba(213, 31, 42, 0.1);
   color: var(--red);
   margin-bottom: 24px;
 }
 
 .whatsapp-channel .contact-channel-icon {
-  background: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
@@ -6257,7 +6342,10 @@ nav .navbook {
 }
 
 .contact-channel h2 {
-  font: 700 31px/1.08 "Times New Roman", Times, serif;
+  font:
+    700 31px/1.08 "Times New Roman",
+    Times,
+    serif;
   margin: 0 0 12px;
 }
 
@@ -6289,13 +6377,13 @@ nav .navbook {
   padding: 11px 13px;
   border-radius: 8px;
   background: #fff0f0;
-  border: 1px solid rgba(213, 31, 42, .18);
+  border: 1px solid rgba(213, 31, 42, 0.18);
   color: var(--red2);
   font-size: 14px !important;
 }
 
 .contact-form button:disabled {
-  opacity: .65;
+  opacity: 0.65;
   cursor: wait;
 }
 
@@ -6319,7 +6407,6 @@ nav .navbook {
     font-size: 28px;
   }
 }
-
 
 /* Preserved design/all-design styling */
 /* REVIEW ONLY: exact duplicate of line 1; original retained for manual review.
@@ -9556,7 +9643,6 @@ nav > a:not(.navbook),
 */
 }
 
-
 /* Final body-copy scale: readable 16px copy across the site, 22px controls. */
 /* REVIEW ONLY: exact duplicate of line 3048; original retained for manual review.
 body :where(p, span, a, label, input, select, textarea, li, small, b, strong) {
@@ -9577,7 +9663,6 @@ nav .navbook {
   font-size: 22px !important;
 }
 */
-
 
 /* Custom dropdown */
 /* REVIEW ONLY: exact duplicate of line 3064; original retained for manual review.
@@ -9719,7 +9804,6 @@ to {
 */
 }
 
-
 /* Package card alignment: keep all package CTAs on the same baseline. */
 /* REVIEW ONLY: exact duplicate of line 3177; original retained for manual review.
 .pagecards .card {
@@ -9733,7 +9817,6 @@ to {
   margin-top: auto;
 }
 */
-
 
 /* Disabled custom dropdown state */
 /* REVIEW ONLY: exact duplicate of line 3188; original retained for manual review.
@@ -9752,7 +9835,6 @@ to {
 }
 */
 
-
 /* Quick links directly below the hero */
 .quickLinks {
   padding: 34px 0 72px;
@@ -9768,16 +9850,18 @@ to {
 .quickLinkCard {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgba(16, 36, 58, .12);
+  border: 1px solid rgba(16, 36, 58, 0.12);
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 10px 28px rgba(16, 36, 58, .07);
-  transition: transform .25s ease, box-shadow .25s ease;
+  box-shadow: 0 10px 28px rgba(16, 36, 58, 0.07);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .quickLinkCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 34px rgba(16, 36, 58, .11);
+  box-shadow: 0 16px 34px rgba(16, 36, 58, 0.11);
 }
 
 .quickLinkImage {
@@ -9800,7 +9884,7 @@ to {
 .quickLinkBody .ey {
   color: var(--red);
   font-size: 11px !important;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
 .quickLinkBody h2 {
@@ -9808,7 +9892,10 @@ to {
   text-align: left;
   margin: 7px 0 10px;
   color: var(--navy);
-  font: 700 23px/1.08 "Times New Roman", Times, serif;
+  font:
+    700 23px/1.08 "Times New Roman",
+    Times,
+    serif;
 }
 .quickLinkBody p {
   min-height: 66px;
@@ -9906,13 +9993,11 @@ to {
 
   .quickLinkBody p {
     min-height: 0;
-
   }
-  .quickLInkBody h2{
+  .quickLInkBody h2 {
     height: 30px;
   }
 }
-
 
 /* Animated ticker + stats band below the quick links */
 .homeMotionStats {
@@ -9922,9 +10007,15 @@ to {
 
 .homeMotionTicker {
   overflow: hidden;
-  border-top: 1px solid rgba(255,255,255,.08);
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(90deg, var(--red2), var(--red), #8f1821, var(--red));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    90deg,
+    var(--red2),
+    var(--red),
+    #8f1821,
+    var(--red)
+  );
   color: var(--white);
   white-space: nowrap;
 }
@@ -9953,8 +10044,12 @@ to {
 }
 
 @keyframes bsdaTicker {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-50%, 0, 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 .homeStats {
@@ -9975,7 +10070,7 @@ to {
   justify-content: center;
   align-items: center;
   padding: 20px;
-  border-right: 1px solid rgba(255,255,255,.11);
+  border-right: 1px solid rgba(255, 255, 255, 0.11);
   text-align: center;
 }
 
@@ -9988,7 +10083,7 @@ to {
   font-size: clamp(30px, 3vw, 44px);
   line-height: 1;
   font-weight: 800;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .homeStatsGrid span {
@@ -10026,14 +10121,15 @@ to {
     border-right: 0;
   }
 
-  .homeStatsGrid > div:nth-child(-n+2) {
-    border-bottom: 1px solid rgba(255,255,255,.11);
+  .homeStatsGrid > div:nth-child(-n + 2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.11);
   }
 }
 
-
 /* Social reels: vertical short-form video layout */
-.socialReels { background: var(--paper); }
+.socialReels {
+  background: var(--paper);
+}
 
 .socialReelsViewport {
   overflow-x: hidden;
@@ -10056,7 +10152,7 @@ to {
 .socialReelCard {
   flex: 0 0 calc((min(1180px, 100vw - 40px) - 54px) / 4);
   min-width: 0;
-  animation: socialReelIn .28s ease both;
+  animation: socialReelIn 0.28s ease both;
 }
 
 .socialReelFrame {
@@ -10067,7 +10163,7 @@ to {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: linear-gradient(160deg, var(--navy2), var(--navy));
-  box-shadow: 0 20px 45px rgba(17, 24, 39, .13);
+  box-shadow: 0 20px 45px rgba(17, 24, 39, 0.13);
 }
 
 .socialReelPlaceholder {
@@ -10077,9 +10173,9 @@ to {
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 28%, rgba(213,31,42,.3), transparent 30%),
-    linear-gradient(160deg, rgba(255,255,255,.04), transparent 42%);
-  color: rgba(255,255,255,.72);
+    radial-gradient(circle at 50% 28%, rgba(213, 31, 42, 0.3), transparent 30%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 42%);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.8px;
@@ -10133,11 +10229,18 @@ to {
   background: var(--paper);
   color: var(--navy);
   padding: 0;
-  transition: background .2s ease, color .2s ease, opacity .2s ease, transform .2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .socialReelArrow span {
-  font: 400 30px/1 "Times New Roman", Times, serif;
+  font:
+    400 30px/1 "Times New Roman",
+    Times,
+    serif;
 }
 
 .socialReelArrow:hover:not(:disabled) {
@@ -10147,13 +10250,19 @@ to {
 }
 
 .socialReelArrow:disabled {
-  opacity: .35;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 @keyframes socialReelIn {
-  from { opacity: 0; transform: translateX(14px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @media (max-width: 900px) {
@@ -10167,12 +10276,18 @@ to {
 }
 
 @media (max-width: 520px) {
-  .socialReelsViewport { margin-top: 28px; }
-  .socialReelsGrid { gap: 10px; }
+  .socialReelsViewport {
+    margin-top: 28px;
+  }
+  .socialReelsGrid {
+    gap: 10px;
+  }
   .socialReelCard {
     flex-basis: calc((100vw - 38px) / 2);
   }
-  .socialReelFrame { border-radius: 12px; }
+  .socialReelFrame {
+    border-radius: 12px;
+  }
 }
 
 /* Mission & vision */
@@ -10195,7 +10310,7 @@ to {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--paper);
-  box-shadow: 0 18px 45px rgba(17, 24, 39, .07);
+  box-shadow: 0 18px 45px rgba(17, 24, 39, 0.07);
 }
 
 .missionVisionCard:after {
@@ -10206,7 +10321,7 @@ to {
   right: -80px;
   top: -80px;
   border-radius: 50%;
-  background: rgba(213, 31, 42, .07);
+  background: rgba(213, 31, 42, 0.07);
 }
 
 .visionCard {
@@ -10216,7 +10331,7 @@ to {
 }
 
 .visionCard:after {
-  background: rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .missionVisionLabel {
@@ -10241,8 +10356,11 @@ to {
   max-width: 520px;
   margin: 0 0 16px;
   color: var(--navy);
-  font: 700 clamp(28px, 3vw, 40px)/1.08 "Times New Roman", Times, serif;
-  letter-spacing: -.5px;
+  font:
+    700 clamp(28px, 3vw, 40px)/1.08 "Times New Roman",
+    Times,
+    serif;
+  letter-spacing: -0.5px;
 }
 
 .visionCard h2 {
@@ -10319,16 +10437,18 @@ to {
 }
 
 @media (max-width: 900px) {
-  .portalVideoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portalVideoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
-  .portalVideoGrid { grid-template-columns: 1fr; }
+  .portalVideoGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-
 /* Backend branch additions */
-
 
 /* Live booking flow */
 .booking-live {
@@ -10392,7 +10512,10 @@ to {
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 .booking-service-option:hover {
   transform: translateY(-1px);
@@ -10400,7 +10523,7 @@ to {
 }
 .booking-service-option.active {
   border-color: var(--red);
-  background: rgba(176, 30, 45, .045);
+  background: rgba(176, 30, 45, 0.045);
   box-shadow: inset 3px 0 0 var(--red);
 }
 .booking-service-option span {
@@ -10442,7 +10565,7 @@ to {
 }
 .booking-slot.active {
   border-color: var(--red);
-  background: rgba(176, 30, 45, .05);
+  background: rgba(176, 30, 45, 0.05);
 }
 .booking-slot span {
   color: var(--muted);
@@ -10458,7 +10581,7 @@ to {
 }
 .booking-inline-error {
   color: var(--red);
-  background: rgba(176, 30, 45, .06);
+  background: rgba(176, 30, 45, 0.06);
 }
 .booking-disclaimer,
 .contact-form-note {
@@ -10492,7 +10615,7 @@ to {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(176, 30, 45, .08);
+  background: rgba(176, 30, 45, 0.08);
   color: var(--red);
 }
 .booking-confirmation h1 {
@@ -10517,11 +10640,11 @@ to {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 .booking-reference strong {
   font-size: 24px;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 .booking-confirmation-meta {
   display: grid;
@@ -10548,7 +10671,7 @@ to {
 /* About page */
 .about-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(260px, .7fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.7fr);
   gap: 18px;
   margin-top: 46px;
 }
@@ -10575,7 +10698,7 @@ to {
 }
 .about-feature p {
   max-width: 650px;
-  color: rgba(255,255,255,.72);
+  color: rgba(255, 255, 255, 0.72);
   line-height: 1.75;
 }
 .about-stat-stack {
@@ -10598,7 +10721,7 @@ to {
 }
 .about-section-grid {
   display: grid;
-  grid-template-columns: .8fr 1.2fr;
+  grid-template-columns: 0.8fr 1.2fr;
   gap: 60px;
   margin: 90px 0 50px;
 }
@@ -10646,7 +10769,7 @@ to {
 /* Contact page */
 .contact-grid {
   display: grid;
-  grid-template-columns: .8fr 1.2fr;
+  grid-template-columns: 0.8fr 1.2fr;
   gap: 18px;
   margin-top: 46px;
 }
@@ -10734,13 +10857,16 @@ to {
   }
 }
 
-
 /* Homepage proof strip — a factual, BSDA-specific alternative to generic vanity metrics. */
 .bsdaProof {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 82% 35%, rgba(213, 31, 42, 0.16), transparent 32%),
+    radial-gradient(
+      circle at 82% 35%,
+      rgba(213, 31, 42, 0.16),
+      transparent 32%
+    ),
     linear-gradient(112deg, #101827 0%, #182238 58%, #24304a 100%);
   color: #fff;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -10779,7 +10905,10 @@ to {
 }
 
 .bsdaProofItem strong {
-  font: 700 clamp(42px, 4vw, 58px)/0.95 "Times New Roman", Times, serif;
+  font:
+    700 clamp(42px, 4vw, 58px)/0.95 "Times New Roman",
+    Times,
+    serif;
   color: #ef6a71;
   letter-spacing: -2px;
   margin-bottom: 10px;
@@ -10909,7 +11038,6 @@ to {
   }
 }
 
-
 /* Home ticker and statistics: improved readability */
 .homeMotionTickerTrack span {
   font-size: 18px;
@@ -10946,7 +11074,6 @@ to {
   }
 }
 
-
 /* Mobile quick links: compact image-left, content-right cards matching the supplied reference. */
 @media (max-width: 600px) {
   .quickLinks .container {
@@ -10969,15 +11096,15 @@ to {
     grid-template-columns: 41% minmax(0, 1fr);
     align-items: stretch;
     min-height: 132px;
-    border: 1px solid rgba(16, 36, 58, .10);
+    border: 1px solid rgba(16, 36, 58, 0.1);
     border-radius: 12px;
     background: #fff;
-    box-shadow: 0 3px 10px rgba(16, 36, 58, .10);
+    box-shadow: 0 3px 10px rgba(16, 36, 58, 0.1);
   }
 
   .quickLinkCard:hover {
     transform: none;
-    box-shadow: 0 3px 10px rgba(16, 36, 58, .10);
+    box-shadow: 0 3px 10px rgba(16, 36, 58, 0.1);
   }
 
   .quickLinkImage {
@@ -11049,9 +11176,9 @@ to {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
-  transition: transform .55s cubic-bezier(.22,.75,.25,1);
+  transition: transform 0.55s cubic-bezier(0.22, 0.75, 0.25, 1);
 }
-.package-home-track .card p{
+.package-home-track .card p {
   display: none;
 }
 .package-home-slide {
@@ -11092,7 +11219,9 @@ to {
     border: 0;
     border-radius: 50%;
     background: #c9c6c0;
-    transition: width .2s ease, background .2s ease;
+    transition:
+      width 0.2s ease,
+      background 0.2s ease;
   }
   .package-home-dots button.is-active {
     width: 24px;
@@ -11195,9 +11324,6 @@ to {
   }
 }
 
-
-
-
 /* Tighter vertical rhythm: reduce oversized gaps between the header, hero, and page sections. */
 .hero {
   padding-top: 40px;
@@ -11250,7 +11376,7 @@ to {
     flex-direction: column;
     grid-template-columns: none;
     gap: 12px;
-    transition: transform .55s cubic-bezier(.22, .61, .36, 1);
+    transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
     will-change: transform;
   }
 
@@ -11293,23 +11419,19 @@ to {
   }
 }
 
-
 @media (min-width: 601px) {
   .lessoncards.lessonMobileTrack {
     transform: none !important;
     transition: none;
   }
 
-
   /* The lesson array is triplicated for the mobile looping carousel.
      On desktop, show only the four unique lesson cards. */
-
 
   .lessoncards.lessonMobileTrack > *:nth-child(n + 5) {
     display: none;
   }
 }
-
 
 /* Accessible password visibility controls for the member auth forms. */
 .auth-password-input {
@@ -11700,10 +11822,14 @@ to {
   height: 48px;
   display: inline-grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, .25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
   color: #fff;
-  transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .footerSocialLinks a:hover {
@@ -11728,13 +11854,12 @@ to {
   }
   .footerSocialLinks a {
     gap: 8px;
-    width:30px;
-    height:30px;
+    width: 30px;
+    height: 30px;
   }
 }
 
-
- refactor/codebase-cleanup
+refactor/codebase-cleanup
 
 /* Custom accessible lesson-service dropdown. */
 .bookingCustomSelect {
@@ -11756,7 +11881,10 @@ to {
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 .bookingCustomSelectTrigger:hover:not(:disabled),
 .bookingCustomSelectTrigger.is-open {
@@ -11764,10 +11892,10 @@ to {
   background: #fff;
 }
 .bookingCustomSelectTrigger.is-open {
-  box-shadow: 0 0 0 3px rgba(213, 31, 42, .08);
+  box-shadow: 0 0 0 3px rgba(213, 31, 42, 0.08);
 }
 .bookingCustomSelectTrigger:disabled {
-  opacity: .65;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 .bookingCustomSelectChevron {
@@ -11777,7 +11905,7 @@ to {
   border-right: 1.5px solid #60697a;
   border-bottom: 1.5px solid #60697a;
   transform: translateY(-2px) rotate(45deg);
-  transition: transform .18s ease;
+  transition: transform 0.18s ease;
 }
 .bookingCustomSelectTrigger.is-open .bookingCustomSelectChevron {
   transform: translateY(2px) rotate(225deg);
@@ -11794,7 +11922,7 @@ to {
   border: 1px solid #ded9d0;
   border-radius: 9px;
   background: #fffdfa;
-  box-shadow: 0 16px 36px rgba(17, 24, 39, .16);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.16);
 }
 .bookingCustomSelectOption {
   display: flex;
@@ -11812,7 +11940,9 @@ to {
   font-size: 13px;
   line-height: 1.45;
   cursor: pointer;
-  transition: background .15s ease, color .15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .bookingCustomSelectOption:hover {
   background: #f6f0e9;
@@ -11828,7 +11958,6 @@ to {
   font-weight: 800;
 }
 
-
 /* Multi-select dropdown for optional add-on booking services. */
 .bookingAdditionalOption {
   display: flex;
@@ -11838,9 +11967,11 @@ to {
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 }
-.bookingAdditionalOption:hover { background: #f6f0e9; }
+.bookingAdditionalOption:hover {
+  background: #f6f0e9;
+}
 .bookingAdditionalOption > input[type="checkbox"] {
   width: 15px;
   height: 15px;
@@ -11964,7 +12095,7 @@ to {
 @media (max-width: 560px) {
   .site.hero-in-view .floatingQuickActions {
     top: 38px;
-    display:none;
+    display: none;
     right: 88px;
     bottom: auto;
     transform: none;
@@ -12030,12 +12161,14 @@ to {
     border-radius: 0;
     background: #fffdfa;
     color: #b7b4ae;
-    font: 16px/1 Arial, sans-serif;
+    font:
+      16px/1 Arial,
+      sans-serif;
     box-shadow: none;
   }
 
   .socialReelArrow:disabled {
-    opacity: .55;
+    opacity: 0.55;
     cursor: not-allowed;
   }
 }
@@ -12061,7 +12194,9 @@ to {
     border-radius: 50%;
     background: #c9c6c0;
     box-shadow: none;
-    transition: width .2s ease, background .2s ease;
+    transition:
+      width 0.2s ease,
+      background 0.2s ease;
   }
 
   .socialReelsControls.package-home-dots button.is-active {
@@ -12118,7 +12253,11 @@ to {
     font-size: 30px;
     line-height: 1;
     cursor: pointer;
-    transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      opacity 0.2s ease;
   }
 
   .socialReelsSideArrow:hover:not(:disabled) {
@@ -12128,7 +12267,7 @@ to {
   }
 
   .socialReelsSideArrow:disabled {
-    opacity: .35;
+    opacity: 0.35;
     cursor: not-allowed;
   }
 }
@@ -12140,6 +12279,5 @@ to {
 
   .socialReelsSideArrow {
     display: none !important;
-
   }
 }
