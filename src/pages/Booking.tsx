@@ -86,9 +86,6 @@ export function Booking() {
   const [catalogError, setCatalogError] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   const [bookingError, setBookingError] = useState("");
-  const [bookingMessage, setBookingMessage] = useState("");
-  const [bookingReference, setBookingReference] = useState("");
-  const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [accountLoading, setAccountLoading] = useState(true);
   const [studentRecord, setStudentRecord] = useState<StudentProfileApiRecord | null>(null);
@@ -227,9 +224,6 @@ export function Booking() {
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBookingError("");
-    setBookingMessage("");
-    setBookingReference("");
-    setDone(false);
 
     if (!studentRecord || accountLoading || accountError || accountMissing) {
       setBookingError("Sign in with a valid BSDA account before booking. No booking was created.");
@@ -482,18 +476,6 @@ export function Booking() {
             </button>
 
             {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
-            {done && (
-              <div className="success" role="status">
-                <Icon n="check" />
-                <span>
-                  {bookingMessage}
-                  <br />
-                  Reference: <strong>{bookingReference}</strong>
-                  <br />
-                  Payment has not been collected or verified.
-                </span>
-              </div>
-            )}
           </form>
 
           <aside className="aside">
