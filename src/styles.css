@@ -11951,7 +11951,8 @@ to {
 
   .site.hero-in-view .floatingQuickAction span {
     display: none;
-
+  }
+}
 /* Reels carousel fixes: keep every CMS reel reachable on mobile and match the compact package arrows. */
 @media (max-width: 600px) {
   .socialReelsViewport {
