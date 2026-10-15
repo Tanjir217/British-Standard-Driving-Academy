@@ -78,6 +78,9 @@ export function Home() {
         if (active && result.ok) setPackages(result.data);
       })
       .catch((error) => {
+
+        console.error("Unable to load homepage packages.", error);
+
         console.error("Unable to load driving packages.", error);
       });
 
@@ -271,7 +274,7 @@ export function Home() {
       <section className="hero">
         <div className="container herogrid">
           <div className="heroCopy">
-            <span className="ey">British-standard driving education</span>
+            <span className="ey">British-standard driving Academy</span>
             <h1>
               Learn to drive.
               <br />
@@ -302,31 +305,6 @@ export function Home() {
             </div>
           </div>
 
-          <div className="heroart">
-            <div className="heroRing ringone" />
-            <div className="heroRing ringtwo" />
-            <div className="heroFrame">
-              <div className="heroSky" />
-              <div className="heroBuilding bOne" />
-              <div className="heroBuilding bTwo" />
-              <div className="heroRoad" />
-              <div className="heroDash dashOne" />
-              <div className="heroDash dashTwo" />
-              <div className="heroDash dashThree" />
-              <div className="heroCar" />
-              <div className="heroFramecopy">
-                <small>YOUR NEXT MILE</small>
-                <b>Starts here.</b>
-              </div>
-            </div>
-            <div className="floatingCard">
-              <span className="ey">Learning path</span>
-              <b>Beginner → Road-ready</b>
-              <i>
-                <span />
-              </i>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -405,8 +383,7 @@ export function Home() {
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
-                    )}
-                    {item.title === "Student Support & Information Center" && (
+      {item.title === "Student Support & Information Center" && (
                       <ul
                         className="quickLinkLessonList"
                         aria-label="Student support and information"

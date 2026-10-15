@@ -1,5 +1,3 @@
-import { ensureCurrentStudentProfile } from "../students/studentProfileProvisioningService";
-
 import { members as managedMembers } from "@wix/members";
 import {
   clearWixTokens,
@@ -147,17 +145,21 @@ export async function createMemberAccount(
   email: string,
   password: string,
   profile: { firstName: string; lastName: string; phones?: string[] },
+  returnTo = "/portal",
 ) {
   return finishDirectAuthentication(
     await registerWithEmail(email, password, profile),
-    "/portal",
+    returnTo,
   );
 }
 
-export async function completeMemberVerification(verificationCode: string) {
+export async function completeMemberVerification(
+  verificationCode: string,
+  returnTo = "/portal",
+) {
   return finishDirectAuthentication(
     await verifyMemberEmail(verificationCode),
-    "/portal",
+    returnTo,
   );
 }
 
@@ -185,28 +187,9 @@ export function completeMemberLogin(): Promise<string> {
       const returnTo = safeReturnPath(result.originalUrl);
       markAdminLoginCompleted(returnTo);
 
-      // Student CMS writes are performed by the Wix-hosted backend only.
-      // Never provision an admin dashboard session as a student profile.
-      const destination = new URL(returnTo, window.location.origin);
-      const isAdminDestination =
-        destination.pathname.startsWith("/admin") ||
-        (destination.pathname === "/" &&
-          destination.searchParams.get("bsdaAdmin") === "dashboard");
-
-      if (!isAdminDestination) {
-        try {
-          await ensureCurrentStudentProfile();
-        } catch (provisioningError) {
-          // A profile provisioning failure must not strand a signed-in member on the callback page.
-          // The portal performs its own protected profile lookup and reports its result in development.
-          if (import.meta.env.DEV) {
-            console.warn("[BSDA] Student profile provisioning failed after sign-in", {
-              message: provisioningError instanceof Error ? provisioningError.message : String(provisioningError),
-            });
-          }
-        }
-      }
-
+      // Student identity and eligibility are resolved from Members/FullData
+      // by the protected profile API. Do not call the legacy
+      // createStudentProfile Velo HTTP Function during login.
       return returnTo;
     })();
   }

@@ -17,7 +17,6 @@ import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { NotFound } from "./pages/NotFound";
 import { AdminGate } from "./pages/AdminGate";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 

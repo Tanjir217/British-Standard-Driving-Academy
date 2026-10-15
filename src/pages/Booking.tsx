@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { beginManagedMemberLogin } from "../services/auth/authService";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
@@ -9,6 +10,7 @@ import type { BookingServiceCatalogItem } from "../services/bookings/bookingServ
 import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import { submitBooking } from "../services/bookingService";
 import type { Package } from "../services/domain/types";
+import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
@@ -22,6 +24,18 @@ function localToday() {
   const now = new Date();
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 10);
+}
+
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function slotKey(slot: BookingApiSlot) {
@@ -54,11 +68,17 @@ export function Booking() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
   const packageId = sp.get("package") || "";
+  const requestedServiceId = sp.get("service") || "";
 
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [services, setServices] = useState<BookingServiceCatalogItem[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [lessonDate, setLessonDate] = useState(localToday);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const [year, month] = localToday().split("-").map(Number);
+    return new Date(year, month - 1, 1, 12);
+  });
   const [availableSlots, setAvailableSlots] = useState<BookingApiSlot[]>([]);
   const [selectedSlotKey, setSelectedSlotKey] = useState("");
   const [loading, setLoading] = useState(true);
@@ -71,22 +91,61 @@ export function Booking() {
   const [pay, setPay] = useState("bank");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [studentRecord, setStudentRecord] = useState<StudentProfileApiRecord | null>(null);
+  const [accountError, setAccountError] = useState("");
+  const [accountMissing, setAccountMissing] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const bookingReturnTo = "/booking" + (sp.toString() ? "?" + sp.toString() : "");
 
   useEffect(() => {
-    if (!packageId) {
-      navigate("/packages", { replace: true });
-      return;
-    }
-
     let active = true;
 
-    Promise.all([packageService.getById(packageId), bookingService.listServices()])
+    getStudentProfile()
+      .then((response) => {
+        if (!active) return;
+        if (response.profileState !== "ready" || !response.profile) {
+          setAccountMissing(true);
+          return;
+        }
+        const profile = response.profile;
+        setStudentRecord(profile);
+        const name = profile.fullName || [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+        setCustomerName(name);
+        setCustomerEmail(profile.email || "");
+        setCustomerPhone(profile.phone || "");
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error instanceof StudentProfileApiError && error.status === 401) {
+          setAccountError("Sign in with your Wix account to book a lesson.");
+        } else if (error instanceof StudentProfileApiError && error.status === 403) {
+          setAccountError(error.message || "Your BSDA account is not active or approved for booking. Please contact the academy.");
+        } else if (error instanceof StudentProfileApiError && error.status === 409) {
+          setAccountError("We found conflicting student records. Please contact BSDA before booking.");
+        } else {
+          setAccountError("We couldn't verify your BSDA account. Please try again before booking.");
+        }
+      })
+      .finally(() => {
+        if (active) setAccountLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    Promise.all([packageId ? packageService.getById(packageId) : Promise.resolve({ ok: true as const, data: null }), bookingService.listServices()])
       .then(([packageResult, serviceResult]) => {
         if (!active) return;
 
         if (!packageResult.ok) {
           setCatalogError(packageResult.error.message);
-        } else {
+        } else if (packageId && packageResult.data) {
           setSelectedPackage(packageResult.data);
         }
 
@@ -94,7 +153,7 @@ export function Booking() {
           setAvailabilityError(serviceResult.error.message);
         } else {
           setServices(serviceResult.data);
-          setSelectedServiceId(serviceResult.data[0]?.id || "");
+          setSelectedServiceId(serviceResult.data.find((service) => service.id === requestedServiceId)?.id || serviceResult.data[0]?.id || "");
           if (serviceResult.data.length === 0) {
             setAvailabilityError("Wix has no bookable services available right now.");
           }
@@ -115,7 +174,7 @@ export function Booking() {
     return () => {
       active = false;
     };
-  }, [navigate, packageId]);
+  }, [navigate, packageId, requestedServiceId]);
 
   useEffect(() => {
     if (!selectedServiceId || !lessonDate) {
@@ -173,7 +232,12 @@ export function Booking() {
     setBookingReference("");
     setDone(false);
 
-    if (!selectedPackage || !selectedSlot) {
+    if (!studentRecord || accountLoading || accountError || accountMissing) {
+      setBookingError("Sign in with a valid BSDA account before booking. No booking was created.");
+      return;
+    }
+
+    if (!selectedSlot) {
       setBookingError("Choose a current available time slot before submitting. No booking was created.");
       return;
     }
@@ -182,13 +246,13 @@ export function Booking() {
     const f = new FormData(e.currentTarget);
     try {
       const result = await submitBooking({
-        name: String(f.get("name") || ""),
-        phone: String(f.get("phone") || ""),
-        email: String(f.get("email") || ""),
+        name: customerName,
+        phone: String(f.get("phone") || customerPhone),
+        email: customerEmail,
         date: lessonDate,
         serviceId: selectedServiceId,
         slot: selectedSlot,
-        packageId: selectedPackage.id,
+        packageId: selectedPackage?.id,
         paymentMethod: pay,
       });
 
@@ -206,19 +270,64 @@ export function Booking() {
     }
   };
 
+  if (accountLoading) {
+    return (
+      <section className="page">
+        <div className="container authloading">
+          <span className="ey">Account verification</span>
+          <h1>Checking your BSDA account...</h1>
+          <p>Bookings are available only to signed-in users with a matching FullData record.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!accountLoading && (accountMissing || accountError)) {
+    const accountMessage = accountMissing
+      ? "Your Wix account is signed in, but no matching FullData record was found. Create or verify your BSDA account before booking."
+      : accountError;
+
+    return (
+      <section className="page">
+        <div className="container authloading">
+          <span className="ey">Account required</span>
+          <h1>We need to verify your BSDA account.</h1>
+          <p>{accountMessage}</p>
+          <div className="bookingAccountActions">
+            <button
+              className="btn red"
+              onClick={() => beginManagedMemberLogin(bookingReturnTo)}
+            >
+              Continue with Wix secure sign-in <Icon n="arrow" />
+            </button>
+            <button
+              className="btn light"
+              onClick={() => navigate("/login?returnTo=" + encodeURIComponent(bookingReturnTo))}
+            >
+              Sign in or create an account
+            </button>
+            <button className="btn light" onClick={() => navigate("/packages")}>
+              Back to packages
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (loading) {
     return (
       <section className="page">
         <div className="container authloading">
           <span className="ey">Booking</span>
-          <h1>Loading your selected package...</h1>
+          <h1>Preparing your booking...</h1>
           <p>Please wait while we prepare your booking.</p>
         </div>
       </section>
     );
   }
 
-  if (catalogError || !selectedPackage) {
+  if (catalogError) {
     return (
       <section className="page">
         <div className="container authloading">
@@ -246,81 +355,130 @@ export function Booking() {
         <div className="booking booking--spaced">
           <form className="form" onSubmit={submit}>
             <div className="payment">
-              <span className="ey">Selected package</span>
-              <h3>{selectedPackage.name}</h3>
-              <p>
-                {selectedPackage.lessonHours > 0
-                  ? `${selectedPackage.lessonHours} hours · `
-                  : ""}
-                {formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}
-              </p>
+              <span className="ey">{selectedPackage ? "Selected package" : "Selected service"}</span>
+              {selectedPackage ? (
+                <>
+                  <h3>{selectedPackage.name}</h3>
+                  <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
+                </>
+              ) : (
+                <>
+                  <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
+                  <p>You can continue with this service, or select a package from the packages page.</p>
+                  <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
+                </>
+              )}
             </div>
 
-            <label>
-              Lesson service
-              <select
-                name="serviceId"
-                required
-                value={selectedServiceId}
-                onChange={(event) => setSelectedServiceId(event.target.value)}
-                disabled={services.length === 0}
-              >
-                {services.length === 0 && <option value="">No Wix services available</option>}
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="payment bookingSelectedServiceSummary">
+              <span className="ey">Selected service</span>
+              <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
+              {(() => {
+                const selectedService = services.find((service) => service.id === selectedServiceId);
+                return selectedService ? (
+                  <p>{formatMoney(selectedService.priceMinor, selectedService.currency)}</p>
+                ) : null;
+              })()}
+            </div>
 
             <div className="twocol">
               <label>
                 Full name
-                <input name="name" required placeholder="Your full name" autoComplete="name" />
+                <input name="name" required placeholder="Your full name" autoComplete="name" value={customerName} readOnly />
               </label>
               <label>
                 Phone number
-                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" />
+                <input name="phone" required placeholder="+44 7XXX XXXXXX" autoComplete="tel" value={customerPhone} readOnly={Boolean(studentRecord?.phone)} onChange={(event) => setCustomerPhone(event.target.value)} />
               </label>
             </div>
 
-            <div className="twocol">
               <label>
                 Email
-                <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" />
+                <input name="email" type="email" required placeholder="you@example.com" autoComplete="email" value={customerEmail} readOnly />
               </label>
-              <label>
+              <label className="bookingDateField">
                 Preferred lesson date
-                <input
-                  name="date"
-                  type="date"
-                  required
-                  min={localToday()}
-                  value={lessonDate}
-                  onChange={(event) => setLessonDate(event.target.value)}
-                />
+                <input type="hidden" name="date" value={lessonDate} required />
+                <button
+                  type="button"
+                  className={calendarOpen ? "bookingDateTrigger is-open" : "bookingDateTrigger"}
+                  aria-haspopup="dialog"
+                  aria-expanded={calendarOpen}
+                  onClick={() => setCalendarOpen((open) => !open)}
+                >
+                  <span>{lessonDate ? parseLocalDate(lessonDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "Choose a date"}</span>
+                  <Icon n="calendar" s={17} />
+                </button>
+                {calendarOpen && (
+                  <div className="bookingCalendar" role="dialog" aria-label="Choose preferred lesson date">
+                    <div className="bookingCalendarHeader">
+                      <button type="button" aria-label="Previous month" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1, 12))}>‹</button>
+                      <strong>{visibleMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong>
+                      <button type="button" aria-label="Next month" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1, 12))}>›</button>
+                    </div>
+                    <div className="bookingCalendarGrid bookingCalendarWeekdays" aria-hidden="true">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <span key={day}>{day}</span>)}
+                    </div>
+                    <div className="bookingCalendarGrid">
+                      {Array.from({ length: (new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1, 12).getDay() + 6) % 7 }, (_, index) => (
+                        <span className="bookingCalendarBlank" key={"blank-" + index} />
+                      ))}
+                      {Array.from({ length: new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0, 12).getDate() }, (_, index) => {
+                        const day = index + 1;
+                        const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day, 12);
+                        const key = toDateKey(date);
+                        const disabled = key < localToday();
+                        const selected = key === lessonDate;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            className={selected ? "is-selected" : ""}
+                            disabled={disabled}
+                            aria-pressed={selected}
+                            onClick={() => {
+                              setLessonDate(key);
+                              setCalendarOpen(false);
+                            }}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="bookingCalendarFooter">
+                      <button type="button" onClick={() => setCalendarOpen(false)}>Close</button>
+                      <button type="button" onClick={() => {
+                        const today = parseLocalDate(localToday());
+                        setLessonDate(localToday());
+                        setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1, 12));
+                        setCalendarOpen(false);
+                      }}>Today</button>
+                    </div>
+                  </div>
+                )}
               </label>
-            </div>
 
             <label>
               Available time slot
-              <select
-                name="slot"
-                required
-                value={selectedSlotKey}
-                onChange={(event) => setSelectedSlotKey(event.target.value)}
-                disabled={availabilityLoading || availableSlots.length === 0}
-              >
-                <option value="">
-                  {availabilityLoading ? "Checking Wix availability..." : "Choose an available time"}
-                </option>
-                {availableSlots.map((slot) => (
-                  <option key={slotKey(slot)} value={slotKey(slot)}>
-                    {formatSlot(slot)}
+              <div className="bookingSelect">
+                <select
+                  name="slot"
+                  required
+                  value={selectedSlotKey}
+                  onChange={(event) => setSelectedSlotKey(event.target.value)}
+                  disabled={availabilityLoading || availableSlots.length === 0}
+                >
+                  <option value="">
+                    {availabilityLoading ? "Checking Wix availability..." : "Choose an available time"}
                   </option>
-                ))}
-              </select>
+                  {availableSlots.map((slot) => (
+                    <option key={slotKey(slot)} value={slotKey(slot)}>
+                      {formatSlot(slot)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </label>
 
             {availabilityError && <p className="formerror" role="status">{availabilityError}</p>}

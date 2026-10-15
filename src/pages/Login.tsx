@@ -107,7 +107,7 @@ export function Login() {
               firstName: form.firstName.trim(),
               lastName: form.lastName.trim(),
               phones: form.phone.trim() ? [form.phone.trim()] : undefined,
-            });
+            }, returnTo);
 
       if (result.state === "REDIRECT") {
         setNotice(
@@ -147,7 +147,7 @@ export function Login() {
     setNotice("");
 
     try {
-      const result = await completeMemberVerification(verificationCode.trim());
+      const result = await completeMemberVerification(verificationCode.trim(), returnTo);
 
       if (result.state === "REDIRECT") {
         setNotice("Email verified successfully. Taking you to your student portal...");

@@ -1,5 +1,17 @@
 import type { APIRoute } from "astro";
+import { auth } from "@wix/essentials";
+import { items } from "@wix/data";
+import { members } from "@wix/members";
 import { availabilityTimeSlots, bookings } from "@wix/bookings";
+
+type WixRecord = Record<string, unknown>;
+type AuthenticatedMember = {
+  _id: string;
+  contactId?: string | null;
+  loginEmail?: string | null;
+  email?: string | null;
+  contact?: { contactId?: string | null } | null;
+};
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -7,12 +19,55 @@ function json(body: unknown, status = 200): Response {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }
 
 function stringField(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function normalizeRecord(value: unknown): WixRecord | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as WixRecord;
+  const nested = record.dataItem ?? record.item ?? record.data;
+  return nested && typeof nested === "object" && !Array.isArray(nested)
+    ? nested as WixRecord
+    : record;
+}
+
+function recordsFromQuery(value: unknown): WixRecord[] {
+  if (!value || typeof value !== "object") return [];
+  const response = value as WixRecord;
+  const possible = response.items ?? response.dataItems ?? response.results;
+  return Array.isArray(possible)
+    ? possible.map(normalizeRecord).filter((record): record is WixRecord => record !== null)
+    : [];
+}
+
+async function findAuthenticatedFullDataRecord(member: AuthenticatedMember): Promise<WixRecord | null> {
+  const contactId = String(member.contactId ?? member.contact?.contactId ?? "").trim();
+  const email = String(member.loginEmail ?? member.email ?? "").trim().toLowerCase();
+  if (!contactId && !email) {
+    throw new Error("MEMBER_IDENTIFIERS_MISSING");
+  }
+
+  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
+  const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
+  const records = recordsFromQuery(await elevatedQuery(collectionId).limit(100).find());
+
+  const contactMatches = contactId
+    ? records.filter((record) => String(record.contactId ?? "").trim() === contactId)
+    : [];
+  if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+  if (contactMatches.length === 1) return contactMatches[0];
+
+  const emailMatches = email
+    ? records.filter((record) => String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email)
+    : [];
+  if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+  return emailMatches[0] ?? null;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -31,14 +86,9 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, code: "INVALID_JSON", message: "Send a valid JSON object." }, 400);
   }
 
-  const firstName = stringField(body.firstName, 80);
-  const lastName = stringField(body.lastName, 80);
-  const email = stringField(body.email, 254).toLowerCase();
-  const phone = stringField(body.phone, 40);
   const slot = body.slot && typeof body.slot === "object" ? body.slot : null;
-
-  if (!firstName || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !slot) {
-    return json({ ok: false, code: "VALIDATION_ERROR", message: "Name, valid email and an available booking slot are required." }, 400);
+  if (!slot) {
+    return json({ ok: false, code: "VALIDATION_ERROR", message: "Choose an available booking slot." }, 400);
   }
 
   const serviceId = stringField(slot.serviceId, 120);
@@ -53,6 +103,33 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    // Fail closed: a browser-submitted name/email is not proof of account ownership.
+    const currentResponse = await members.getCurrentMember();
+    const member = currentResponse.member as AuthenticatedMember | undefined;
+    if (!member || typeof member._id !== "string" || !member._id) {
+      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in with your BSDA account before booking." }, 401);
+    }
+
+    const student = await findAuthenticatedFullDataRecord(member);
+    if (!student) {
+      return json({ ok: false, code: "FULLDATA_PROFILE_REQUIRED", message: "No matching BSDA student account was found. Create an account or contact the academy before booking." }, 403);
+    }
+
+    const firstName = stringField(student.firstName, 80);
+    const lastName = stringField(student.lastName, 80);
+    const nickname = stringField(student.nickname, 160);
+    const recordName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
+    const nameParts = recordName.split(/\s+/).filter(Boolean);
+    const verifiedFirstName = nameParts.shift() || "";
+    const verifiedLastName = nameParts.join(" ");
+    const email = stringField(student.loginEmail ?? student.email ?? member.loginEmail ?? member.email, 254).toLowerCase();
+    const contactId = stringField(student.contactId, 160);
+    const phone = stringField(student.phone, 40) || stringField(body.phone, 40);
+
+    if (!verifiedFirstName || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !contactId) {
+      return json({ ok: false, code: "FULLDATA_PROFILE_INCOMPLETE", message: "Your BSDA account record is incomplete. Please update it or contact the academy before booking." }, 409);
+    }
+
     // Never trust the client-side slot's bookable flag. Re-query Wix immediately
     // before creating the booking and match the actual service, schedule, and time.
     const availability = await availabilityTimeSlots.listAvailabilityTimeSlots({
@@ -78,8 +155,9 @@ export const POST: APIRoute = async ({ request }) => {
     const createBooking = bookings.createBooking as (input: any) => Promise<any>;
     const result = await createBooking({
       contactDetails: {
-        firstName,
-        lastName,
+        contactId,
+        firstName: verifiedFirstName,
+        lastName: verifiedLastName,
         email,
         ...(phone ? { phone } : {}),
       },
@@ -117,7 +195,14 @@ export const POST: APIRoute = async ({ request }) => {
       },
     }, 201);
   } catch (error) {
-    console.error("[BSDA bookings] Booking creation failed:", error instanceof Error ? error.message : "Unknown error");
-    return json({ ok: false, code: "BOOKING_CREATE_FAILED", message: "Wix could not create this booking. Please try again." }, 502);
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    console.error("[BSDA bookings] Booking creation failed:", reason);
+    if (reason === "MEMBER_IDENTIFIERS_MISSING") {
+      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "We couldn't verify your BSDA account identity. Please sign in again or contact the academy." }, 422);
+    }
+    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
+      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your BSDA account has conflicting student records. Please contact the academy before booking." }, 409);
+    }
+    return json({ ok: false, code: "BOOKING_CREATE_FAILED", message: "Wix could not verify your account or create this booking. Please try again." }, 502);
   }
 };

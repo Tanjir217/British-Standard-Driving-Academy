@@ -10,6 +10,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showQuickIntro, setShowQuickIntro] = useState(pathname === "/");
+  const [heroInView, setHeroInView] = useState(pathname === "/");
 
   useEffect(() => {
     if (pathname !== "/") {
@@ -37,6 +38,26 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   }, []);
 
 
+  useEffect(() => {
+    if (pathname !== "/") {
+      setHeroInView(false);
+      return;
+    }
+
+    const hero = document.querySelector(".hero");
+    if (!hero) {
+      setHeroInView(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeroInView(entry.isIntersecting),
+      { threshold: 0.01 },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, [pathname]);
+
   const nav = [
     ["/packages", "Packages"],
     ["/lessons", "Lessons"],
@@ -48,7 +69,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className={scrolled ? "site scrolled" : "site"}>
+    <div className={`site${scrolled ? " scrolled" : ""}${heroInView ? " hero-in-view" : ""}`} >
       <div className="scrollbar" style={{ width: `${progress}%` }} />
 
       <div className="topbar">

@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
-import { members } from "@wix/members";
 
 const COLLECTION_ID =
   import.meta.env.BSDA_STUDENT_PROFILES_COLLECTION_ID || "StudentProfiles";
@@ -71,15 +70,46 @@ function safeProfile(record: WixRecord) {
   };
 }
 
-type AuthenticatedMember = { _id: string; loginEmail?: string | null; contactId?: string | null };
+type AuthenticatedMember = {
+  _id: string;
+  loginEmail?: string | null;
+  email?: string | null;
+  contactId?: string | null;
+  contact?: { contactId?: string | null; email?: string | null } | null;
+};
 
-async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
-  // The Wix Astro integration binds SDK calls to the request's authenticated
-  // visitor/member session. Never accept a member ID from the request body.
-  const response = await members.getCurrentMember();
-  const member = response.member;
-  if (!member || typeof member._id !== "string" || !member._id) return null;
-  return member as AuthenticatedMember;
+async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMember | null> {
+  // Validate the Headless OAuth access token issued by Wix. FullData is used
+  // only after this succeeds; a CMS row alone is never proof of a live session.
+  const authorization = request.headers.get("authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const accessToken = match?.[1]?.trim();
+  if (!accessToken) return null;
+
+  const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (response.status === 401 || response.status === 403) return null;
+  if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
+
+  const payload = await response.json() as Record<string, any>;
+  const member = (payload.member ?? payload) as Record<string, any>;
+  const id = member._id ?? member.id;
+  if (typeof id !== "string" || !id) return null;
+  const contact = member.contact && typeof member.contact === "object" ? member.contact : null;
+
+  return {
+    ...member,
+    _id: id,
+    loginEmail: member.loginEmail ?? member.email ?? contact?.email ?? null,
+    contactId: member.contactId ?? contact?.contactId ?? null,
+  } as AuthenticatedMember;
 }
 
 async function findProfileByMemberId(memberId: string): Promise<WixRecord | null> {
@@ -168,11 +198,13 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
   }
 
-  const result = await elevatedQuery(collectionId).limit(100).find();
+  // Match the working local diagnostic's bounded scan window. The earlier
+  // 100-row limit could miss a valid member later in FullData.
+  const result = await elevatedQuery(collectionId).limit(500).find();
   const records = recordsFromQuery(result);
 
   const contactMatches = contactId
-    ? records.filter((record) => String(record.contactId ?? "").trim() === contactId)
+    ? records.filter((record) => String(record.contactId ?? "").trim().toLowerCase() === contactId.toLowerCase())
     : [];
   if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
   if (contactMatches.length === 1) {
@@ -199,9 +231,9 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
   return null;
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
   try {
-    const member = await getAuthenticatedMember();
+    const member = await getAuthenticatedMember(request);
     if (!member) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
     }
@@ -209,6 +241,18 @@ export const GET: APIRoute = async () => {
     const record = await findFullDataMember(member);
     if (!record) {
       return json({ ok: true, profileState: "missing", profile: null, source: "Members/FullData" }, 200);
+    }
+
+    // FullData determines whether the authenticated member is eligible to
+    // book. It does not authenticate the browser session; Wix validates that
+    // session above, then this record's status is checked separately.
+    const activityStatus = String(record.activityStatus ?? "").trim().toLowerCase();
+    const approvalStatus = String(record.status ?? "").trim().toLowerCase();
+    if (activityStatus && activityStatus !== "active") {
+      return json({ ok: false, code: "MEMBER_INACTIVE", message: "Your BSDA account is not active. Please contact the academy." }, 403);
+    }
+    if (approvalStatus && !["approved", "active"].includes(approvalStatus)) {
+      return json({ ok: false, code: "MEMBER_NOT_APPROVED", message: "Your BSDA account is not approved for booking yet." }, 403);
     }
 
     return json({
@@ -262,7 +306,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const member = await getAuthenticatedMember();
+    const member = await getAuthenticatedMember(request);
     if (!member) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before creating your student profile." }, 401);
     }
@@ -339,7 +383,7 @@ export const PATCH: APIRoute = async ({ request }) => {
   }
 
   try {
-    const member = await getAuthenticatedMember();
+    const member = await getAuthenticatedMember(request);
     if (!member) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before updating your profile." }, 401);
     }
