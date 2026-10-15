@@ -3049,11 +3049,14 @@ textarea {
 }
 
 @media (max-width: 560px) {
+  /* Duplicate mobile typography rule commented out: the same selector and value
+     already exist in the earlier max-width: 560px block.
   nav > a:not(.navbook),
   nav .navbook,
   .btn {
     font-size: 24px;
   }
+  */
 }
 
 /* Final body-copy scale: readable 16px copy across the site, 22px controls. */
@@ -6305,11 +6308,13 @@ header {
   border-radius: 7px;
   font-size: 9px;
 }
+/* Duplicate rule commented out: the identical active rule is already defined earlier.
 .testimonialgrid h2 {
   font: 700 clamp(36px, 4vw, 55px)/1.05 "Times New Roman";
   letter-spacing: -1.8px;
   margin: 12px 0;
 }
+*/
 */
 .quoteCards {
   display: grid;
@@ -6333,20 +6338,24 @@ header {
   font-size: 9px;
   color: #929aaa;
 }
+/* Duplicate rule commented out: the identical active rule is already defined earlier.
 .aside p {
   font-size: 11px;
   color: #b8bfd0;
 }
 */
+*/
 .pagecards {
   max-width: 1060px;
   margin: auto;
 }
+/* Duplicate rule commented out: the identical active rule is already defined earlier.
 .paystrip p {
   font-size: 11px;
   color: #b8bfd0;
   margin: 0;
 }
+*/
 */
 .paychips {
   display: flex;
