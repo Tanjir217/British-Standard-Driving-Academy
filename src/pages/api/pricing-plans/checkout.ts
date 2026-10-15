@@ -155,7 +155,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     stage = "plan-lookup";
-    const plan = await plansV3.getPlan(planId) as any;
+    // This is a server-side Wix Headless operation. Use Wix's documented
+    // elevation pattern for reading a plan in a trusted backend context;
+    // the browser still cannot choose a price or bypass the public-plan check.
+    const elevatedGetPlan = auth.elevate(plansV3.getPlan) as (id: string) => Promise<unknown>;
+    const plan = await elevatedGetPlan(planId) as any;
     const actualPlanId = stringField(plan?._id ?? plan?.id, 120);
     if (actualPlanId !== planId || plan?.visibility !== "PUBLIC" || plan?.archived === true) {
       return json({ ok: false, code: "PLAN_NOT_AVAILABLE", message: "That package is no longer available. Return to packages and choose a current plan." }, 404);
