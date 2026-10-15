@@ -383,7 +383,8 @@ export function Home() {
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
-      {item.title === "Student Support & Information Center" && (
+                    )}
+                    {item.title === "Student Support & Information Center" && (
                       <ul
                         className="quickLinkLessonList"
                         aria-label="Student support and information"
