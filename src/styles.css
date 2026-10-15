@@ -5034,10 +5034,13 @@ nav .navbook {
     transform: translateX(4px);
   }
 
+  /* Duplicate desktop rule commented out: the same selector and declaration
+     already exist in the earlier min-width: 981px block.
   .floatingMenuLinks a svg,
   .floatingMenuBook svg {
     display: none;
   }
+  */
 
   .floatingMenuHead {
     display: none;
