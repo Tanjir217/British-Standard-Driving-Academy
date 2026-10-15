@@ -62,7 +62,9 @@ export async function createWixBooking(input: {
   return parseResponse<{ booking: { id: string; status: string; startDate: string; endDate: string } }>(response);
 }
 
-export async function createWixBookingCheckout(input: { slot: BookingApiSlot }) {
+export async function createWixBookingCheckout(
+  input: { slot: BookingApiSlot },
+): Promise<{ redirectUrl: string }> {
   const response = await httpClient.fetchWithAuth("/api/bookings/checkout", {
     method: "POST",
     headers: {
@@ -71,5 +73,15 @@ export async function createWixBookingCheckout(input: { slot: BookingApiSlot }) 
     },
     body: JSON.stringify({ slot: input.slot }),
   });
-  return parseResponse<{ redirectUrl: string }>(response);
+
+  const result = await parseResponse<{ redirectUrl: string }>(response);
+  // parseResponse rejects HTTP/API failures at runtime, but its union type also
+  // includes the error variant. Narrow it here before exposing redirectUrl.
+  if (!result.ok) {
+    throw new Error(result.message || "Wix could not prepare secure checkout.");
+  }
+  if (typeof result.redirectUrl !== "string" || !result.redirectUrl.startsWith("https://")) {
+    throw new Error("Wix returned an invalid secure checkout URL.");
+  }
+  return { redirectUrl: result.redirectUrl };
 }
