@@ -3219,7 +3219,7 @@ nav .navbook {
 }
 
 .authshell {
-  width: min(1320px, 100%);
+  width: min(1000px, 100%);
   min-height: 760px;
   margin: 0 auto;
   display: grid;
@@ -3731,7 +3731,7 @@ nav .navbook {
 }
 
 .authshell {
-  width: min(1320px, 100%);
+  width: min(1000px, 100%);
   height: 100%;
   min-height: 0;
 }
@@ -12337,7 +12337,7 @@ refactor/codebase-cleanup
   grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
   align-items: stretch;
   gap: clamp(24px, 5vw, 76px);
-  width: min(1320px, 100%);
+  width: min(1000px, 100%);
   min-height: 650px;
   height: auto;
   margin: 0 auto;
@@ -12985,7 +12985,7 @@ refactor/codebase-cleanup
   grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
   align-items: stretch;
   gap: clamp(18px, 2.5vw, 32px);
-  width: min(1220px, 100%);
+  width: min(1000px, 100%);
   min-height: 0;
   height: auto;
   margin: 0 auto;
