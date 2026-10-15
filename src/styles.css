@@ -13398,3 +13398,18 @@ refactor/codebase-cleanup
     padding: 15px;
   }
 }
+
+
+/* Targeted fix: remove excess blank space below the auth cards. */
+.authscreen {
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.authshell {
+  padding-bottom: 0;
+}
+
+.authvisual {
+  min-height: 0;
+}
