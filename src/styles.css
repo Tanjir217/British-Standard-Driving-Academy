@@ -2554,10 +2554,6 @@ footer {
   .heading h2 {
     font-size: 38px;
   }
-  /* .sectionNumber {
-    font-size: 70px;
-    top: -10px;
-  } */
   .journeygrid,
   .lessoncards,
   .dashgrid,
@@ -3047,18 +3043,6 @@ textarea {
     font-size: 18px;
   }
 }
-
-@media (max-width: 560px) {
-  /* Duplicate mobile typography rule commented out: the same selector and value
-     already exist in the earlier max-width: 560px block.
-  nav > a:not(.navbook),
-  nav .navbook,
-  .btn {
-    font-size: 24px;
-  }
-  */
-}
-
 /* Final body-copy scale: readable 16px copy across the site, 22px controls. */
 body :where(p, span, a, label, input, select, textarea, li, small, b, strong) {
   font-size: 16px !important;
@@ -7493,13 +7477,6 @@ header {
 .heroTrust {
   gap: 20px;
 }
-
-/* .section,
-.page {
-  padding-top: 10px;
-  padding-bottom: 10px;
-} */
-
 .heading p {
   font-size: 16px !important;
   line-height: 1.75;
@@ -7881,12 +7858,6 @@ header {
   align-items: start;
 }
 
-/* .section,
-.page {
-  padding-top: 10px;
-  padding-bottom: 10px;
-} */
-
 @media (max-width: 560px) {
   .hero {
     padding-top: 32px;
@@ -7894,7 +7865,7 @@ header {
 
   .section,
   .page {
-    padding-top: 48px;
+    padding-top: 115px;
     padding-bottom: 48px;
   }
 }
