@@ -11895,7 +11895,7 @@ to {
 
   .heroCopy .actions {
     width: 100%;
-    flex-direction: row-reverse;
+    flex-direction: row;
     margin-top: 15px;
     margin-bottom: 50px;
     padding-top: 0;
@@ -11903,9 +11903,9 @@ to {
   }
 
   .heroCopy .actions .btn {
-    font-size: 15px !important;
+    font-size: 13px !important;
     min-height: 46px;
-    padding: 10px 13px;
+    padding: 10px 12px;
   }
 
   .heroCopy .heroTrust {
