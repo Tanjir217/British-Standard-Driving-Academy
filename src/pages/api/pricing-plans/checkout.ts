@@ -166,7 +166,24 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     stage = "wix-redirect-session";
-    const baseUrl = import.meta.env.DEV ? new URL(request.url).origin : "https://www.bsda.online";
+    // Wix only creates redirect sessions for callback domains authorized in Headless Settings.
+    // Do not use localhost automatically in development: it is commonly not an
+    // authorized redirect domain and causes Wix to reject session creation.
+    // Set BSDA_CHECKOUT_RETURN_URL to a registered HTTPS URL when a different
+    // return host is required; otherwise use the canonical site URL.
+    const configuredReturnUrl = stringField(import.meta.env.BSDA_CHECKOUT_RETURN_URL, 500);
+    let baseUrl = "https://bsda.online";
+    if (configuredReturnUrl) {
+      try {
+        const configuredUrl = new URL(configuredReturnUrl);
+        if (configuredUrl.protocol !== "https:" || !configuredUrl.hostname) {
+          throw new Error("BSDA_CHECKOUT_RETURN_URL must be an HTTPS URL.");
+        }
+        baseUrl = configuredUrl.origin;
+      } catch {
+        throw new Error("INVALID_CHECKOUT_RETURN_URL");
+      }
+    }
     const response = await redirects.createRedirectSession({
       paidPlansCheckout: { planId },
       callbacks: {
@@ -183,8 +200,21 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: true, redirectUrl });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA pricing plans] Checkout session creation failed:", { stage, reason });
-    if (reason === "MEMBER_IDENTIFIERS_MISSING") {
+    const wixError = error && typeof error === "object" ? error as Record<string, any> : null;
+    const cause = wixError?.cause && typeof wixError.cause === "object"
+      ? wixError.cause as Record<string, any>
+      : null;
+    const diagnostic = {
+      stage,
+      reason,
+      errorName: error instanceof Error ? error.name : typeof error,
+      errorCode: stringField(wixError?.code ?? cause?.code, 120) || undefined,
+      causeMessage: stringField(cause?.message, 300) || undefined,
+      httpStatus: Number.isFinite(wixError?.status) ? wixError.status : Number.isFinite(cause?.status) ? cause.status : undefined,
+      details: wixError?.details ?? cause?.details ?? undefined,
+    };
+    console.error("[BSDA pricing plans] Checkout session creation failed:", diagnostic);
+    if (reason === "INVALID_CHECKOUT_RETURN_URL") {\n      return json({ ok: false, code: "INVALID_CHECKOUT_RETURN_URL", message: "The configured checkout return URL must be a valid HTTPS URL." }, 500);\n    }\n    if (reason === "MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "We couldn't verify your BSDA account. Please sign in again." }, 422);
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
@@ -194,7 +224,7 @@ export const POST: APIRoute = async ({ request }) => {
       ok: false,
       code: "PLAN_CHECKOUT_FAILED",
       message: "Wix could not prepare package checkout. Verify the member session, plan access, and allowed redirect domain, then try again.",
-      ...(import.meta.env.DEV ? { diagnosticStage: stage, diagnosticMessage: reason.slice(0, 300) } : {}),
+      ...(import.meta.env.DEV ? {\n        diagnosticStage: stage,\n        diagnosticMessage: [reason, diagnostic.errorCode, diagnostic.httpStatus, diagnostic.causeMessage]\n          .filter((value) => value !== undefined && value !== "")\n          .join(" | ")\n          .slice(0, 500),\n      } : {}),
     }, 502);
   }
 };
