@@ -124,8 +124,8 @@ export const POST: APIRoute = async ({ request }) => {
     // Re-query availability on the server; never trust a browser-provided slot as bookable.
     const availability = await availabilityTimeSlots.listAvailabilityTimeSlots({
       serviceId,
-      fromLocalDate: localStartDate.slice(0, 10),
-      toLocalDate: localStartDate.slice(0, 10),
+      fromLocalDate: `${localStartDate.slice(0, 10)}T00:00:00`,
+      toLocalDate: `${localStartDate.slice(0, 10)}T23:59:59`,
       timeZone,
       bookable: true,
     });
@@ -157,7 +157,7 @@ export const POST: APIRoute = async ({ request }) => {
         timezone: timeZone,
       },
       callbacks: {
-        postFlowUrl: "https://www.bsda.online/?bsdaPayment=return",
+        postFlowUrl: `${import.meta.env.DEV ? new URL(request.url).origin : "https://www.bsda.online"}/?bsdaPayment=return&kind=booking`,
       },
     });
 
