@@ -8045,7 +8045,8 @@ header {
 }
 
 /* Packages page: keep the primary action buttons uniform and prevent label wrapping. */
-.cards.pagecards .card > .btn.full {
+.cards.pagecards .card > .btn.full,
+.servicecard .servicecardContinue {
   width: 100%;
   min-width: 0;
   min-height: 48px;
@@ -8063,14 +8064,18 @@ header {
   text-align: center;
 }
 
-.cards.pagecards .card > .btn.full > svg {
+.cards.pagecards .card > .btn.full > svg,
+.servicecard .servicecardContinue > span {
   flex: 0 0 auto;
   width: 15px;
   height: 15px;
+  font-size: 13px !important;
+  line-height: 1;
 }
 
 @media (max-width: 1200px) and (min-width: 981px) {
-  .cards.pagecards .card > .btn.full {
+  .cards.pagecards .card > .btn.full,
+  .servicecard .servicecardContinue {
     gap: 5px;
     padding-inline: 7px;
     font-size: 12px !important;
