@@ -14,6 +14,7 @@ import {
 } from "../services/videoLibraryService";
 import { lessons } from "../data/site";
 import { packageService } from "../services/packages/packageService";
+import { bookingService, type BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 
 function formatMoney(amountMinor: number, currency: string) {
@@ -44,6 +45,7 @@ export function Home() {
       window.matchMedia("(max-width: 600px)").matches,
   );
   const [packages, setPackages] = useState<Package[]>([]);
+  const [bookingServices, setBookingServices] = useState<BookingServiceCatalogItem[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
@@ -53,43 +55,62 @@ export function Home() {
   const [packageInteracted, setPackageInteracted] = useState(false);
   const packageTouchStartX = useRef<number | null>(null);
 
+  const packageCards = packages.map((plan) => ({
+    ...toPackageCard(plan),
+    kind: "package" as const,
+  }));
+  const serviceCards = bookingServices.map((service) => ({
+    kind: "service" as const,
+    id: service.id,
+    name: service.name,
+    price: formatMoney(service.priceMinor, service.currency),
+    eyebrow: "Booking Service",
+    description: service.description?.trim() ?? "",
+    features: [] as string[],
+  }));
+  const homepageCards = [...packageCards, ...serviceCards];
+
   useEffect(() => {
     // The desktop layout displays every package at once; only rotate the mobile carousel.
     if (
       packageInteracted ||
-      packages.length < 2 ||
+      homepageCards.length < 2 ||
       !window.matchMedia("(max-width: 700px)").matches
     )
       return;
     const timer = window.setInterval(() => {
       setPackageActiveIndex((current) =>
-        Math.min(current + 1, packages.length - 1),
+        Math.min(current + 1, homepageCards.length - 1),
       );
     }, 3000);
     return () => window.clearInterval(timer);
-  }, [packageInteracted, packages.length]);
+  }, [packageInteracted, homepageCards.length]);
 
   useEffect(() => {
     let active = true;
 
-    packageService
-      .list()
-      .then((result) => {
-        if (active && result.ok) setPackages(result.data);
+    Promise.all([packageService.list(), bookingService.listServices()])
+      .then(([packageResult, serviceResult]) => {
+        if (!active) return;
+        if (packageResult.ok) setPackages(packageResult.data.slice(0, 4));
+        if (serviceResult.ok) {
+          const normalizeServiceName = (name: string) =>
+            name.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
+          setBookingServices(
+            serviceResult.data
+              .filter((service) => normalizeServiceName(service.name) !== "standard driving lesson 1 hour")
+              .slice(0, 4),
+          );
+        }
       })
       .catch((error) => {
-
-        console.error("Unable to load homepage packages.", error);
-
-        console.error("Unable to load driving packages.", error);
+        console.error("Unable to load homepage packages and services.", error);
       });
 
     return () => {
       active = false;
     };
   }, []);
-
-  const packageCards = packages.map(toPackageCard);
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 600px)").matches;
@@ -510,11 +531,11 @@ export function Home() {
               packageTouchStartX.current = null;
               if (startX === null || endX === undefined) return;
               const delta = startX - endX;
-              if (Math.abs(delta) < 40 || packages.length < 2) return;
+              if (Math.abs(delta) < 40 || homepageCards.length < 2) return;
               setPackageActiveIndex((current) =>
                 Math.max(
                   0,
-                  Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)),
+                  Math.min(homepageCards.length - 1, current + (delta > 0 ? 1 : -1)),
                 ),
               );
             }}
@@ -525,7 +546,7 @@ export function Home() {
               className="package-home-track"
               style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}
             >
-              {packageCards.map((p, i) => (
+              {homepageCards.map((p, i) => (
                 <div
                   className={
                     "package-home-slide" +
@@ -538,13 +559,28 @@ export function Home() {
                   }}
                 >
                   <Reveal delay={i * 90}>
-                    <PackageCard p={p} />
+                    {p.kind === "package" ? (
+                      <PackageCard p={p} />
+                    ) : (
+                      <article className="card">
+                        <span className="cardey">{p.eyebrow}</span>
+                        <h3>{p.name}</h3>
+                        {p.description && <p>{p.description}</p>}
+                        <div className="price">
+                          {p.price}
+                          <small>/ service</small>
+                        </div>
+                        <Link className="textlink" to={"/booking?service=" + p.id}>
+                          Book service <Icon n="arrow" s={15} />
+                        </Link>
+                      </article>
+                    )}
                   </Reveal>
                 </div>
               ))}
             </div>
             <div className="package-home-dots" aria-label="Choose a package">
-              {packageCards.map((p, i) => (
+              {homepageCards.map((p, i) => (
                 <button
                   key={p.id}
                   type="button"
