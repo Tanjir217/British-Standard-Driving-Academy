@@ -12976,7 +12976,7 @@ refactor/codebase-cleanup
 .authscreen {
   display: grid;
   align-items: center;
-  min-height: min(660px, calc(100svh - 132px));
+  min-height: calc(100svh - 24px);
   height: auto;
   padding: 18px clamp(14px, 3vw, 36px);
   overflow: visible;
