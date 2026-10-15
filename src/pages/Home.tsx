@@ -71,14 +71,19 @@ export function Home() {
 
   useEffect(() => {
     let active = true;
+
     packageService
       .list()
       .then((result) => {
         if (active && result.ok) setPackages(result.data);
       })
       .catch((error) => {
+
         console.error("Unable to load homepage packages.", error);
+
+        console.error("Unable to load driving packages.", error);
       });
+
     return () => {
       active = false;
     };
@@ -226,6 +231,19 @@ export function Home() {
     });
   };
 
+  const scrollReelTo = (index: number) => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
+    const step = card.getBoundingClientRect().width + gap;
+    viewport.scrollTo({ left: Math.max(0, index) * step, behavior: "smooth" });
+  };
+
   const advanceReelAfterEnd = (finishedIndex: number) => {
     if (
       typeof window === "undefined" ||
@@ -248,7 +266,8 @@ export function Home() {
     );
     const step = card.getBoundingClientRect().width + gap;
     const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
-    setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
+    const maxPage = Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4));
+    setReelPage(Math.max(0, Math.min(maxPage, page)));
   };
   return (
     <>
@@ -364,12 +383,10 @@ export function Home() {
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
-                    )}
-
-                    {item.title === "Student Support & Information Center" && (
+      {item.title === "Student Support & Information Center" && (
                       <ul
                         className="quickLinkLessonList"
-                        aria-label="Government information links"
+                        aria-label="Student support and information"
                       >
                         <li>DVLA</li>
                         <li>Theory Test Booking</li>
@@ -670,12 +687,22 @@ export function Home() {
             />
           </div>
 
-          <div
-            className="socialReelsViewport"
-            ref={reelViewportRef}
-            onScroll={syncReelPage}
-          >
-            <div className="socialReelsGrid">
+          <div className="socialReelsDesktopNav">
+            <button
+              type="button"
+              className="socialReelsSideArrow socialReelsSideArrowPrev"
+              onClick={() => scrollReels(-1)}
+              disabled={reelPage === 0}
+              aria-label="Show previous reels"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <div
+              className="socialReelsViewport"
+              ref={reelViewportRef}
+              onScroll={syncReelPage}
+            >
+              <div className="socialReelsGrid">
               {reelItems.map((reel, index) => (
                 <article
                   className="socialReelCard"
@@ -708,31 +735,30 @@ export function Home() {
                   <span>New reels coming soon</span>
                 </div>
               )}
+              </div>
             </div>
-          </div>
-
-          <div
-            className="socialReelsControls"
-            aria-label="Short video navigation"
-          >
             <button
               type="button"
-              className="socialReelArrow"
-              onClick={() => scrollReels(-1)}
-              disabled={reelPage === 0}
-              aria-label="Show previous short videos"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              type="button"
-              className="socialReelArrow"
+              className="socialReelsSideArrow socialReelsSideArrowNext"
               onClick={() => scrollReels(1)}
-              disabled={reelPage === reelItems.length - 4}
-              aria-label="Show next short videos"
+              disabled={reelPage >= Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4))}
+              aria-label="Show next reels"
             >
               <span aria-hidden="true">›</span>
             </button>
+          </div>
+
+          <div className="socialReelsControls package-home-dots" aria-label="Choose a reel">
+            {reelItems.map((reel, index) => (
+              <button
+                key={reel._id || "reel-dot-" + (index + 1)}
+                type="button"
+                className={reelPage === index ? "is-active" : ""}
+                aria-label={"Show reel " + (index + 1)}
+                aria-pressed={reelPage === index}
+                onClick={() => scrollReelTo(index)}
+              />
+            ))}
           </div>
         </div>
       </section>

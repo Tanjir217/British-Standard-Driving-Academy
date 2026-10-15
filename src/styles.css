@@ -11703,6 +11703,7 @@ to {
 }
 
 
+ refactor/codebase-cleanup
 
 /* Custom accessible lesson-service dropdown. */
 .bookingCustomSelect {
@@ -11950,5 +11951,162 @@ to {
 
   .site.hero-in-view .floatingQuickAction span {
     display: none;
+
+/* Reels carousel fixes: keep every CMS reel reachable on mobile and match the compact package arrows. */
+@media (max-width: 600px) {
+  .socialReelsViewport {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+  }
+
+  .socialReelsGrid {
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    width: max-content !important;
+    min-width: 0;
+  }
+
+  .socialReelCard {
+    display: block;
+    flex: 0 0 calc(100vw - 24px) !important;
+    width: calc(100vw - 24px) !important;
+    min-width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px);
+  }
+
+  .socialReelsControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+  }
+
+  .socialReelArrow {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    padding: 0;
+    border: 1px solid #d6d3ce;
+    border-radius: 0;
+    background: #fffdfa;
+    color: #b7b4ae;
+    font: 16px/1 Arial, sans-serif;
+    box-shadow: none;
+  }
+
+  .socialReelArrow:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+}
+
+/* Reel navigation uses the same active-pill dots as the homepage package carousel. */
+@media (max-width: 600px) {
+  .socialReelsControls.package-home-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .socialReelsControls.package-home-dots button {
+    display: block;
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    min-height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #c9c6c0;
+    box-shadow: none;
+    transition: width .2s ease, background .2s ease;
+  }
+
+  .socialReelsControls.package-home-dots button.is-active {
+    width: 24px;
+    min-width: 24px;
+    border-radius: 8px;
+    background: var(--red);
+  }
+}
+
+/* Desktop-only side arrows for the homepage reels carousel. Mobile layout and dot navigation remain unchanged. */
+.socialReelsDesktopNav {
+  position: relative;
+}
+
+.socialReelsSideArrow {
+  display: none;
+}
+
+@media (min-width: 601px) {
+  .socialReelsDesktopNav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  /* Fit exactly four cards inside the viewport remaining between the side arrows. */
+  .socialReelsDesktopNav .socialReelsGrid {
+    width: 100%;
+  }
+
+  .socialReelsDesktopNav .socialReelCard {
+    flex: 0 0 calc((100% - 54px) / 4);
+    min-width: 0;
+  }
+
+  .socialReelsDesktopNav .socialReelsViewport {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .socialReelsSideArrow {
+    display: inline-flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid #d9d5cf;
+    border-radius: 50%;
+    background: #fffdfa;
+    color: #222;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
+  }
+
+  .socialReelsSideArrow:hover:not(:disabled) {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+
+  .socialReelsSideArrow:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 600px) {
+  .socialReelsDesktopNav {
+    display: block;
+  }
+
+  .socialReelsSideArrow {
+    display: none !important;
+
   }
 }
