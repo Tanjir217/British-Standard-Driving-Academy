@@ -188,15 +188,7 @@ export function Portal() {
   }, [navigate]);
 
   if (loading) {
-    return (
-      <section className="page portal">
-        <div className="container authloading">
-          <span className="ey">Student portal</span>
-          <h1>Loading your account...</h1>
-          <p>Please wait while we securely restore your session.</p>
-        </div>
-      </section>
-    );
+    return <StudentPortalSkeleton />;
   }
 
   if (error) {
@@ -401,6 +393,64 @@ export function Portal() {
             </div>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+
+function StudentPortalSkeleton() {
+  return (
+    <section className="page portal portal-skeleton-page" aria-busy="true" aria-label="Loading student profile">
+      <div className="container dashboard portal-skeleton">
+        <div className="portal-skeleton-head">
+          <div className="portal-skeleton-heading">
+            <span className="portal-skeleton-line portal-skeleton-eyebrow" />
+            <span className="portal-skeleton-line portal-skeleton-title" />
+            <span className="portal-skeleton-line portal-skeleton-email" />
+          </div>
+          <span className="portal-skeleton-line portal-skeleton-signout" />
+        </div>
+
+        <div className="portal-skeleton-grid">
+          <div className="portal-skeleton-card portal-skeleton-status-card">
+            <span className="portal-skeleton-line portal-skeleton-label" />
+            <span className="portal-skeleton-line portal-skeleton-status" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+          </div>
+          <div className="portal-skeleton-card">
+            <span className="portal-skeleton-icon" />
+            <span className="portal-skeleton-line portal-skeleton-card-title" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+          </div>
+          <div className="portal-skeleton-card">
+            <span className="portal-skeleton-icon" />
+            <span className="portal-skeleton-line portal-skeleton-card-title" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-progress" />
+            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+          </div>
+          <div className="portal-skeleton-card">
+            <span className="portal-skeleton-icon" />
+            <span className="portal-skeleton-line portal-skeleton-card-title" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-line portal-skeleton-copy" />
+            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+          </div>
+        </div>
+
+        <div className="portal-skeleton-profile">
+          <div>
+            <span className="portal-skeleton-line portal-skeleton-label" />
+            <span className="portal-skeleton-line portal-skeleton-profile-title" />
+            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-medium" />
+          </div>
+          <span className="portal-skeleton-line portal-skeleton-book-button" />
+        </div>
+        <span className="portal-skeleton-screen-reader">Loading your BSDA student profile…</span>
       </div>
     </section>
   );
