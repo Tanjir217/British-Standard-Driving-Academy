@@ -12314,20 +12314,23 @@ refactor/codebase-cleanup
 }
 
 .authscreen::before {
-  width: 310px;
-  height: 190px;
-  top: -105px;
-  left: -105px;
+  width: 210px;
+  height: 125px;
+  top: -72px;
+  left: -78px;
   transform: rotate(-34deg);
+  background: #d51f2a;
+  opacity: 0.12;
 }
 
 .authscreen::after {
-  width: 270px;
-  height: 170px;
-  right: -100px;
-  bottom: -85px;
+  width: 175px;
+  height: 105px;
+  right: -62px;
+  bottom: -42px;
   transform: rotate(-35deg);
-  background: #b9e8ff;
+  background: #111827;
+  opacity: 0.10;
 }
 
 .authshell {
@@ -12977,7 +12980,9 @@ refactor/codebase-cleanup
   height: auto;
   padding: 18px clamp(14px, 3vw, 36px);
   overflow: visible;
-  background: #eef2ff;
+  background:
+    radial-gradient(ellipse at 8% 5%, rgba(213, 31, 42, 0.055), transparent 30%),
+    var(--cream);
 }
 
 .authshell {
@@ -13457,11 +13462,11 @@ refactor/codebase-cleanup
 /* Targeted fix: remove excess blank space below the auth cards. */
 /* Repeated auth styling disabled; canonical two-card rules above remain active.
 .authscreen {
-  min-height: 0;
+  min-height: min(620px, calc(100svh - 110px));
   height: auto;
-  align-content: start;
-  padding-top: 0;
-  padding-bottom: 0;
+  align-content: center;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 */
 
