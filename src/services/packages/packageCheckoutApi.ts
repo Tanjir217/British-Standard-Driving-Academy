@@ -2,7 +2,7 @@ import { getWixTokens } from "../wix/client";
 
 type CheckoutResponse =
   | { ok: true; redirectUrl: string }
-  | { ok: false; code?: string; message?: string };
+  | { ok: false; code?: string; message?: string; diagnosticStage?: string; diagnosticMessage?: string };
 
 export async function createWixPricingPlanCheckout(planId: string): Promise<{ redirectUrl: string }> {
   const accessToken = getWixTokens()?.accessToken?.value;
@@ -26,6 +26,10 @@ export async function createWixPricingPlanCheckout(planId: string): Promise<{ re
 
   const result = await response.json().catch(() => null) as CheckoutResponse | null;
   if (!response.ok || !result || result.ok !== true) {
+    if (import.meta.env.DEV && result && "diagnosticStage" in result && result.diagnosticStage) {
+      const detail = result.diagnosticMessage ? `: ${result.diagnosticMessage}` : "";
+      throw new Error(`Package checkout failed at ${result.diagnosticStage}${detail}`);
+    }
     throw new Error(result && "message" in result && result.message
       ? result.message
       : "Wix could not prepare package checkout. Please try again.");
