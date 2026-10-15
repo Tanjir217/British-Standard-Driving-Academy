@@ -173,7 +173,9 @@ export function Booking() {
   }, [navigate, packageId, requestedServiceId]);
 
   useEffect(() => {
-    if (!selectedServiceId || !lessonDate) {
+    // Package checkout does not need a lesson slot. Only query availability in
+    // the individual-lesson flow, after a service and date have been selected.
+    if (packageId || !selectedServiceId || !lessonDate) {
       setAvailableSlots([]);
       setSelectedSlotKey("");
       return;
@@ -242,7 +244,7 @@ export function Booking() {
     return () => {
       active = false;
     };
-  }, [selectedServiceId, lessonDate]);
+  }, [packageId, selectedServiceId, lessonDate]);
 
   const selectedSlot = availableSlots.find((slot) => slotKey(slot) === selectedSlotKey) || null;
 
