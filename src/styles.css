@@ -11931,10 +11931,10 @@ to {
 /* Mobile homepage quick actions: move the existing rail into the navbar only while the hero is visible. */
 @media (max-width: 560px) {
   .site.hero-in-view .floatingQuickActions {
-    top: 44px;
-    right: 78px;
+    top: 60px;
+    right: 88px;
     bottom: auto;
-    transform: none;
+    transform: translateY(-50%);
     flex-direction: row;
     align-items: center;
     gap: 4px;
