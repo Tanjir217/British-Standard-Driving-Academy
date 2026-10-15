@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
 import { plansV3 } from "@wix/pricing-plans";
-import { redirects } from "@wix/redirects";
 
 type WixRecord = Record<string, unknown>;
 type AuthenticatedMember = {
@@ -184,17 +183,92 @@ export const POST: APIRoute = async ({ request }) => {
         throw new Error("INVALID_CHECKOUT_RETURN_URL");
       }
     }
-    const response = await redirects.createRedirectSession({
+    // Call the documented Redirects REST endpoint directly so Wix HTTP errors
+    // are visible instead of being collapsed into the SDK generic error wrapper.
+    const authorization = request.headers.get("authorization") || "";
+    const accessToken = authorization.match(/^Bearer\\s+(.+)$/i)?.[1]?.trim();
+    if (!accessToken) {
+      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in with your BSDA account before purchasing a package." }, 401);
+    }
+
+    const redirectPayload = {
       paidPlansCheckout: { planId },
       callbacks: {
         postFlowUrl: `${baseUrl}/?bsdaPayment=return&kind=plan`,
       },
+    };
+    const wixResponse = await fetch("https://www.wixapis.com/_api/redirects-api/v1/redirect-session", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(redirectPayload),
+      cache: "no-store",
     });
+    const wixResponseText = await wixResponse.text();
+    let wixResponseBody: Record<string, any> | null = null;
+    try {
+      wixResponseBody = JSON.parse(wixResponseText) as Record<string, any>;
+    } catch {
+      wixResponseBody = null;
+    }
 
-    const redirectUrl = response.redirectSession?.fullUrl;
+    if (!wixResponse.ok) {
+      const wixErrorMessage = stringField(
+        wixResponseBody?.message
+          ?? wixResponseBody?.details?.applicationError?.description
+          ?? wixResponseBody?.details?.validationError?.fieldViolations?.[0]?.description,
+        500,
+      );
+      const wixErrorCode = stringField(
+        wixResponseBody?.code
+          ?? wixResponseBody?.details?.applicationError?.code
+          ?? wixResponseBody?.details?.validationError?.fieldViolations?.[0]?.field,
+        160,
+      );
+      const responseDiagnostic = {
+        stage,
+        httpStatus: wixResponse.status,
+        wixErrorCode: wixErrorCode || undefined,
+        wixErrorMessage: wixErrorMessage || undefined,
+        wixResponse: wixResponseText.slice(0, 1200),
+      };
+      console.error("[BSDA pricing plans] Wix Redirects API rejected checkout session:", responseDiagnostic);
+      return json({
+        ok: false,
+        code: "WIX_REDIRECT_SESSION_REJECTED",
+        message: "Wix rejected the package checkout request.",
+        ...(import.meta.env.DEV ? {
+          diagnosticStage: stage,
+          diagnosticMessage: [
+            `HTTP ${wixResponse.status}`,
+            wixErrorCode,
+            wixErrorMessage,
+            wixResponseText.slice(0, 500),
+          ].filter(Boolean).join(" | ").slice(0, 900),
+        } : {}),
+      }, 502);
+    }
+
+    const redirectUrl = wixResponseBody?.redirectSession?.fullUrl;
     if (typeof redirectUrl !== "string" || !redirectUrl.startsWith("https://")) {
-      console.error("[BSDA pricing plans] Wix returned no valid checkout URL.");
-      return json({ ok: false, code: "CHECKOUT_URL_MISSING", message: "Wix could not prepare package checkout. Please try again." }, 502);
+      const responseDiagnostic = {
+        stage,
+        httpStatus: wixResponse.status,
+        wixResponse: wixResponseText.slice(0, 1200),
+      };
+      console.error("[BSDA pricing plans] Wix Redirects API returned no valid checkout URL:", responseDiagnostic);
+      return json({
+        ok: false,
+        code: "CHECKOUT_URL_MISSING",
+        message: "Wix did not return a valid package checkout URL.",
+        ...(import.meta.env.DEV ? {
+          diagnosticStage: stage,
+          diagnosticMessage: wixResponseText.slice(0, 700) || "Wix response did not contain redirectSession.fullUrl.",
+        } : {}),
+      }, 502);
     }
 
     return json({ ok: true, redirectUrl });
