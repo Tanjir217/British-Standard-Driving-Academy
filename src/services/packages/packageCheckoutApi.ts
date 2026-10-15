@@ -1,14 +1,24 @@
-import { httpClient } from "@wix/essentials";
+import { getWixTokens } from "../wix/client";
 
 type CheckoutResponse =
   | { ok: true; redirectUrl: string }
   | { ok: false; code?: string; message?: string };
 
 export async function createWixPricingPlanCheckout(planId: string): Promise<{ redirectUrl: string }> {
-  const response = await httpClient.fetchWithAuth("/api/pricing-plans/checkout", {
+  const accessToken = getWixTokens()?.accessToken?.value;
+  if (!accessToken) {
+    throw new Error("Your Wix sign-in session is not available in this browser. Please sign in again.");
+  }
+
+  // Match the established student-profile API contract: explicitly pass the
+  // current Headless OAuth access token to the same-origin Astro endpoint.
+  const response = await fetch("/api/pricing-plans/checkout", {
     method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ planId }),
