@@ -8,7 +8,7 @@ import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
-import { submitBooking } from "../services/bookingService";
+import { createWixBookingCheckout } from "../services/bookings/bookingApi";
 import type { Package } from "../services/domain/types";
 import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
@@ -88,7 +88,6 @@ export function Booking() {
   const [bookingError, setBookingError] = useState("");
   const [bookingMessage, setBookingMessage] = useState("");
   const [bookingReference, setBookingReference] = useState("");
-  const [pay, setPay] = useState("bank");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [accountLoading, setAccountLoading] = useState(true);
@@ -238,34 +237,23 @@ export function Booking() {
     }
 
     if (!selectedSlot) {
-      setBookingError("Choose a current available time slot before submitting. No booking was created.");
+      setBookingError("Choose a current available time slot before checkout.");
+      return;
+    }
+
+    // This flow checks out a single Wix Bookings service. Do not charge the
+    // service price when the visitor arrived intending to purchase a package.
+    if (selectedPackage) {
+      setBookingError("Package purchases use a separate Wix Pricing Plans checkout. To pay for an individual lesson, open Booking from the service card instead.");
       return;
     }
 
     setBusy(true);
-    const f = new FormData(e.currentTarget);
     try {
-      const result = await submitBooking({
-        name: customerName,
-        phone: String(f.get("phone") || customerPhone),
-        email: customerEmail,
-        date: lessonDate,
-        serviceId: selectedServiceId,
-        slot: selectedSlot,
-        packageId: selectedPackage?.id,
-        paymentMethod: pay,
-      });
-
-      if (result.ok) {
-        setDone(true);
-        setBookingReference(result.reference);
-        setBookingMessage(result.message || "Wix accepted the booking request.");
-      } else {
-        setBookingError(result.message || "Wix could not create the booking.");
-      }
+      const result = await createWixBookingCheckout({ slot: selectedSlot });
+      window.location.assign(result.redirectUrl);
     } catch (error) {
-      setBookingError(error instanceof Error ? error.message : "Wix could not create the booking.");
-    } finally {
+      setBookingError(error instanceof Error ? error.message : "Wix could not prepare secure checkout.");
       setBusy(false);
     }
   };
@@ -484,21 +472,13 @@ export function Booking() {
             {availabilityError && <p className="formerror" role="status">{availabilityError}</p>}
 
             <div className="payment">
-              <span className="ey">Payment method preference</span>
-              <h3>How would you like to pay?</h3>
-              <p>Payment processing is not connected yet. This selection does not charge you or mark the booking as paid.</p>
-              <label className={pay === "bank" ? "radio active" : "radio"}>
-                <input type="radio" checked={pay === "bank"} onChange={() => setPay("bank")} />
-                Bank Transfer <small>Manual verification</small>
-              </label>
-              <label className={pay === "paybank" ? "radio active" : "radio"}>
-                <input type="radio" checked={pay === "paybank"} onChange={() => setPay("paybank")} />
-                Pay by Bank <small>Not connected yet</small>
-              </label>
+              <span className="ey">Secure payment</span>
+              <h3>Pay securely with Wix</h3>
+              <p>After confirming your booking details, you’ll continue to Wix’s secure checkout to review the service price and complete payment. BSDA never collects or stores your card or bank details.</p>
             </div>
 
             <button disabled={busy || availabilityLoading || !selectedSlot || done} className="btn red full">
-              {busy ? "Submitting booking..." : "Submit booking"} <Icon n="arrow" />
+              {busy ? "Preparing secure checkout..." : "Confirm Booking"} <Icon n="arrow" />
             </button>
 
             {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
