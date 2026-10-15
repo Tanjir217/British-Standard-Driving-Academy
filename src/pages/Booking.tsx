@@ -184,31 +184,57 @@ export function Booking() {
     setAvailableSlots([]);
     setSelectedSlotKey("");
 
-    fetchBookingAvailability({
-      serviceId: selectedServiceId,
-      from: lessonDate,
-      to: lessonDate,
-      timeZone: "Europe/London",
-    })
-      .then((result) => {
+    const loadAvailability = async () => {
+      try {
+        const dayResult = await fetchBookingAvailability({
+          serviceId: selectedServiceId,
+          from: lessonDate,
+          to: lessonDate,
+          timeZone: "Europe/London",
+        });
         if (!active) return;
-        if (!result.ok) {
-          setAvailabilityError(result.message || "Unable to load availability.");
+        if (!dayResult.ok) {
+          setAvailabilityError(dayResult.message || "Unable to load availability.");
           return;
         }
-        setAvailableSlots(result.slots);
-        if (result.slots.length === 0) {
-          setAvailabilityError("No available slots were returned for this date. Try another date.");
+
+        if (dayResult.slots.length > 0) {
+          setAvailableSlots(dayResult.slots);
+          return;
         }
-      })
-      .catch((error) => {
+
+        // If the selected day has no slots, search the selected day plus the
+        // following six calendar days so customers can choose the next opening.
+        const weekEnd = parseLocalDate(lessonDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const weekResult = await fetchBookingAvailability({
+          serviceId: selectedServiceId,
+          from: lessonDate,
+          to: toDateKey(weekEnd),
+          timeZone: "Europe/London",
+        });
+        if (!active) return;
+        if (!weekResult.ok) {
+          setAvailabilityError(weekResult.message || "Unable to load availability for the next seven days.");
+          return;
+        }
+        setAvailableSlots(weekResult.slots);
+        if (weekResult.slots.length === 0) {
+          setAvailabilityError("No available slots were found for this day or the following six days. Try another date.");
+        } else {
+          setAvailabilityError("No slots were available on the selected date. Showing available times for the next seven days.");
+        }
+      } catch (error) {
         if (!active) return;
         setAvailabilityError(
           error instanceof Error
             ? error.message
             : "Unable to load current availability.",
         );
-      })
+      }
+    };
+
+    void loadAvailability();
       .finally(() => {
         if (active) setAvailabilityLoading(false);
       });
