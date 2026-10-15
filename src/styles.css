@@ -13403,10 +13403,16 @@ refactor/codebase-cleanup
 /* Targeted fix: remove excess blank space below the auth cards. */
 .authscreen {
   min-height: 0;
+  height: auto;
+  align-content: start;
+  padding-top: 0;
   padding-bottom: 0;
 }
 
 .authshell {
+  min-height: 0;
+  height: auto;
+  margin-bottom: 0;
   padding-bottom: 0;
 }
 
