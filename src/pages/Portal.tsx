@@ -320,7 +320,7 @@ export function Portal() {
           <div className="dash darkdash">
             <span className="ey">Account status</span>
             <strong>{studentProfile?.status || "Profile pending"}</strong>
-            <p>{profileMessage || "Checking your saved student profile."}</p>
+            <p>{profileMessage || "Your learner profile status will appear here."}</p>
           </div>
 
           <PortalCard
