@@ -92,7 +92,7 @@ export function Home() {
     Promise.all([packageService.list(), bookingService.listServices()])
       .then(([packageResult, serviceResult]) => {
         if (!active) return;
-        if (packageResult.ok) setPackages(packageResult.data);
+        if (packageResult.ok) setPackages(packageResult.data.slice(0, 4));
         if (serviceResult.ok) {
           const normalizeServiceName = (name: string) =>
             name.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
