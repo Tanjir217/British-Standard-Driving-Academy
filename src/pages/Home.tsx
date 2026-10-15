@@ -55,6 +55,21 @@ export function Home() {
   const [packageInteracted, setPackageInteracted] = useState(false);
   const packageTouchStartX = useRef<number | null>(null);
 
+  const packageCards = packages.map((plan) => ({
+    ...toPackageCard(plan),
+    kind: "package" as const,
+  }));
+  const serviceCards = bookingServices.map((service) => ({
+    kind: "service" as const,
+    id: service.id,
+    name: service.name,
+    price: formatMoney(service.priceMinor, service.currency),
+    eyebrow: "Booking Service",
+    description: service.description?.trim() ?? "",
+    features: [] as string[],
+  }));
+  const homepageCards = [...packageCards, ...serviceCards];
+
   useEffect(() => {
     // The desktop layout displays every package at once; only rotate the mobile carousel.
     if (
@@ -96,21 +111,6 @@ export function Home() {
       active = false;
     };
   }, []);
-
-  const packageCards = packages.map((plan) => ({
-    ...toPackageCard(plan),
-    kind: "package" as const,
-  }));
-  const serviceCards = bookingServices.map((service) => ({
-    kind: "service" as const,
-    id: service.id,
-    name: service.name,
-    price: formatMoney(service.priceMinor, service.currency),
-    eyebrow: "Booking Service",
-    description: service.description?.trim() ?? "",
-    features: [] as string[],
-  }));
-  const homepageCards = [...packageCards, ...serviceCards];
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 600px)").matches;
