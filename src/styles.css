@@ -11936,6 +11936,7 @@ to {
 @media (max-width: 560px) {
   .site.hero-in-view .floatingQuickActions {
     top: 38px;
+    display:none;
     right: 88px;
     bottom: auto;
     transform: none;
