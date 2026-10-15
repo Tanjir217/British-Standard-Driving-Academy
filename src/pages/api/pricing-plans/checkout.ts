@@ -210,7 +210,11 @@ export const POST: APIRoute = async ({ request }) => {
       errorName: error instanceof Error ? error.name : typeof error,
       errorCode: stringField(wixError?.code ?? cause?.code, 120) || undefined,
       causeMessage: stringField(cause?.message, 300) || undefined,
-      httpStatus: Number.isFinite(wixError?.status) ? wixError.status : Number.isFinite(cause?.status) ? cause.status : undefined,
+      httpStatus: Number.isFinite(wixError?.status)
+        ? wixError.status
+        : Number.isFinite(cause?.status)
+          ? cause.status
+          : undefined,
       details: wixError?.details ?? cause?.details ?? undefined,
     };
     console.error("[BSDA pricing plans] Checkout session creation failed:", diagnostic);
