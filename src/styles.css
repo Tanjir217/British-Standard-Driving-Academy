@@ -1333,16 +1333,16 @@ nav .navbook:hover {
 }
 
 /* Package checkout only: remove the side information panel and space its actions. */
-.booking--spaced:has(> .form > .payment + .payment) {
+.booking--package-checkout {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.booking--spaced:has(> .form > .payment + .payment) > .aside {
+.booking--package-checkout > .aside {
   display: none;
 }
 
-.booking--spaced:has(> .form > .payment + .payment) > .form > .btn.full + .formerror + .btn.full,
-.booking--spaced:has(> .form > .payment + .payment) > .form > .btn.full + .btn.full {
+.booking--package-checkout > .form > .btn.full + .formerror + .btn.full,
+.booking--package-checkout > .form > .btn.full + .btn.full {
   margin-top: 20px;
 }
 .form,
