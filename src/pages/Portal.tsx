@@ -357,50 +357,61 @@ export function Portal() {
         </div>
 
         {isEditingProfile && (
-          <section className="panel portal-profile-editor" aria-labelledby="portal-profile-editor-title">
-            <div className="portal-profile-editor-heading">
-              <div>
-                <span className="ey">Personal information</span>
-                <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
-                <p>These details are saved to your own FullData record. Your sign-in email is managed by Wix and cannot be changed here.</p>
-              </div>
-              {studentProfile && <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>}
-            </div>
-            <form className="portal-profile-form" onSubmit={handleSaveProfile}>
-              <label>
-                First name
-                <input autoComplete="given-name" required maxLength={80} value={profileDraft.firstName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, firstName: event.target.value }))} />
-              </label>
-              <label>
-                Last name
-                <input autoComplete="family-name" required maxLength={80} value={profileDraft.lastName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, lastName: event.target.value }))} />
-              </label>
-              <label>
-                Preferred name
-                <input autoComplete="nickname" maxLength={80} value={profileDraft.nickname} onChange={(event) => setProfileDraft((draft) => ({ ...draft, nickname: event.target.value }))} />
-              </label>
-              <label>
-                Phone number
-                <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
-              </label>
-              <label className="portal-profile-form-wide">
-                Profile image URL
-                <input type="text" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
-                <small>Use a public HTTPS image URL or a Wix Media image URL. Direct file upload is not enabled in this version.</small>
-              </label>
-              {profileDraft.profilePhotoUrl.trim() && (
-                <div className="portal-profile-preview portal-profile-form-wide">
-                  <img src={profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
-                  <span>Image preview</span>
+          <div
+            className="portal-profile-modal-backdrop"
+            onClick={() => { if (!isSavingProfile) setIsEditingProfile(false); }}
+          >
+            <section
+              className="panel portal-profile-editor portal-profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="portal-profile-editor-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="portal-profile-editor-heading">
+                <div>
+                  <span className="ey">Personal information</span>
+                  <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
+                  <p>These details are saved to your own FullData record. Your sign-in email is managed by Wix and cannot be changed here.</p>
                 </div>
-              )}
-              {profileMessage && <p className="portal-profile-form-message portal-profile-form-wide" role="status">{profileMessage}</p>}
-              <div className="portal-profile-form-actions portal-profile-form-wide">
-                <button type="submit" className="btn red" disabled={isSavingProfile}>{isSavingProfile ? "Saving…" : "Save profile"} <Icon n="arrow" /></button>
-                {studentProfile && <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>}
+                <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile} aria-label="Close profile editor">Close</button>
               </div>
-            </form>
-          </section>
+              <form className="portal-profile-form" onSubmit={handleSaveProfile}>
+                <label>
+                  First name
+                  <input autoComplete="given-name" required maxLength={80} value={profileDraft.firstName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, firstName: event.target.value }))} />
+                </label>
+                <label>
+                  Last name
+                  <input autoComplete="family-name" required maxLength={80} value={profileDraft.lastName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, lastName: event.target.value }))} />
+                </label>
+                <label>
+                  Preferred name
+                  <input autoComplete="nickname" maxLength={80} value={profileDraft.nickname} onChange={(event) => setProfileDraft((draft) => ({ ...draft, nickname: event.target.value }))} />
+                </label>
+                <label>
+                  Phone number
+                  <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
+                </label>
+                <label className="portal-profile-form-wide">
+                  Profile image URL
+                  <input type="text" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
+                  <small>Use a public HTTPS image URL or a Wix Media image URL. Direct file upload is not enabled in this version.</small>
+                </label>
+                {profileDraft.profilePhotoUrl.trim() && (
+                  <div className="portal-profile-preview portal-profile-form-wide">
+                    <img src={profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
+                    <span>Image preview</span>
+                  </div>
+                )}
+                {profileMessage && <p className="portal-profile-form-message portal-profile-form-wide" role="status">{profileMessage}</p>}
+                <div className="portal-profile-form-actions portal-profile-form-wide">
+                  <button type="submit" className="btn red" disabled={isSavingProfile}>{isSavingProfile ? "Saving…" : "Save profile"} <Icon n="arrow" /></button>
+                  <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>
+                </div>
+              </form>
+            </section>
+          </div>
         )}
       </div>
     </section>
