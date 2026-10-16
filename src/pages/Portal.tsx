@@ -250,9 +250,14 @@ export function Portal() {
               {studentProfile?.email || member?.loginEmail || "Your BSDA member account"}
             </p>
           </div>
-          <button className="btn light" onClick={() => void signOutMember()}>
-            Sign out
-          </button>
+          <div className="dashboardpanelactions">
+            <button className="btn light" onClick={() => setIsEditingProfile(true)}>
+              {studentProfile ? "Edit profile" : "Complete profile"}
+            </button>
+            <button className="btn light" onClick={() => void signOutMember()}>
+              Sign out
+            </button>
+          </div>
         </div>
 
         <div className="dashgrid">
@@ -351,50 +356,6 @@ export function Portal() {
           </div>
         </div>
 
-        {studentProfile && (
-          <div className="panel dashboardpanel">
-            <div>
-              <span className="ey">Learner profile</span>
-              {studentProfile.coverPhotoUrl && (
-                <img className="portal-profile-cover" src={studentProfile.coverPhotoUrl} alt="" loading="lazy" />
-              )}
-              {studentProfile.profilePhotoUrl && (
-                <img className="portal-profile-photo" src={studentProfile.profilePhotoUrl} alt="" loading="lazy" />
-              )}
-              <h2>{studentProfile.fullName || "Student profile"}</h2>
-              {profileMessage && !isEditingProfile && <p className="portal-profile-form-message" role="status">{profileMessage}</p>}
-              <p>{studentProfile.phone || "No phone number saved"}</p>
-              <p>{assignedInstructorName ? `Instructor: ${assignedInstructorName}` : "Instructor assignment is not available in booking records yet."}</p>
-              {studentProfile.transmission && (
-                <p>{studentProfile.transmission === "either"
-                  ? "Manual or automatic"
-                  : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}</p>
-              )}
-            </div>
-            <div className="dashboardpanelactions">
-              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Edit profile</button>
-              <button className="btn red" onClick={() => navigate("/booking")}>
-                Book a lesson <Icon n="arrow" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!studentProfile && (
-          <div className="panel dashboardpanel">
-            <div>
-              <span className="ey">Next stage</span>
-              <h2>Your account is connected.</h2>
-              <p>{profileMessage}</p>
-            </div>
-            <div className="dashboardpanelactions">
-              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Complete profile</button>
-              <button className="btn red" onClick={() => navigate("/booking")}>
-                Book a lesson <Icon n="arrow" />
-              </button>
-            </div>
-          </div>
-        )}
         {isEditingProfile && (
           <section className="panel portal-profile-editor" aria-labelledby="portal-profile-editor-title">
             <div className="portal-profile-editor-heading">
