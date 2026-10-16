@@ -6,8 +6,8 @@ import { members } from "@wix/members";
 type WixRecord = Record<string, unknown>;
 
 const FULL_DATA_COLLECTION_ID = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
-const LESSONS_COLLECTION_ID = import.meta.env.BSDA_LESSON_RECORDS_COLLECTION_ID || "LessonsRecords";
-const LESSON_STUDENT_FIELD_ID = import.meta.env.BSDA_LESSON_STUDENT_ID_FIELD || "memberId";
+const LESSONS_COLLECTION_ID = import.meta.env.BSDA_LESSON_RECORDS_COLLECTION_ID || "LessonRecords";
+const LESSON_STUDENT_FIELD_ID = import.meta.env.BSDA_LESSON_STUDENT_ID_FIELD || "studentId";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -115,8 +115,12 @@ function toLesson(record: WixRecord) {
     status: stringValue("status", "lessonStatus", "completionStatus").toLowerCase(),
     startedAt: value("startedAt", "startDate", "lessonDate", "date", "_createdDate"),
     durationMinutes: numberValue("durationMinutes", "duration", "lessonDuration"),
+    instructorId: stringValue("instructorId", "staffId"),
     instructorName: stringValue("instructorName", "staffName"),
     instructorNotes: stringValue("instructorNotes", "notes", "feedback"),
+    objectives: Array.isArray(record.objectives) ? record.objectives.filter((entry): entry is string => typeof entry === "string") : [],
+    strengths: Array.isArray(record.strengths) ? record.strengths.filter((entry): entry is string => typeof entry === "string") : [],
+    improvements: Array.isArray(record.improvements) ? record.improvements.filter((entry): entry is string => typeof entry === "string") : [],
     progressScore: numberValue("progressScore", "score"),
   };
 }
