@@ -57,6 +57,9 @@ function safeReturnPath(value?: string) {
 /** Starts the Wix Astro integration managed member session flow. */
 export function beginManagedMemberLogin(returnTo = "/portal") {
   const safePath = safeReturnPath(returnTo);
+  // Discard any pre-migration browser OAuth state before starting the single
+  // Wix Astro-managed login flow. The managed session itself is cookie-backed.
+  clearLocalMemberSession();
   const loginUrl = "/api/auth/login?returnToUrl=" + encodeURIComponent(safePath);
   window.location.assign(loginUrl);
 }
