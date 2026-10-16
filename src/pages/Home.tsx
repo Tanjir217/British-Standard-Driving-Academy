@@ -599,7 +599,7 @@ export function Home() {
         </div>
       </section> */}
 
-      <section className="section soft">
+      {/* <section className="section soft">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -688,7 +688,7 @@ export function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="section videoSection">
         <div className="container">
@@ -706,7 +706,7 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section dark">
+      {/* <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -759,9 +759,9 @@ export function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="missionVision section">
+      {/* <section className="missionVision section">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -803,7 +803,7 @@ export function Home() {
             </article>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="socialReels section">
         <div className="container">
