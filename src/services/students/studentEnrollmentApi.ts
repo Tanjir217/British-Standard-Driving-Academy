@@ -1,4 +1,3 @@
-import { getWixTokens } from "../wix/client";
 import type { ServiceResult } from "../api/types";
 
 export interface StudentEnrollment {
@@ -14,13 +13,12 @@ export interface StudentEnrollment {
 type EnrollmentResponse = { ok?: boolean; enrollments?: StudentEnrollment[]; message?: string };
 
 export async function listEnrollmentsForCurrentStudent(): Promise<ServiceResult<StudentEnrollment[]>> {
-  const token = getWixTokens()?.accessToken?.value;
   try {
     const response = await fetch("/api/students/enrollment", {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
-      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { Accept: "application/json" },
     });
     const payload = await response.json().catch(() => null) as EnrollmentResponse | null;
     if (!response.ok || !payload?.ok || !Array.isArray(payload.enrollments)) {
