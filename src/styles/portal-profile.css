@@ -901,3 +901,65 @@
     animation: none;
   }
 }
+
+
+/* Header spacing and student avatar: replaces the duplicate edit-profile action. */
+.portal-content-header {
+  min-width: 0;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 16px 0 24px;
+}
+
+.portal-content-greeting {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.portal-content-greeting h1 {
+  margin: 10px 0 8px;
+  line-height: 1.12;
+}
+
+.portal-content-greeting p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.portal-header-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #f3e9e5;
+  box-shadow: 0 0 0 1px rgba(216, 32, 47, 0.22), 0 8px 20px rgba(23, 32, 51, 0.09);
+  color: #c91d2b;
+  font: 700 32px/1 "Times New Roman", Times, serif;
+}
+
+.portal-header-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 680px) {
+  .portal-content-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 0 18px;
+  }
+
+  .portal-header-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+}
