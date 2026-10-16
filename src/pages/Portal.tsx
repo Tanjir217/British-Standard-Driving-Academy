@@ -476,8 +476,6 @@ export function Portal() {
                       <button type="button" className="btn light" onClick={() => {
                         setProfilePhotoFile(null);
                         setProfilePhotoPreview("");
-                        const fileInput = document.getElementById("portal-profile-image-input") as HTMLInputElement | null;
-                        if (fileInput) fileInput.value = "";
                       }}>Remove selected image</button>
                     )}
                   </div>
