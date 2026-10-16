@@ -61,7 +61,7 @@ function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
   try {
     const member = await getMember();
     if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your bookings." }, 401);
