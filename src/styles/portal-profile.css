@@ -275,3 +275,37 @@
   object-fit: cover;
   background: #f0eeea;
 }
+
+.portal-learning-materials {
+  grid-column: 1 / -1;
+}
+
+.portal-learning-video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.portal-learning-video {
+  min-width: 0;
+}
+
+.portal-learning-video h4 {
+  margin: 0 0 10px;
+}
+
+.portal-learning-video iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
+  background: #111827;
+}
+
+@media (max-width: 640px) {
+  .portal-learning-video-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
