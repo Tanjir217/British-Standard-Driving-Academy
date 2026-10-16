@@ -284,15 +284,19 @@ export function Portal() {
 
         <main className="portal-main-content">
           <header className="portal-content-header">
-            <div>
+            <div className="portal-content-greeting">
               <span className="ey">STUDENT DASHBOARD</span>
               <h1>Hello, {displayName}.</h1>
               <p>{studentProfile?.email || "Your BSDA student account"}</p>
             </div>
             {activeSection === "profile" && (
-              <button className="btn red" type="button" onClick={() => setIsEditingProfile(true)}>
-                {studentProfile ? "Edit profile" : "Complete profile"}
-              </button>
+              <div className="portal-header-avatar" aria-label="Your profile photo">
+                {studentProfile?.profilePhotoUrl ? (
+                  <img src={profileImagePreviewUrl(studentProfile.profilePhotoUrl)} alt="Your profile" />
+                ) : (
+                  <span aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
             )}
           </header>
 
