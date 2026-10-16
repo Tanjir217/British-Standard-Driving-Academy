@@ -10033,3 +10033,108 @@ refactor/codebase-cleanup
   .instructors-team-grid .instructorphoto { aspect-ratio: 4 / 3.4; }
   .instructors-team-grid .instructorbody { min-height: auto; }
 }
+
+
+/* Desktop exit-intent promotion modal. Uses the existing BSDA navy, cream and red theme. */
+.exit-promo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(9, 15, 26, .7);
+  backdrop-filter: blur(5px);
+  animation: exitPromoFade .18s ease-out both;
+}
+.exit-promo-dialog {
+  position: relative;
+  width: min(100%, 470px);
+  padding: 42px clamp(24px, 5vw, 44px) 28px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 100% 0, rgba(213,31,42,.09), transparent 42%),
+    var(--paper);
+  box-shadow: 0 28px 90px rgba(0,0,0,.32);
+  text-align: center;
+  animation: exitPromoRise .24s ease-out both;
+}
+.exit-promo-close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--navy);
+}
+.exit-promo-close:hover { background: var(--cream); }
+.exit-promo-mark {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+  color: #fff;
+  background: var(--navy);
+  box-shadow: 0 10px 24px rgba(17,24,39,.18);
+}
+.exit-promo-mark svg { color: #ffb6bb; }
+.exit-promo-dialog > .ey {
+  justify-content: center;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+.exit-promo-dialog h2 {
+  margin: 12px 0 10px;
+  color: var(--navy);
+  font: 700 clamp(29px, 4vw, 37px)/1.08 "Times New Roman", Times, serif;
+  letter-spacing: -.6px;
+}
+.exit-promo-dialog > p {
+  max-width: 355px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 14px !important;
+  line-height: 1.7;
+}
+.exit-promo-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px 0;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 700;
+}
+.exit-promo-note svg { color: var(--red); }
+.exit-promo-cta {
+  min-height: 48px;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 9px;
+}
+.exit-promo-dismiss {
+  margin-top: 15px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+.exit-promo-dismiss:hover { color: var(--navy); text-decoration: underline; }
+@keyframes exitPromoFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes exitPromoRise { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 767px) {
+  .exit-promo-overlay { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exit-promo-overlay, .exit-promo-dialog { animation: none; }
+}
