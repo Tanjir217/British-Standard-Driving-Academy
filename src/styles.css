@@ -10186,3 +10186,24 @@ refactor/codebase-cleanup
     color: #fff;
   }
 }
+
+
+/* Size desktop quick actions to each label instead of forcing equal widths. */
+@media (min-width: 981px) {
+  .floatingQuickActions .floatingQuickAction,
+  .floatingQuickActions.home-intro .floatingQuickAction {
+    width: max-content;
+    min-width: 0;
+    gap: 9px;
+  }
+
+  .floatingQuickActions .floatingQuickAction span,
+  .floatingQuickActions.home-intro .floatingQuickAction span {
+    max-width: none;
+  }
+
+  .floatingQuickActions .floatingQuickAction:hover,
+  .floatingQuickActions .floatingQuickAction:focus-visible {
+    width: max-content;
+  }
+}
