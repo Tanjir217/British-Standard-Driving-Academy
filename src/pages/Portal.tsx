@@ -413,7 +413,7 @@ export function Portal() {
               </label>
               <label className="portal-profile-form-wide">
                 Profile image URL
-                <input type="url" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
+                <input type="text" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
                 <small>Use a public HTTPS image URL or a Wix Media image URL. Direct file upload is not enabled in this version.</small>
               </label>
               {profileDraft.profilePhotoUrl.trim() && (
