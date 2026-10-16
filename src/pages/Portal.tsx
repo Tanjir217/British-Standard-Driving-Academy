@@ -133,6 +133,12 @@ export function Portal() {
           }
         }
         if (active) setLoadedSections((current) => current.includes(activeSection) ? current : [...current, activeSection]);
+      } catch {
+        if (!active) return;
+        if (activeSection === "bookings") setBookingsMessage("Bookings could not be loaded. Please try again later.");
+        else if (activeSection === "progress") setLessonsMessage("Learning progress could not be loaded. Please try again later.");
+        else if (activeSection === "enrollment") setEnrollmentMessage("Package and enrollment data could not be loaded. Please try again later.");
+        else if (activeSection === "materials") setLearningMaterialsMessage("Learning materials could not be loaded. Please try again later.");
       } finally {
         if (active) setSectionLoading(false);
       }
@@ -241,7 +247,7 @@ export function Portal() {
   const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\\s+/)[0] || "Learner";
   const displayName = firstName || "Learner";
   const sectionItems = [
-    { id: "profile" as const, label: "Personal profile", icon: "user" },
+    { id: "profile" as const, label: "Personal profile", icon: "users" },
     { id: "bookings" as const, label: "Bookings", icon: "calendar" },
     { id: "progress" as const, label: "Learning progress / report", icon: "car" },
     { id: "enrollment" as const, label: "Package & enrollment", icon: "wallet" },
