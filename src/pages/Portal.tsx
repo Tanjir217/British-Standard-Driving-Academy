@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import "../styles/portal-profile.css";
 import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
+import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../services/students/studentBookingApi";
 import {
   getCurrentMember,
   signOutMember,
@@ -54,6 +55,8 @@ export function Portal() {
   const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
   const [lessonsMessage, setLessonsMessage] = useState("Loading lesson records…");
+  const [bookings, setBookings] = useState<StudentBookingRecord[]>([]);
+  const [bookingsMessage, setBookingsMessage] = useState("Loading bookings…");
 
   useEffect(() => {
     let active = true;
@@ -128,6 +131,15 @@ export function Portal() {
         } else {
           setLessonsMessage(lessonResult.error.message);
         }
+
+        const bookingResult = await listBookingsForCurrentStudent();
+        if (!active) return;
+        if (bookingResult.ok) {
+          setBookings(bookingResult.data);
+          setBookingsMessage(bookingResult.data.length ? "" : "No bookings are associated with this account yet.");
+        } else {
+          setBookingsMessage(bookingResult.error.message);
+        }
       } catch (err) {
         if (!active) return;
         setError(
@@ -192,19 +204,19 @@ export function Portal() {
 
           <div className="dash">
             <Icon n="calendar" s={24} />
-            <h3>Lesson records</h3>
-            {lessonsMessage ? (
-              <p role={lessonsMessage.toLowerCase().includes("could not") || lessonsMessage.toLowerCase().includes("failed") ? "alert" : undefined}>{lessonsMessage}</p>
+            <h3>Bookings</h3>
+            {bookingsMessage ? (
+              <p role={bookingsMessage.toLowerCase().includes("could not") || bookingsMessage.toLowerCase().includes("failed") ? "alert" : undefined}>{bookingsMessage}</p>
             ) : (
               <ul className="portal-lesson-list">
-                {lessons.slice(0, 5).map((lesson) => (
-                  <li key={lesson.id}>
-                    <strong>{lesson.lessonType || "Driving lesson"}</strong>
-                    <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt)))
-                      ? new Date(String(lesson.startedAt)).toLocaleDateString()
+                {bookings.slice(0, 5).map((booking) => (
+                  <li key={booking.id}>
+                    <strong>{booking.serviceName || "Driving appointment"}</strong>
+                    <span>{booking.startDate && !Number.isNaN(Date.parse(booking.startDate))
+                      ? new Date(booking.startDate).toLocaleString()
                       : "Date not recorded"}</span>
-                    <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
-                    {lesson.instructorName && <span>Instructor: {lesson.instructorName}</span>}
+                    <span className="portalstatus">{booking.status.replace(/_/g, " ").toLowerCase()}</span>
+                    {booking.instructorName && <span>Instructor: {booking.instructorName}</span>}
                   </li>
                 ))}
               </ul>
@@ -229,6 +241,20 @@ export function Portal() {
                 <p>Progress is not available yet because verified lesson completion and package entitlement data are not both present.</p>
                 <span className="portalstatus">Awaiting verified records</span>
               </>
+            )}
+            <h4>Lesson history</h4>
+            {lessonsMessage ? <p>{lessonsMessage}</p> : (
+              <ul className="portal-lesson-list">
+                {lessons.slice(0, 5).map((lesson) => (
+                  <li key={lesson.id}>
+                    <strong>{lesson.lessonType || "Driving lesson"}</strong>
+                    <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt)))
+                      ? new Date(String(lesson.startedAt)).toLocaleDateString()
+                      : "Date not recorded"}</span>
+                    <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
