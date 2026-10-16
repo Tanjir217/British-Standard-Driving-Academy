@@ -1,5 +1,3 @@
-import { getWixTokens } from "../wix/client";
-
 export interface StudentProfileApiRecord {
   id: string;
   memberId: string;
@@ -48,16 +46,12 @@ export class StudentProfileApiError extends Error {
 }
 
 async function fetchAuthenticatedProfile(input: RequestInit): Promise<Response> {
-  const accessToken = getWixTokens()?.accessToken?.value;
-  // The primary Wix Astro login is cookie-backed. Send same-origin cookies
-  // even when no browser OAuth token exists; the server validates that session.
   return fetch("/api/students/profile", {
     ...input,
     credentials: "same-origin",
     cache: "no-store",
     headers: {
       Accept: "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(input.headers || {}),
     },
   });
