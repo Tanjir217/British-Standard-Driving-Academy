@@ -19,18 +19,21 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Student profile endpoint contract
 
-- `GET /api/students/profile`: 401 if no authenticated Wix member; 200 with `profileState: "missing"` and `profile: null` if the member has no profile; 200 with a safe profile otherwise.
-- `POST /api/students/profile`: validates JSON and names, derives member identity from the Wix session, returns an existing profile on repeat requests, or attempts to insert a new record.
-- The member ID in the request body is never trusted.
-- CMS access is elevated only inside server code and only after the authenticated member is identified.
+- `GET /api/students/profile`: read-only profile from `Members/FullData`; contactId is matched first, with email fallback only if Wix did not return contactId.
+- `GET /api/students/lessons`: returns lesson rows from `LessonRecords` filtered by the authenticated student's FullData contactId.
+- `GET /api/students/bookings`: queries Wix Bookings by `contactDetails.contactId` and rechecks ownership before returning results.
+- `GET /api/students/enrollment`: reads only the current member's Pricing Plans orders.
+- `GET /api/students/learning-materials`: returns enabled student-video slots from `SiteContent`.
+- The profile endpoint is read-only; it no longer provisions or updates the competing `StudentProfiles` collection.
+- Protected CMS access stays server-side and is never authorized by a browser-supplied contactId.
 
 ## Required before calling the endpoint production-ready
 
-1. Verify the exact StudentProfiles collection ID and field keys in the intended Wix site.
-2. Verify the site's schema accepts the fields written by the endpoint and confirm collection permissions.
-3. Confirm that the Wix Astro integration supplies the expected member context for this request and that the frontend login flow establishes that session. The existing Vite OAuth/session flow is not assumed to be interchangeable with the integration's built-in `/api/auth/login` and `/api/auth/logout` routes.
-4. Add an enforced uniqueness strategy for the memberId ownership field to eliminate races between simultaneous profile-creation requests.
-5. Run install, type-check, build, local auth tests, CMS read/write tests, and preview tests using the installed Wix CLI and the intended non-production Wix site.
+1. Confirm the actual Wix site context for managed member sessions and verify fallback behavior for legacy OAuth sessions.
+2. Confirm `LessonRecords.studentId` stores the student's FullData `contactId`, and confirm the exact collection ID and field IDs.
+3. Verify `SiteContent` read permissions and that student portal keys `portal-video-1` through `portal-video-6` are enabled.
+4. Verify the current-member Pricing Plans orders API is available in the deployed Wix context and returns plan names/statuses as expected.
+5. Run install, type-check, build, local auth tests, Wix CMS/Bookings/Pricing Plans integration tests, and preview tests using the intended non-production Wix site.
 
 ## Do not
 
@@ -41,9 +44,8 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Implemented endpoint source files on this branch
 
-- `GET /api/students/profile`: authenticated member's profile or a structured missing-profile state.
-- `POST /api/students/profile`: validates name fields, derives member ID from the Wix session, returns an existing profile on repeat calls, and uses a deterministic item ID to reduce duplicate creation races.
-- `PATCH /api/students/profile`: member-owned updates limited to name, phone, and transmission fields.
+- `GET /api/students/profile`: read-only profile resolved from FullData.
+- `GET /api/students/lessons`, `/api/students/bookings`, `/api/students/enrollment`, and `/api/students/learning-materials`: authenticated student-specific data endpoints.
 - `GET /api/admin/authorization`: fail-closed authorization against the protected `AdminStaffAccess` collection (`memberId`, `enabled` fields currently assumed from earlier repository work).
 - `GET /api/admin/students`: protected StudentProfiles listing.
 - `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons`: protected lesson record operations.
