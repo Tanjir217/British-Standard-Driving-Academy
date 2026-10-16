@@ -26,3 +26,121 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Lesson recommendation cards: inspired by package-page typography and spacing,
+   but intentionally implemented as a separate lesson-specific component. */
+.lesson-recommendations .lesson-plan-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 25px;
+  background: #fff;
+  border: 1px solid var(--line, #e4e0d8);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.035);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.lesson-recommendations .lesson-plan-card:hover {
+  border-color: rgba(213, 31, 42, 0.45);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.09);
+  transform: translateY(-3px);
+}
+
+.lesson-plan-card__topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lesson-plan-card__eyebrow {
+  color: var(--red, #d51f2a);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.lesson-plan-card__recommended {
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: rgba(213, 31, 42, 0.08);
+  color: var(--red, #d51f2a);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.lesson-plan-card h3 {
+  margin: 0 0 9px;
+  color: var(--navy, #111827);
+  font: 700 25px/1.2 "Times New Roman", Times, serif;
+}
+
+.lesson-plan-card__description {
+  margin: 0;
+  color: var(--muted, #697181);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.lesson-plan-card__price {
+  margin: 20px 0 14px;
+  color: var(--navy, #111827);
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.lesson-plan-card__price span {
+  color: var(--muted, #697181);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.lesson-plan-card__features {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 22px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line, #e4e0d8);
+  list-style: none;
+}
+
+.lesson-plan-card__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 0;
+  color: #4e5665;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lesson-plan-card__features li span {
+  flex: 0 0 auto;
+  color: var(--red, #d51f2a);
+  font-weight: 800;
+}
+
+.lesson-plan-card__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 560px) {
+  .lesson-recommendations .lesson-plan-card {
+    padding: 21px;
+  }
+
+  .lesson-plan-card h3 {
+    font-size: 23px;
+  }
+}
