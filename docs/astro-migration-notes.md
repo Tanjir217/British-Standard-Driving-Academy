@@ -26,10 +26,12 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 - `GET /api/students/learning-materials`: returns enabled student-video slots from `SiteContent`.
 - The profile endpoint is read-only; it no longer provisions or updates the competing `StudentProfiles` collection.
 - Protected CMS access stays server-side and is never authorized by a browser-supplied contactId.
+- Student login/registration use Wix Astro's built-in `/api/auth/login` and `/api/auth/logout` routes; do not use custom Headless `auth.login()` / `auth.register()` in the student portal.
+- `GET /api/auth/session` exposes only the current member identity from the managed session. Student API clients use same-origin cookies and never attach browser-held member bearer tokens.
 
 ## Required before calling the endpoint production-ready
 
-1. Confirm the actual Wix site context for managed member sessions and verify fallback behavior for legacy OAuth sessions.
+1. Confirm the actual Wix site context for managed member sessions. The student portal intentionally has no legacy OAuth-token fallback; verify the single Wix Astro-managed flow.
 2. Confirm `LessonRecords.studentId` stores the student's FullData `contactId`, and confirm the exact collection ID and field IDs.
 3. Verify `SiteContent` read permissions and that student portal keys `portal-video-1` through `portal-video-6` are enabled.
 4. Verify the current-member Pricing Plans orders API is available in the deployed Wix context and returns plan names/statuses as expected.
