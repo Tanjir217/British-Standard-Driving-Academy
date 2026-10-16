@@ -53,7 +53,7 @@ Do not run `wix headless link` or any release command until the Wix site binding
 ## Student portal endpoint source files on `feat/student-portal-full-data`
 
 - `GET /api/auth/session` — current member identity from the Wix Astro-managed session.
-- `GET /api/students/profile` — read-only profile resolved from `Members/FullData` using the managed session.
+- `GET /api/students/profile`, `PATCH /api/students/profile` — read and edit the authenticated student's own `Members/FullData` profile using the managed session; new profile rows are created as pending.
 - `GET /api/students/lessons` — current student's protected `LessonRecords` rows.
 - `GET /api/students/bookings` — current student's Wix Bookings records filtered by verified contactId.
 - `GET /api/students/enrollment` — current member's Wix Pricing Plans orders.
