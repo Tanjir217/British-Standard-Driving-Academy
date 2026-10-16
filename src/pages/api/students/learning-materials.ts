@@ -23,7 +23,7 @@ function normalize(value: unknown): RecordValue | null {
   return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as RecordValue : record;
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
   try {
     const current = await members.getCurrentMember();
     const member = current.member as RecordValue | undefined;
