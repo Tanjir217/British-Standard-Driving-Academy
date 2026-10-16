@@ -5,7 +5,7 @@ import "../styles/portal-profile.css";
 import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
 import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../services/students/studentBookingApi";
 import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
-import { getSiteContent, type SiteContentItem } from "../services/siteContentService";
+import { listStudentLearningVideos, type StudentLearningVideo } from "../services/students/studentLearningMaterialsApi";
 import { VideoEmbed } from "../components/VideoEmbed";
 import {
   getCurrentMember,
@@ -62,7 +62,7 @@ export function Portal() {
   const [bookingsMessage, setBookingsMessage] = useState("Loading bookings…");
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
   const [enrollmentMessage, setEnrollmentMessage] = useState("Loading enrollment…");
-  const [learningVideos, setLearningVideos] = useState<SiteContentItem[]>([]);
+  const [learningVideos, setLearningVideos] = useState<StudentLearningVideo[]>([]);
   const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("Loading learning materials…");
 
   useEffect(() => {
@@ -158,10 +158,8 @@ export function Portal() {
         }
 
         try {
-          const contentMap = await getSiteContent();
+          const videos = await listStudentLearningVideos();
           if (!active) return;
-          const videos = Array.from({ length: 6 }, (_, index) => contentMap[`portal-video-${index + 1}`])
-            .filter((item): item is SiteContentItem => Boolean(item?.enabled && item.url?.trim()));
           setLearningVideos(videos);
           setLearningMaterialsMessage(videos.length ? "" : "No learning videos have been published yet.");
         } catch (contentError) {
