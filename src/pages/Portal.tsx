@@ -49,6 +49,8 @@ export function Portal() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "" });
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
@@ -59,6 +61,12 @@ export function Portal() {
   const [enrollmentMessage, setEnrollmentMessage] = useState("Loading enrollment…");
   const [learningVideos, setLearningVideos] = useState<StudentLearningVideo[]>([]);
   const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("Loading learning materials…");
+
+  useEffect(() => {
+    return () => {
+      if (profilePhotoPreview.startsWith("blob:")) URL.revokeObjectURL(profilePhotoPreview);
+    };
+  }, [profilePhotoPreview]);
 
   useEffect(() => {
     let active = true;
@@ -197,7 +205,57 @@ export function Portal() {
     setIsSavingProfile(true);
     setProfileMessage("");
     try {
-      const response = await updateStudentProfile(profileDraft);
+      let profilePhotoUrl = profileDraft.profilePhotoUrl;
+      if (profilePhotoFile) {
+        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(profilePhotoFile.type)) {
+          throw new Error("Choose a JPG, PNG, WebP, or GIF image.");
+        }
+        if (profilePhotoFile.size > 5 * 1024 * 1024) {
+          throw new Error("The profile image must be 5 MB or smaller.");
+        }
+
+        const uploadUrlResponse = await fetch("/api/students/profile-image-upload", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: profilePhotoFile.name,
+            mimeType: profilePhotoFile.type,
+            sizeInBytes: profilePhotoFile.size,
+          }),
+        });
+        const uploadUrlPayload = await uploadUrlResponse.json().catch(() => null) as {
+          ok?: boolean;
+          uploadUrl?: string;
+          message?: string;
+        } | null;
+        if (!uploadUrlResponse.ok || !uploadUrlPayload?.ok || !uploadUrlPayload.uploadUrl) {
+          throw new Error(uploadUrlPayload?.message || "We could not prepare the image upload.");
+        }
+
+        const uploadResponse = await fetch(uploadUrlPayload.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": profilePhotoFile.type },
+          body: profilePhotoFile,
+        });
+        const uploadedPayload = await uploadResponse.json().catch(() => null) as {
+          file?: { url?: string; media?: { image?: { image?: { url?: string } } } };
+        } | null;
+        if (!uploadResponse.ok) throw new Error("Wix Media could not save the selected image.");
+        const uploadedUrl = uploadedPayload?.file?.media?.image?.image?.url || uploadedPayload?.file?.url;
+        if (!uploadedUrl) throw new Error("Wix Media did not return the uploaded image URL.");
+        const parsedUploadedUrl = new URL(uploadedUrl);
+        if (parsedUploadedUrl.protocol !== "https:" || parsedUploadedUrl.hostname !== "static.wixstatic.com") {
+          throw new Error("Wix Media returned an unexpected image URL.");
+        }
+        profilePhotoUrl = uploadedUrl;
+      }
+
+      const response = await updateStudentProfile({ ...profileDraft, profilePhotoUrl });
       if (!response.profile) throw new Error("The profile service did not return the saved profile.");
       setStudentProfile(response.profile);
       setProfileDraft({
@@ -207,6 +265,8 @@ export function Portal() {
         phone: response.profile.phone || "",
         profilePhotoUrl: response.profile.profilePhotoUrl || "",
       });
+      setProfilePhotoFile(null);
+      setProfilePhotoPreview("");
       setProfileMessage("Your profile has been saved to FullData.");
       setIsEditingProfile(false);
     } catch (saveError) {
@@ -374,7 +434,6 @@ export function Portal() {
                   <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
                   <p>These details are saved to your own FullData record. Your sign-in email is managed by Wix and cannot be changed here.</p>
                 </div>
-                <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile} aria-label="Close profile editor">Close</button>
               </div>
               <form className="portal-profile-form" onSubmit={handleSaveProfile}>
                 <label>
@@ -394,14 +453,34 @@ export function Portal() {
                   <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
                 </label>
                 <label className="portal-profile-form-wide">
-                  Profile image URL
-                  <input type="text" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
-                  <small>Use a public HTTPS image URL or a Wix Media image URL. Direct file upload is not enabled in this version.</small>
+                  Profile image
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    aria-describedby="portal-profile-image-help"
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0] || null;
+                      setProfilePhotoFile(file);
+                      setProfilePhotoPreview(file ? URL.createObjectURL(file) : "");
+                      setProfileMessage("");
+                    }}
+                  />
+                  <small id="portal-profile-image-help">Choose a JPG, PNG, WebP, or GIF image up to 5 MB. The image will upload to Wix Media when you save your profile.</small>
                 </label>
-                {profileDraft.profilePhotoUrl.trim() && (
+                {(profilePhotoPreview || profileDraft.profilePhotoUrl.trim()) && (
                   <div className="portal-profile-preview portal-profile-form-wide">
-                    <img src={profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
-                    <span>Image preview</span>
+                    <img
+                      src={profilePhotoPreview || profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")}
+                      alt="Profile image preview"
+                      onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
+                    />
+                    <span>{profilePhotoFile ? profilePhotoFile.name : "Current profile image"}</span>
+                    {profilePhotoFile && (
+                      <button type="button" className="btn light" onClick={() => {
+                        setProfilePhotoFile(null);
+                        setProfilePhotoPreview("");
+                      }}>Remove selected image</button>
+                    )}
                   </div>
                 )}
                 {profileMessage && <p className="portal-profile-form-message portal-profile-form-wide" role="status">{profileMessage}</p>}
