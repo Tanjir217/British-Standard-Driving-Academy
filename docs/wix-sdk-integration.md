@@ -88,11 +88,13 @@ The current foundation keeps OAuth flow state and the temporary member token ses
 
 ## Security boundary
 
-Direct browser access is limited to Wix operations that are authorized for the current member token.
+Direct browser access is limited to Wix operations authorized for the current member session.
 
-Student Profiles and Lesson Records are Admin-only Wix CMS collections. They therefore remain behind a future protected application backend boundary rather than being read directly from React.
+Student profile data is read server-side from `Members/FullData` after validating the cookie-backed Wix Astro managed member session, with a validated Headless OAuth token fallback. Lesson Records and booking records are returned only by protected `/api/students/*` endpoints, which resolve the authenticated member's FullData contactId and apply ownership filters before returning records. The student portal never queries the protected lesson CMS directly from React.
 
-Removing the Vercel `api/admin/*` functions does not remove this CMS security requirement. It only removes an unnecessary proxy for the current admin Bookings dashboard.
+Pricing-plan enrollment uses Wix's current-member order API. Student learning videos use the existing managed `SiteContent` slots (`portal-video-1` through `portal-video-6`).
+
+Keep StudentProfiles and LessonRecords Admin-only in Wix CMS. Do not make these collections publicly readable to support the student portal. The protected endpoint queries and field IDs must be verified against the actual Wix site before production use.
 
 ## Source-of-truth rules
 
