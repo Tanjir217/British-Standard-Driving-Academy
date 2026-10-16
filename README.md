@@ -18,7 +18,8 @@ BSDA is the existing multi-page driving academy application. The `main` branch r
 - `/lessons` — Driving lessons
 - `/instructors` and `/instructors/:instructorId` — Instructor directory/details
 - `/portal` — Student portal
-- `/login` and `/auth/callback` — Legacy login flow retained during migration
+- `/login` — BSDA-branded entry point to Wix Astro's managed sign-in/registration flow
+- `/auth/callback` — legacy OAuth callback retained for compatibility; not used by the student portal
 - `/faq` — FAQ
 - `/admin` — Protected staff dashboard
 
@@ -51,7 +52,8 @@ Do not run `wix headless link` or any release command until the Wix site binding
 
 ## Student portal endpoint source files on `feat/student-portal-full-data`
 
-- `GET /api/students/profile` — read-only profile resolved from `Members/FullData`.
+- `GET /api/auth/session` — current member identity from the Wix Astro-managed session.
+- `GET /api/students/profile` — read-only profile resolved from `Members/FullData` using the managed session.
 - `GET /api/students/lessons` — current student's protected `LessonRecords` rows.
 - `GET /api/students/bookings` — current student's Wix Bookings records filtered by verified contactId.
 - `GET /api/students/enrollment` — current member's Wix Pricing Plans orders.
