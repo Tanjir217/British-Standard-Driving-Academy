@@ -18,6 +18,7 @@ export function Contact() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setError("");
     setSent(false);
     setSubmitting(true);
@@ -30,7 +31,7 @@ export function Contact() {
 
     try {
       await submitContactEnquiry({ name, email, phone: phone || undefined, message });
-      event.currentTarget.reset();
+      formElement.reset();
       setSent(true);
     } catch {
       setError(
