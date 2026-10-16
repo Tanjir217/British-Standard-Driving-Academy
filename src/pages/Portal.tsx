@@ -271,7 +271,7 @@ export function Portal() {
           </div>
 
           <div className="dash">
-            <Icon n="package" s={24} />
+            <Icon n="wallet" s={24} />
             <h3>Packages & enrollment</h3>
             {enrollmentMessage ? <p>{enrollmentMessage}</p> : (
               <ul className="portal-lesson-list">
