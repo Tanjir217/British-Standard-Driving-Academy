@@ -38,7 +38,7 @@ export const studentService: StudentService = {
           lessonsCompleted: profile.lessonsCompleted ?? 0,
           lessonsRemaining: profile.lessonsRemaining ?? 0,
           progressPercent: profile.progressPercent ?? 0,
-          status: profile.status,
+          status: profile.status === "inactive" || profile.status === "paused" || profile.status === "completed" ? profile.status : "active",
         },
       };
     } catch (error) {
