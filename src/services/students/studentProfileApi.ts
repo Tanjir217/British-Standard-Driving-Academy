@@ -18,12 +18,12 @@ export interface StudentProfileApiRecord {
   lastLoginDate?: string | null;
   createdDate?: string | null;
   updatedDate?: string | null;
-  transmission: "manual" | "automatic" | "either";
+  transmission?: "manual" | "automatic" | "either";
   assignedInstructorId?: string;
   enrolledPackageId?: string;
-  lessonsCompleted: number;
-  lessonsRemaining: number;
-  progressPercent: number;
+  lessonsCompleted: number | null;
+  lessonsRemaining: number | null;
+  progressPercent: number | null;
   status: "active" | "paused" | "completed" | "inactive";
 }
 
