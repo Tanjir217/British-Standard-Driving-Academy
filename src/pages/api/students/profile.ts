@@ -57,7 +57,7 @@ async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
   const response = await members.getCurrentMember();
   const current = response.member as Record<string, any> | undefined;
   const currentId = current?._id ?? current?.id;
-  if (typeof currentId !== "string" || !currentId) return null;
+  if (!current || typeof currentId !== "string" || !currentId) return null;
   const contact = current.contact && typeof current.contact === "object" ? current.contact : null;
   return {
     ...current,
