@@ -182,7 +182,7 @@ function validateEditableProfile(value: unknown): EditableProfile | null {
 
   if (!firstName || firstName.length > 80 || !lastName || lastName.length > 80) return null;
   if (nickname.length > 80 || phone.length > 40 || /[<>]/.test(firstName + lastName + nickname)) return null;
-  if (phone && !/^[+()0-9.\\s-]{5,40}$/.test(phone)) return null;
+  if (phone && !/^[+()0-9.\s-]{5,40}$/.test(phone)) return null;
   if (profilePhotoUrl) {
     if (profilePhotoUrl.length > 2048) return null;
     const isWixImage = /^wix:image:\/\/v1\/[a-zA-Z0-9_.~%/-]+$/i.test(profilePhotoUrl);
