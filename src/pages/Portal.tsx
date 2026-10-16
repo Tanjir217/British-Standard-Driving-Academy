@@ -207,6 +207,7 @@ export function Portal() {
 
   const firstName = studentProfile?.fullName?.trim().split(/\s+/)[0] || member?.contact?.firstName?.trim();
   const displayName = firstName || "learner";
+  const assignedInstructorName = bookings.find((booking) => booking.instructorName.trim())?.instructorName || "";
 
   return (
     <section className="page portal">
@@ -328,6 +329,7 @@ export function Portal() {
               )}
               <h2>{studentProfile.fullName || "Student profile"}</h2>
               <p>{studentProfile.phone || "No phone number saved"}</p>
+              <p>{assignedInstructorName ? `Instructor: ${assignedInstructorName}` : "Instructor assignment is not available in booking records yet."}</p>
               {studentProfile.transmission && (
                 <p>{studentProfile.transmission === "either"
                   ? "Manual or automatic"
