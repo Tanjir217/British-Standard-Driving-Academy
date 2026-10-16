@@ -23,11 +23,33 @@ function normalize(value: unknown): RecordValue | null {
   return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as RecordValue : record;
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
   try {
-    const current = await members.getCurrentMember();
-    const member = current.member as RecordValue | undefined;
-    if (!member || typeof (member._id ?? member.id) !== "string") {
+    let memberId = "";
+    try {
+      const current = await members.getCurrentMember();
+      const member = current.member as RecordValue | undefined;
+      memberId = String(member?._id ?? member?.id ?? "");
+    } catch {
+      // Fall back to the legacy Headless OAuth token.
+    }
+    if (!memberId) {
+      const token = request.headers.get("authorization")?.match(/^Bearer\\s+(.+)$/i)?.[1]?.trim();
+      if (token) {
+        const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          cache: "no-store",
+        });
+        if (response.status === 401 || response.status === 403) {
+          return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view student learning materials." }, 401);
+        }
+        if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
+        const payload = await response.json() as RecordValue;
+        const member = (payload.member ?? payload) as RecordValue;
+        memberId = String(member._id ?? member.id ?? "");
+      }
+    }
+    if (!memberId) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view student learning materials." }, 401);
     }
 
