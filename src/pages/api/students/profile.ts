@@ -181,7 +181,7 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
   return null;
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
   try {
     const member = await getAuthenticatedMember();
     if (!member) {
