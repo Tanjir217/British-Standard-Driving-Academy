@@ -185,7 +185,7 @@ function validateEditableProfile(value: unknown): EditableProfile | null {
   if (phone && !/^[+()0-9.\s-]{5,40}$/.test(phone)) return null;
   if (profilePhotoUrl) {
     if (profilePhotoUrl.length > 2048) return null;
-    const isWixImage = /^wix:image:\/\/v1\/[a-zA-Z0-9_.~%/-]+$/i.test(profilePhotoUrl);
+    const isWixImage = /^wix:image:\/\/v1\/[a-zA-Z0-9_.~%/#?=&-]+$/i.test(profilePhotoUrl);
     let isHttps = false;
     try {
       const url = new URL(profilePhotoUrl);
