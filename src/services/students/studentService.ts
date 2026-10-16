@@ -32,7 +32,7 @@ export const studentService: StudentService = {
           email: profile.email,
           phone: profile.phone || undefined,
           profilePhotoUrl: profile.profilePhotoUrl || undefined,
-          transmission: profile.transmission,
+          transmission: profile.transmission ?? "either",
           assignedInstructorId: profile.assignedInstructorId,
           enrolledPackageId: profile.enrolledPackageId,
           lessonsCompleted: profile.lessonsCompleted,
