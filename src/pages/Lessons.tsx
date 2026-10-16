@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "../components/Heading";
-import { LessonCard } from "../components/LessonCard";
+// Legacy mock-card component retained for reference while testing the CMS-driven implementation.
+// import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
-import { Reveal } from "../components/Reveal";
+// import { Reveal } from "../components/Reveal";
 // Legacy static lesson data retained for reference; the CMS-driven lesson path is being tested instead.
 // import { lessons } from "../data/site";
 import "../package-page-grid.css";
