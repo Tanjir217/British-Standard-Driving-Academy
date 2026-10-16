@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
+import { members } from "@wix/members";
 
 const COLLECTION_ID =
   import.meta.env.BSDA_STUDENT_PROFILES_COLLECTION_ID || "StudentProfiles";
@@ -79,22 +80,35 @@ type AuthenticatedMember = {
 };
 
 async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMember | null> {
-  // Validate the Headless OAuth access token issued by Wix. FullData is used
-  // only after this succeeds; a CMS row alone is never proof of a live session.
+  // Prefer the cookie-backed Wix Astro managed session. This is the primary
+  // login flow used by the portal; the browser OAuth token is a migration fallback.
+  try {
+    const managed = await members.getCurrentMember();
+    const current = managed.member as Record<string, any> | undefined;
+    const currentId = current?._id ?? current?.id;
+    if (typeof currentId === "string" && currentId) {
+      const contact = current.contact && typeof current.contact === "object" ? current.contact : null;
+      return {
+        ...current,
+        _id: currentId,
+        loginEmail: current.loginEmail ?? current.email ?? contact?.email ?? null,
+        contactId: current.contactId ?? contact?.contactId ?? null,
+      } as AuthenticatedMember;
+    }
+  } catch {
+    // Continue to the explicit Headless OAuth token fallback below.
+  }
+
   const authorization = request.headers.get("authorization") || "";
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const match = authorization.match(/^Bearer\\s+(.+)$/i);
   const accessToken = match?.[1]?.trim();
   if (!accessToken) return null;
 
   const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/json",
-    },
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
     cache: "no-store",
   });
-
   if (response.status === 401 || response.status === 403) return null;
   if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
 
@@ -103,7 +117,6 @@ async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMe
   const id = member._id ?? member.id;
   if (typeof id !== "string" || !id) return null;
   const contact = member.contact && typeof member.contact === "object" ? member.contact : null;
-
   return {
     ...member,
     _id: id,
