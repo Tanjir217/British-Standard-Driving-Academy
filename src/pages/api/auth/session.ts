@@ -34,7 +34,7 @@ export const GET: APIRoute = async () => {
     const member = response.member as Record<string, any> | undefined;
     const memberId = member?._id ?? member?.id;
 
-    if (typeof memberId !== "string" || !memberId) {
+    if (!member || typeof memberId !== "string" || !memberId) {
       return json({ ok: true, authenticated: false, member: null });
     }
 
