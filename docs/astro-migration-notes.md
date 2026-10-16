@@ -19,12 +19,13 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Student profile endpoint contract
 
-- `GET /api/students/profile`: read-only profile from `Members/FullData`; contactId is matched first, with email fallback only if Wix did not return contactId.
+- `GET /api/students/profile`: reads the authenticated member's FullData profile; contactId is matched first, with email fallback only if Wix did not return contactId.
+- `PATCH /api/students/profile`: updates the authenticated member's allowed personal fields in FullData or creates a pending row when no profile exists.
 - `GET /api/students/lessons`: returns lesson rows from `LessonRecords` filtered by the authenticated student's FullData contactId.
 - `GET /api/students/bookings`: queries Wix Bookings by `contactDetails.contactId` and rechecks ownership before returning results.
 - `GET /api/students/enrollment`: reads only the current member's Pricing Plans orders.
 - `GET /api/students/learning-materials`: returns enabled student-video slots from `SiteContent`.
-- The profile endpoint is read-only; it no longer provisions or updates the competing `StudentProfiles` collection.
+- Profile writes target the same `Members/FullData` collection read by the profile endpoint. Only first name, last name, nickname, phone, and profile image URL are editable; contactId, loginEmail, status, and booking eligibility are server-controlled.
 - Protected CMS access stays server-side and is never authorized by a browser-supplied contactId.
 - Student login/registration use Wix Astro's built-in `/api/auth/login` and `/api/auth/logout` routes; do not use custom Headless `auth.login()` / `auth.register()` in the student portal.
 - `GET /api/auth/session` exposes only the current member identity from the managed session. Student API clients use same-origin cookies and never attach browser-held member bearer tokens.
@@ -46,7 +47,7 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Implemented endpoint source files on this branch
 
-- `GET /api/students/profile`: read-only profile resolved from FullData.
+- `GET /api/students/profile`, `PATCH /api/students/profile`: read and edit the current student's FullData profile.
 - `GET /api/students/lessons`, `/api/students/bookings`, `/api/students/enrollment`, and `/api/students/learning-materials`: authenticated student-specific data endpoints.
 - `GET /api/admin/authorization`: fail-closed authorization against the protected `AdminStaffAccess` collection (`memberId`, `enabled` fields currently assumed from earlier repository work).
 - `GET /api/admin/students`: protected StudentProfiles listing.
@@ -105,3 +106,10 @@ The user's screenshot showed the OAuth authorize endpoint returning `Invalid red
 
 The React callback route is `/auth/callback`, and the local dev server in the current test is `http://localhost:4321`. After saving the allowed URI, retry account creation/sign-in and confirm that the browser returns to `/auth/callback` and the callback completes. The production URI is listed for later production verification; adding it does not mean the Astro backend has been deployed or that production login is currently working.
 
+
+
+## Student profile self-service (2026-10-16)
+- Portal profile editing writes only to `Members/FullData` through the protected PATCH endpoint.
+- New records are marked pending so completing personal information cannot grant booking approval.
+- The profile photo field accepts a public HTTPS URL or Wix Media URI; local file upload is not implemented.
+- FullData elevated insert/update behavior and the actual `profilePhoto` CMS field type still require a live Wix integration test. No successful CMS write is claimed until that test passes.
