@@ -17,15 +17,12 @@ type BookingResponse = { ok?: boolean; bookings?: StudentBookingRecord[]; code?:
 
 export async function listBookingsForCurrentStudent(): Promise<ServiceResult<StudentBookingRecord[]>> {
   const token = getWixTokens()?.accessToken?.value;
-  if (!token) {
-    return { ok: false, error: { code: "UNAUTHORIZED", message: "Your Wix session has expired. Sign in again to view bookings." } };
-  }
   try {
     const response = await fetch("/api/students/bookings", {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     });
     const payload = await response.json().catch(() => null) as BookingResponse | null;
     if (!response.ok || !payload?.ok || !Array.isArray(payload.bookings)) {
