@@ -401,11 +401,13 @@ export function Booking() {
                 <h3>Checkout with Wix</h3>
                 <p>Wix will handle the package checkout. This return page will not assume payment succeeded; the purchase must be confirmed by Wix before package benefits are considered active.</p>
               </div>
-              <button type="button" className="btn red full" disabled={busy} onClick={() => void startPackageCheckout()}>
-                {busy ? "Preparing secure checkout..." : "Purchase package securely"} <Icon n="arrow" />
-              </button>
               {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
-              <button type="button" className="btn light full" onClick={() => navigate("/packages")}>Choose a different package</button>
+              <div className="package-checkout-actions">
+                <button type="button" className="btn red full" disabled={busy} onClick={() => void startPackageCheckout()}>
+                  {busy ? "Preparing secure checkout..." : "Purchase package securely"} <Icon n="arrow" />
+                </button>
+                <button type="button" className="btn light full" onClick={() => navigate("/packages")}>Choose a different package</button>
+              </div>
             </div>
             <aside className="aside">
               <Icon n="calendar" s={27} />
