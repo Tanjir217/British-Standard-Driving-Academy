@@ -347,17 +347,19 @@ function PortalCard({
   icon,
   title,
   text,
+  status = "Data unavailable",
 }: {
   icon: string;
   title: string;
   text: string;
+  status?: string;
 }) {
   return (
     <div className="dash">
       <Icon n={icon} s={24} />
       <h3>{title}</h3>
       <p>{text}</p>
-      <span className="portalstatus">Coming with your learner profile</span>
+      <span className="portalstatus">{status}</span>
     </div>
   );
 }
