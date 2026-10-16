@@ -10,7 +10,6 @@ import { VideoEmbed } from "../components/VideoEmbed";
 import {
   getCurrentMember,
   signOutMember,
-  beginManagedMemberLogin,
 } from "../services/auth/authService";
 import {
   getStudentProfile,
@@ -30,30 +29,11 @@ type MemberSummary = {
   };
 };
 
-type PendingIdentity = { email?: string; firstName?: string; lastName?: string; phone?: string };
-
-function readPendingIdentity(): PendingIdentity {
-  try {
-    const raw = sessionStorage.getItem("bsda.pending.member.identity");
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as PendingIdentity;
-    return {
-      email: typeof parsed.email === "string" ? parsed.email : "",
-      firstName: typeof parsed.firstName === "string" ? parsed.firstName : "",
-      lastName: typeof parsed.lastName === "string" ? parsed.lastName : "",
-      phone: typeof parsed.phone === "string" ? parsed.phone : "",
-    };
-  } catch {
-    return {};
-  }
-}
-
 export function Portal() {
   const navigate = useNavigate();
   const [member, setMember] = useState<MemberSummary | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
-  const [managedLoginRequired, setManagedLoginRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
@@ -78,7 +58,6 @@ export function Portal() {
           return;
         }
 
-        const pendingIdentity = readPendingIdentity();
         const memberRecord = currentMember as typeof currentMember & {
           email?: string | null;
           profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
@@ -86,15 +65,13 @@ export function Portal() {
           contactId?: string | null;
         };
         const summary: MemberSummary = {
-          loginEmail: currentMember.loginEmail || memberRecord.email || pendingIdentity.email || null,
-          email: memberRecord.email || pendingIdentity.email || null,
-          profile: memberRecord.profile,
+          loginEmail: currentMember.loginEmail || memberRecord.email || null,
+          email: memberRecord.email || null,
+          profile: memberRecord.profile ?? undefined,
           contact: {
-            firstName: currentMember.contact?.firstName || pendingIdentity.firstName || undefined,
-            lastName: currentMember.contact?.lastName || pendingIdentity.lastName || undefined,
-            phones: currentMember.contact?.phones?.length
-              ? currentMember.contact.phones
-              : pendingIdentity.phone ? [pendingIdentity.phone] : undefined,
+            firstName: currentMember.contact?.firstName || undefined,
+            lastName: currentMember.contact?.lastName || undefined,
+            phones: currentMember.contact?.phones?.length ? currentMember.contact.phones : undefined,
             contactId: memberRecord.contact?.contactId ?? memberRecord.contactId ?? null,
           },
         };
@@ -119,8 +96,8 @@ export function Portal() {
         } catch (profileError) {
           if (!active) return;
           if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
-            setManagedLoginRequired(true);
-            setProfileMessage("Your current sign-in is not connected to the Wix-managed session required for secure profile access. Continue with Wix secure sign-in to finish connecting your portal.");
+            setError("Your Wix sign-in session could not be verified by the student profile service. Please sign in again.");
+            return;
           } else {
             // Keep the portal useful while CMS collections/permissions are
             // being repaired. The authenticated Wix member remains the source
@@ -352,11 +329,6 @@ export function Portal() {
               <p>{profileMessage}</p>
             </div>
             <div className="dashboardpanelactions">
-              {managedLoginRequired && (
-                <button className="btn light" onClick={() => beginManagedMemberLogin("/portal")}>
-                  Continue with Wix secure sign-in
-                </button>
-              )}
               <button className="btn red" onClick={() => navigate("/booking")}>
                 Book a lesson <Icon n="arrow" />
               </button>
