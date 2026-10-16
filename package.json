@@ -14,6 +14,7 @@
     "preview:astro": "astro preview"
   },
   "dependencies": {
+    "@wix/media": "^1.0.278",
     "@wix/bookings": "^1.0.1699",
     "@wix/data": "^1.0.526",
     "@wix/members": "^1.0.525",
