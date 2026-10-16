@@ -144,3 +144,124 @@
     font-size: 23px;
   }
 }
+
+
+/* Skeleton state shown while the selected lesson path's package data is loading. */
+.lesson-plan-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.lesson-plan-skeleton {
+  min-width: 0;
+  min-height: 360px;
+  padding: 25px;
+  overflow: hidden;
+  border: 1px solid var(--line, #e4e0d8);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.lesson-skeleton-line,
+.lesson-skeleton-button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #eeeae5;
+}
+
+.lesson-skeleton-line::after,
+.lesson-skeleton-button::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+  animation: lesson-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.lesson-skeleton-eyebrow {
+  width: 34%;
+  height: 10px;
+  margin-bottom: 20px;
+}
+
+.lesson-skeleton-title {
+  width: 78%;
+  height: 25px;
+  margin-bottom: 18px;
+}
+
+.lesson-skeleton-description {
+  width: 100%;
+  height: 10px;
+  margin-bottom: 9px;
+}
+
+.lesson-skeleton-description--short {
+  width: 68%;
+}
+
+.lesson-skeleton-price {
+  width: 48%;
+  height: 30px;
+  margin: 25px 0 18px;
+}
+
+.lesson-skeleton-divider {
+  height: 1px;
+  margin-bottom: 17px;
+  background: var(--line, #e4e0d8);
+}
+
+.lesson-skeleton-feature {
+  width: 88%;
+  height: 10px;
+  margin-bottom: 14px;
+}
+
+.lesson-skeleton-feature--short {
+  width: 58%;
+}
+
+.lesson-skeleton-button {
+  height: 43px;
+  margin-top: 25px;
+  background: #f0d9da;
+}
+
+.lesson-skeleton-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes lesson-skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@media (max-width: 980px) {
+  .lesson-plan-skeleton-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .lesson-plan-skeleton-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-skeleton-line::after,
+  .lesson-skeleton-button::after {
+    animation: none;
+  }
+}
