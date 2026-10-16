@@ -1,6 +1,17 @@
 import type { APIRoute } from "astro";
 import { members } from "@wix/members";
 
+function isUnauthenticatedError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { status?: unknown; statusCode?: unknown; code?: unknown };
+  const status = Number(candidate.status ?? candidate.statusCode);
+  if (status === 401) return true;
+  const code = typeof candidate.code === "string" ? candidate.code.toUpperCase() : "";
+  return code.includes("UNAUTHENTICATED") ||
+    code.includes("NOT_AUTHENTICATED") ||
+    code.includes("MEMBER_NOT_LOGGED_IN");
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -60,6 +71,9 @@ export const GET: APIRoute = async () => {
       },
     });
   } catch (error) {
+    if (isUnauthenticatedError(error)) {
+      return json({ ok: true, authenticated: false, member: null });
+    }
     console.error(
       "[BSDA auth session] Wix-managed session lookup failed:",
       error instanceof Error ? error.message : "Unknown error",
