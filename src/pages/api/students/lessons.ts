@@ -105,6 +105,7 @@ function toLesson(record: WixRecord) {
   };
   const numberValue = (...keys: string[]) => {
     const item = value(...keys);
+    if (item === null || item === undefined || item === "") return null;
     const parsed = typeof item === "number" ? item : Number(item);
     return Number.isFinite(parsed) ? parsed : null;
   };
