@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { extendedBookings } from "@wix/bookings";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
+import { members } from "@wix/members";
 
 type RecordValue = Record<string, unknown>;
 const FULL_DATA_COLLECTION_ID = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
@@ -32,8 +33,22 @@ function records(value: unknown): RecordValue[] {
 }
 
 async function getMember(request: Request): Promise<{ memberId: string; contactId: string; email: string } | null> {
-  const authorization = request.headers.get("authorization") || "";
-  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  try {
+    const managed = await members.getCurrentMember();
+    const member = managed.member as Record<string, any> | undefined;
+    const memberId = member?._id ?? member?.id;
+    if (typeof memberId === "string" && memberId) {
+      const contact = member.contact && typeof member.contact === "object" ? member.contact : {};
+      return {
+        memberId,
+        contactId: String(member.contactId ?? contact.contactId ?? "").trim(),
+        email: String(member.loginEmail ?? member.email ?? contact.email ?? "").trim().toLowerCase(),
+      };
+    }
+  } catch {
+    // Use the explicit Headless token fallback for legacy browser sessions.
+  }
+  const token = request.headers.get("authorization")?.match(/^Bearer\\s+(.+)$/i)?.[1]?.trim();
   if (!token) return null;
   const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
@@ -41,11 +56,11 @@ async function getMember(request: Request): Promise<{ memberId: string; contactI
   });
   if (response.status === 401 || response.status === 403) return null;
   if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
-  const payload = await response.json() as RecordValue;
-  const member = asRecord(payload.member ?? payload) ?? {};
-  const contact = asRecord(member.contact) ?? {};
-  const memberId = String(member._id ?? member.id ?? "").trim();
-  if (!memberId) return null;
+  const payload = await response.json() as Record<string, any>;
+  const member = (payload.member ?? payload) as Record<string, any>;
+  const contact = member.contact && typeof member.contact === "object" ? member.contact : {};
+  const memberId = member._id ?? member.id;
+  if (typeof memberId !== "string" || !memberId) return null;
   return {
     memberId,
     contactId: String(member.contactId ?? contact.contactId ?? "").trim(),
