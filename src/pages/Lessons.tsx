@@ -5,6 +5,7 @@ import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
 import { Reveal } from "../components/Reveal";
 import { lessons } from "../data/site";
+import "../package-page-grid.css";
 import { packageService } from "../services/packages/packageService";
 import type { Package } from "../services/domain/types";
 
