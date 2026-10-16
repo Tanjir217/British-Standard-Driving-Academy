@@ -299,8 +299,9 @@ export function Booking() {
   if (accountLoading) {
     return (
       <section className="page">
-        <div className="container authloading booking-account-verification-loading">
-          <img src="/b7c.gif" alt="Checking your BSDA account" />
+        <div className="container authloading booking-account-verification-loading" role="status" aria-label="Checking your BSDA account">
+          <span className="booking-account-verification-spinner" aria-hidden="true" />
+          <span className="sr-only">Checking your BSDA account...</span>
         </div>
       </section>
     );
