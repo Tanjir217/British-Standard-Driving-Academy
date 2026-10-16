@@ -9656,3 +9656,50 @@ refactor/codebase-cleanup
     border-radius: 17px;
   }
 }
+
+/* Homepage promotional banners are rendered only when Wix returns an image. */
+.promotionalBanners {
+  padding-top: clamp(18px, 3vw, 34px);
+  padding-bottom: clamp(24px, 4vw, 44px);
+}
+
+.promotionalBannersGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.promotionalBanner {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.promotionalBanner a {
+  display: block;
+  line-height: 0;
+}
+
+.promotionalBanner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+@media (max-width: 600px) {
+  .promotionalBanners {
+    padding-top: 16px;
+    padding-bottom: 24px;
+  }
+
+  .promotionalBannersGrid {
+    gap: 12px;
+  }
+
+  .promotionalBanner {
+    border-radius: 12px;
+  }
+}
