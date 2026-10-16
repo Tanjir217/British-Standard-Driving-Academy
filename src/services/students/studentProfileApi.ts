@@ -23,6 +23,7 @@ export interface StudentProfileApiRecord {
   lessonsRemaining: number | null;
   progressPercent: number | null;
   status?: string;
+  bookingEligible?: boolean;
 }
 
 type ProfileResponse = {
@@ -83,3 +84,20 @@ export async function getStudentProfile(): Promise<ProfileResponse> {
   return readResponse(response);
 }
 
+
+export type StudentProfileUpdate = {
+  firstName: string;
+  lastName: string;
+  nickname: string;
+  phone: string;
+  profilePhotoUrl: string;
+};
+
+export async function updateStudentProfile(input: StudentProfileUpdate): Promise<ProfileResponse> {
+  const response = await fetchAuthenticatedProfile({
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return readResponse(response);
+}
