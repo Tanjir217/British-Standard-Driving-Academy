@@ -154,9 +154,13 @@ export function Lessons() {
         } else {
           setPlanWarning("");
         }
+        setRecommendationsLoading(false);
       })
       .catch(() => {
-        if (active) setPlanWarning("Wix Pricing Plans could not be loaded. Please try again.");
+        if (active) {
+          setPlanWarning("Wix Pricing Plans could not be loaded. Please try again.");
+          setRecommendationsLoading(false);
+        }
       });
 
     return () => { active = false; };
@@ -181,10 +185,28 @@ export function Lessons() {
               title={recommendedPlans.length ? "Recommended for your next step." : "Finding the right lesson path."}
               text="Recommendations are matched to your selected learner category and transmission using your Wix CMS configuration."
             />
-            {cmsLoading && <p role="status">Loading lesson paths from Wix…</p>}
-            {!cmsLoading && cmsError && <p role="alert">{cmsError}</p>}
-            {!cmsLoading && !cmsError && planWarning && <p role="status">{planWarning}</p>}
-            {!cmsLoading && !cmsError && recommendedPlans.length > 0 && (
+            {cmsError && <p role="alert">{cmsError}</p>}
+            {!cmsError && recommendationsLoading && (
+              <div className="lesson-plan-skeleton-grid" role="status" aria-label="Loading recommended lesson packages">
+                {[0, 1, 2].map((item) => (
+                  <div className="lesson-plan-skeleton" key={item} aria-hidden="true">
+                    <div className="lesson-skeleton-line lesson-skeleton-eyebrow" />
+                    <div className="lesson-skeleton-line lesson-skeleton-title" />
+                    <div className="lesson-skeleton-line lesson-skeleton-description" />
+                    <div className="lesson-skeleton-line lesson-skeleton-description lesson-skeleton-description--short" />
+                    <div className="lesson-skeleton-line lesson-skeleton-price" />
+                    <div className="lesson-skeleton-divider" />
+                    <div className="lesson-skeleton-line lesson-skeleton-feature" />
+                    <div className="lesson-skeleton-line lesson-skeleton-feature" />
+                    <div className="lesson-skeleton-line lesson-skeleton-feature lesson-skeleton-feature--short" />
+                    <div className="lesson-skeleton-button" />
+                  </div>
+                ))}
+                <span className="lesson-skeleton-sr">Loading lesson recommendations…</span>
+              </div>
+            )}
+            {!cmsError && !recommendationsLoading && planWarning && <p role="status">{planWarning}</p>}
+            {!cmsError && !recommendationsLoading && recommendedPlans.length > 0 && (
               <div className="cards pagecards">
                 {recommendedPlans.map(({ mapping, plan }) => (
                   <article className="lesson-plan-card" key={mapping.id}>
