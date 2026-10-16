@@ -7,10 +7,7 @@ import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../ser
 import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
 import { listStudentLearningVideos, type StudentLearningVideo } from "../services/students/studentLearningMaterialsApi";
 import { VideoEmbed } from "../components/VideoEmbed";
-import {
-  getCurrentMember,
-  signOutMember,
-} from "../services/auth/authService";
+import { signOutMember } from "../services/auth/authService";
 import {
   getStudentProfile,
   type StudentProfileApiRecord,
@@ -29,21 +26,8 @@ function profileImagePreviewUrl(value: string, fallback = ""): string {
   return fallback;
 }
 
-type MemberSummary = {
-  loginEmail?: string | null;
-  email?: string | null;
-  profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
-  contact?: {
-    firstName?: string;
-    lastName?: string;
-    phones?: string[];
-    contactId?: string | null;
-  };
-};
-
 export function Portal() {
   const navigate = useNavigate();
-  const [member, setMember] = useState<MemberSummary | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -54,13 +38,16 @@ export function Portal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
-  const [lessonsMessage, setLessonsMessage] = useState("Loading lesson records…");
+  const [lessonsMessage, setLessonsMessage] = useState("");
   const [bookings, setBookings] = useState<StudentBookingRecord[]>([]);
-  const [bookingsMessage, setBookingsMessage] = useState("Loading bookings…");
+  const [bookingsMessage, setBookingsMessage] = useState("");
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
-  const [enrollmentMessage, setEnrollmentMessage] = useState("Loading enrollment…");
+  const [enrollmentMessage, setEnrollmentMessage] = useState("");
   const [learningVideos, setLearningVideos] = useState<StudentLearningVideo[]>([]);
-  const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("Loading learning materials…");
+  const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("");
+  const [activeSection, setActiveSection] = useState<"profile" | "bookings" | "progress" | "enrollment" | "materials">("profile");
+  const [sectionLoading, setSectionLoading] = useState(false);
+  const [loadedSections, setLoadedSections] = useState<string[]>([]);
 
   useEffect(() => {
     return () => {
@@ -68,136 +55,92 @@ export function Portal() {
     };
   }, [profilePhotoPreview]);
 
+  // Initial portal entry performs one data request: the protected profile endpoint.
+  // That endpoint also verifies the Wix member session and returns 401 when signed out.
   useEffect(() => {
     let active = true;
-
-    async function loadPortal() {
+    async function loadProfile() {
       try {
-        const currentMember = await getCurrentMember();
+        const response = await getStudentProfile();
         if (!active) return;
-
-        if (!currentMember) {
+        if (response.profile) {
+          setStudentProfile(response.profile);
+          setProfileDraft({
+            firstName: response.profile.firstName || "",
+            lastName: response.profile.lastName || "",
+            nickname: response.profile.nickname || "",
+            phone: response.profile.phone || "",
+            profilePhotoUrl: response.profile.profilePhotoUrl || "",
+          });
+          setProfileMessage("Your profile is saved in FullData.");
+        } else {
+          setProfileMessage("Complete your profile to create your student record in FullData.");
+        }
+      } catch (profileError) {
+        if (!active) return;
+        if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
           navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
           return;
         }
-
-        const memberRecord = currentMember as typeof currentMember & {
-          email?: string | null;
-          profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
-          contact?: (typeof currentMember.contact & { contactId?: string | null }) | null;
-          contactId?: string | null;
-        };
-        const summary: MemberSummary = {
-          loginEmail: currentMember.loginEmail || memberRecord.email || null,
-          email: memberRecord.email || null,
-          profile: memberRecord.profile ?? undefined,
-          contact: {
-            firstName: currentMember.contact?.firstName || undefined,
-            lastName: currentMember.contact?.lastName || undefined,
-            phones: currentMember.contact?.phones?.length ? currentMember.contact.phones : undefined,
-            contactId: memberRecord.contact?.contactId ?? memberRecord.contactId ?? null,
-          },
-        };
-        setMember(summary);
-        setProfileDraft({
-          firstName: currentMember.contact?.firstName || "",
-          lastName: currentMember.contact?.lastName || "",
-          nickname: currentMember.profile?.nickname || "",
-          phone: currentMember.contact?.phones?.[0] || "",
-          profilePhotoUrl: currentMember.profile?.photo?.url || "",
-        });
-
-        // Profile data comes only from the protected server endpoint. If no
-        // profile exists, provision it from the authenticated member's contact
-        // details; the endpoint derives the actual member ID from the session.
-        try {
-          // The profile endpoint reads the authenticated member's matching
-          // record from Wix CMS FullData. Do not create or mutate records in
-          // this member-data collection from the student portal.
-          const response = await getStudentProfile();
-
-          if (!active) return;
-          if (response.profile) {
-            setStudentProfile(response.profile);
-            setProfileDraft({
-              firstName: response.profile.firstName || "",
-              lastName: response.profile.lastName || "",
-              nickname: response.profile.nickname || "",
-              phone: response.profile.phone || "",
-              profilePhotoUrl: response.profile.profilePhotoUrl || "",
-            });
-            setProfileMessage("Your profile is saved in FullData.");
-          } else {
-            setProfileMessage("Complete your profile to create your student record in FullData.");
-            setIsEditingProfile(true);
-          }
-        } catch (profileError) {
-          if (!active) return;
-          if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
-            setError("Your Wix sign-in session could not be verified by the student profile service. Please sign in again.");
-            return;
-          } else {
-            // Keep the portal useful while CMS collections/permissions are
-            // being repaired. The authenticated Wix member remains the source
-            // for basic identity fields; academy-specific data stays pending.
-            setProfileMessage(
-              "Your Wix member details are available. Academy profile data is temporarily unavailable and will appear when the student records service is restored.",
-            );
-          }
-        }
-        const lessonResult = await lessonService.listForCurrentStudent();
-        if (!active) return;
-        if (lessonResult.ok) {
-          setLessons(lessonResult.data);
-          setLessonsMessage(lessonResult.data.length ? "" : "No lesson records are available yet.");
-        } else {
-          setLessonsMessage(lessonResult.error.message);
-        }
-
-        const bookingResult = await listBookingsForCurrentStudent();
-        if (!active) return;
-        if (bookingResult.ok) {
-          setBookings(bookingResult.data);
-          setBookingsMessage(bookingResult.data.length ? "" : "No bookings are associated with this account yet.");
-        } else {
-          setBookingsMessage(bookingResult.error.message);
-        }
-
-        const enrollmentResult = await listEnrollmentsForCurrentStudent();
-        if (!active) return;
-        if (enrollmentResult.ok) {
-          setEnrollments(enrollmentResult.data);
-          setEnrollmentMessage(enrollmentResult.data.length ? "" : "No Wix Pricing Plans orders were found for this account.");
-        } else {
-          setEnrollmentMessage(enrollmentResult.error.message);
-        }
-
-        try {
-          const videos = await listStudentLearningVideos();
-          if (!active) return;
-          setLearningVideos(videos);
-          setLearningMaterialsMessage(videos.length ? "" : "No learning videos have been published yet.");
-        } catch (contentError) {
-          if (!active) return;
-          setLearningMaterialsMessage(contentError instanceof Error ? contentError.message : "Learning materials could not be loaded.");
-        }
-      } catch (err) {
-        if (!active) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "We couldn't load your account.",
-        );
+        setError(profileError instanceof Error ? profileError.message : "We couldn't load your profile.");
       } finally {
         if (active) setLoading(false);
       }
     }
-
-    void loadPortal();
-    return () => {
-      active = false;
-    };
+    void loadProfile();
+    return () => { active = false; };
   }, [navigate]);
+
+  // Each dashboard section requests its own data only when opened. Successfully
+  // loaded sections are cached in component state to avoid repeat requests on tab changes.
+  useEffect(() => {
+    if (activeSection === "profile" || loadedSections.includes(activeSection)) return;
+    let active = true;
+    setSectionLoading(true);
+
+    async function loadSection() {
+      try {
+        if (activeSection === "bookings") {
+          const result = await listBookingsForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setBookings(result.data);
+            setBookingsMessage(result.data.length ? "" : "No bookings are associated with this account yet.");
+          } else setBookingsMessage(result.error.message);
+        } else if (activeSection === "progress") {
+          const result = await lessonService.listForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setLessons(result.data);
+            setLessonsMessage(result.data.length ? "" : "No lesson records are available yet.");
+          } else setLessonsMessage(result.error.message);
+        } else if (activeSection === "enrollment") {
+          const result = await listEnrollmentsForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setEnrollments(result.data);
+            setEnrollmentMessage(result.data.length ? "" : "No Wix Pricing Plans orders were found for this account.");
+          } else setEnrollmentMessage(result.error.message);
+        } else if (activeSection === "materials") {
+          try {
+            const videos = await listStudentLearningVideos();
+            if (!active) return;
+            setLearningVideos(videos);
+            setLearningMaterialsMessage(videos.length ? "" : "No learning videos have been published yet.");
+          } catch (contentError) {
+            if (!active) return;
+            setLearningMaterialsMessage(contentError instanceof Error ? contentError.message : "Learning materials could not be loaded.");
+          }
+        }
+        if (active) setLoadedSections((current) => current.includes(activeSection) ? current : [...current, activeSection]);
+      } finally {
+        if (active) setSectionLoading(false);
+      }
+    }
+
+    void loadSection();
+    return () => { active = false; };
+  }, [activeSection, loadedSections]);
 
   async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -295,126 +238,162 @@ export function Portal() {
     );
   }
 
-  const firstName = studentProfile?.fullName?.trim().split(/\s+/)[0] || member?.contact?.firstName?.trim();
-  const displayName = firstName || "learner";
-  const assignedInstructorName = bookings.find((booking) => booking.instructorName.trim())?.instructorName || "";
+  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\\s+/)[0] || "Learner";
+  const displayName = firstName || "Learner";
+  const sectionItems = [
+    { id: "profile" as const, label: "Personal profile", icon: "user" },
+    { id: "bookings" as const, label: "Bookings", icon: "calendar" },
+    { id: "progress" as const, label: "Learning progress / report", icon: "car" },
+    { id: "enrollment" as const, label: "Package & enrollment", icon: "wallet" },
+    { id: "materials" as const, label: "Learning materials", icon: "book" },
+  ];
 
   return (
     <section className="page portal">
-      <div className="container dashboard">
-        <div className="dashhead">
-          <div>
-            <span className="ey">Student dashboard</span>
-            <h1>Good to see you, {displayName}.</h1>
-            <p className="dashboardemail">
-              {studentProfile?.email || member?.loginEmail || "Your BSDA member account"}
-            </p>
+      <div className="container portal-layout">
+        <aside className="portal-sidebar" aria-label="Student portal navigation">
+          <div className="portal-sidebar-brand">
+            <span className="ey">BSDA STUDENT PORTAL</span>
+            <h2>My learning</h2>
           </div>
-          <div className="dashboardpanelactions">
-            <button className="btn light" onClick={() => setIsEditingProfile(true)}>
-              {studentProfile ? "Edit profile" : "Complete profile"}
-            </button>
-            <button className="btn light" onClick={() => void signOutMember()}>
-              Sign out
-            </button>
-          </div>
-        </div>
+          <nav className="portal-sidebar-nav">
+            {sectionItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`portal-nav-item${activeSection === item.id ? " is-active" : ""}`}
+                aria-current={activeSection === item.id ? "page" : undefined}
+                onClick={() => setActiveSection(item.id)}
+              >
+                <Icon n={item.icon} s={20} />
+                <span>{item.label}</span>
+                <span className="portal-nav-chevron" aria-hidden="true">›</span>
+              </button>
+            ))}
+          </nav>
+          <button className="portal-sidebar-signout" type="button" onClick={() => void signOutMember()}>
+            <Icon n="arrow" s={18} /> Sign out
+          </button>
+        </aside>
 
-        <div className="dashgrid">
-          <div className="dash darkdash">
-            <span className="ey">Account status</span>
-            <strong>{studentProfile?.status || "Profile pending"}</strong>
-          </div>
+        <main className="portal-main-content">
+          <header className="portal-content-header">
+            <div>
+              <span className="ey">STUDENT DASHBOARD</span>
+              <h1>Hello, {displayName}.</h1>
+              <p>{studentProfile?.email || "Your BSDA student account"}</p>
+            </div>
+            {activeSection === "profile" && (
+              <button className="btn red" type="button" onClick={() => setIsEditingProfile(true)}>
+                {studentProfile ? "Edit profile" : "Complete profile"}
+              </button>
+            )}
+          </header>
 
-          <div className="dash">
-            <Icon n="calendar" s={24} />
-            <h3>Bookings</h3>
-            {bookingsMessage ? (
-              <p role={bookingsMessage.toLowerCase().includes("could not") || bookingsMessage.toLowerCase().includes("failed") ? "alert" : undefined}>{bookingsMessage}</p>
-            ) : (
-              <ul className="portal-lesson-list">
-                {bookings.slice(0, 5).map((booking) => (
-                  <li key={booking.id}>
-                    <strong>{booking.serviceName || "Driving appointment"}</strong>
-                    <span>{booking.startDate && !Number.isNaN(Date.parse(booking.startDate))
-                      ? new Date(booking.startDate).toLocaleString()
-                      : "Date not recorded"}</span>
+          {activeSection === "profile" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-profile-heading">
+              <div className="portal-panel-heading">
+                <div>
+                  <span className="ey">YOUR ACCOUNT</span>
+                  <h2 id="portal-profile-heading">Personal information</h2>
+                  <p>Review and update the personal details associated with your BSDA student profile.</p>
+                </div>
+                <span className={`portal-account-status${studentProfile?.status?.toLowerCase() === "active" ? " is-active" : ""}`}>
+                  {studentProfile?.status || "Profile pending"}
+                </span>
+              </div>
+              {profileMessage && <p className="portal-section-message" role="status">{profileMessage}</p>}
+              {studentProfile?.profilePhotoUrl && (
+                <img className="portal-profile-photo" src={profileImagePreviewUrl(studentProfile.profilePhotoUrl)} alt="Your profile" />
+              )}
+              <dl className="portal-profile-details">
+                <div><dt>First name</dt><dd>{studentProfile?.firstName || profileDraft.firstName || "Not provided"}</dd></div>
+                <div><dt>Last name</dt><dd>{studentProfile?.lastName || profileDraft.lastName || "Not provided"}</dd></div>
+                <div><dt>Preferred name</dt><dd>{studentProfile?.nickname || profileDraft.nickname || "Not provided"}</dd></div>
+                <div><dt>Email address</dt><dd>{studentProfile?.email || "Not available"}</dd></div>
+                <div><dt>Phone number</dt><dd>{studentProfile?.phone || profileDraft.phone || "Not provided"}</dd></div>
+                <div><dt>Transmission preference</dt><dd>{studentProfile?.transmission || "Not set"}</dd></div>
+              </dl>
+              <div className="portal-profile-detail-actions">
+                <button className="btn red" type="button" onClick={() => setIsEditingProfile(true)}>
+                  {studentProfile ? "Edit personal information" : "Complete profile"}
+                </button>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "bookings" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-bookings-heading">
+              <div className="portal-panel-heading"><div><span className="ey">YOUR SCHEDULE</span><h2 id="portal-bookings-heading">Bookings</h2><p>Appointments associated with your account.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : bookingsMessage ? <p className="portal-section-message" role="status">{bookingsMessage}</p> : (
+                <ul className="portal-lesson-list">{bookings.map((booking) => (
+                  <li key={booking.id}><strong>{booking.serviceName || "Driving appointment"}</strong>
+                    <span>{booking.startDate && !Number.isNaN(Date.parse(booking.startDate)) ? new Date(booking.startDate).toLocaleString() : "Date not recorded"}</span>
                     <span className="portalstatus">{booking.status.replace(/_/g, " ").toLowerCase()}</span>
                     {booking.instructorName && <span>Instructor: {booking.instructorName}</span>}
+                    {booking.paymentStatus && <span>Payment: {booking.paymentStatus.replace(/_/g, " ").toLowerCase()}</span>}
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                ))}</ul>
+              )}
+            </section>
+          )}
 
-          <div className="dash">
-            <Icon n="car" s={24} />
-            <h3>Learning progress</h3>
-            {studentProfile?.lessonsCompleted !== null && studentProfile?.lessonsCompleted !== undefined &&
-             studentProfile?.lessonsRemaining !== null && studentProfile?.lessonsRemaining !== undefined &&
-             studentProfile?.progressPercent !== null && studentProfile?.progressPercent !== undefined ? (
-              <>
-                <p>{studentProfile.lessonsCompleted} lessons completed · {studentProfile.lessonsRemaining} remaining</p>
-                <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress">
-                  <span style={{ width: `${studentProfile.progressPercent}%` }} />
-                </div>
-                <span className="portalstatus">{studentProfile.progressPercent}% complete</span>
-              </>
-            ) : (
-              <>
-                <p>Progress is not available yet because verified lesson completion and package entitlement data are not both present.</p>
-                <span className="portalstatus">Awaiting verified records</span>
-              </>
-            )}
-            <p>{lessons.length} lesson record{lessons.length === 1 ? "" : "s"} retrieved from Wix CMS.</p>
-            <h4>Lesson history</h4>
-            {lessonsMessage ? <p>{lessonsMessage}</p> : (
-              <ul className="portal-lesson-list">
-                {lessons.slice(0, 5).map((lesson) => (
-                  <li key={lesson.id}>
-                    <strong>{lesson.lessonType || "Driving lesson"}</strong>
-                    <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt)))
-                      ? new Date(String(lesson.startedAt)).toLocaleDateString()
-                      : "Date not recorded"}</span>
-                    <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {activeSection === "progress" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-progress-heading">
+              <div className="portal-panel-heading"><div><span className="ey">LESSON REPORT</span><h2 id="portal-progress-heading">Learning progress</h2><p>Lesson history and progress information recorded by your instructor.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : lessonsMessage ? <p className="portal-section-message" role="status">{lessonsMessage}</p> : (
+                <>
+                  {studentProfile?.lessonsCompleted != null && studentProfile?.lessonsRemaining != null && studentProfile?.progressPercent != null ? (
+                    <div className="portal-progress-summary">
+                      <div><span>Lessons completed</span><strong>{studentProfile.lessonsCompleted}</strong></div>
+                      <div><span>Lessons remaining</span><strong>{studentProfile.lessonsRemaining}</strong></div>
+                      <div><span>Overall progress</span><strong>{studentProfile.progressPercent}%</strong></div>
+                      <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress"><span style={{ width: `${studentProfile.progressPercent}%` }} /></div>
+                    </div>
+                  ) : <p>Verified completion and package entitlement data is not available in your profile yet.</p>}
+                  <h3>Lesson report</h3>
+                  <ul className="portal-lesson-list">{lessons.map((lesson) => (
+                    <li key={lesson.id}><strong>{lesson.lessonType || "Driving lesson"}</strong>
+                      <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt))) ? new Date(String(lesson.startedAt)).toLocaleDateString() : "Date not recorded"}</span>
+                      <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
+                      {lesson.instructorName && <span>Instructor: {lesson.instructorName}</span>}
+                      {lesson.instructorNotes && <span>Instructor notes: {lesson.instructorNotes}</span>}
+                      {lesson.objectives?.length ? <span>Objectives: {lesson.objectives.join(", ")}</span> : null}
+                      {lesson.strengths?.length ? <span>Strengths: {lesson.strengths.join(", ")}</span> : null}
+                      {lesson.improvements?.length ? <span>Areas to improve: {lesson.improvements.join(", ")}</span> : null}
+                    </li>
+                  ))}</ul>
+                </>
+              )}
+            </section>
+          )}
 
-          <div className="dash">
-            <Icon n="wallet" s={24} />
-            <h3>Packages & enrollment</h3>
-            {enrollmentMessage ? <p>{enrollmentMessage}</p> : (
-              <ul className="portal-lesson-list">
-                {enrollments.slice(0, 3).map((enrollment) => (
-                  <li key={enrollment.id}>
-                    <strong>{enrollment.planName || "Wix pricing plan"}</strong>
+          {activeSection === "enrollment" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-enrollment-heading">
+              <div className="portal-panel-heading"><div><span className="ey">YOUR PURCHASES</span><h2 id="portal-enrollment-heading">Packages & enrollment</h2><p>Your Wix Pricing Plans and enrollment details.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : enrollmentMessage ? <p className="portal-section-message" role="status">{enrollmentMessage}</p> : (
+                <ul className="portal-lesson-list">{enrollments.map((enrollment) => (
+                  <li key={enrollment.id}><strong>{enrollment.planName || "Wix pricing plan"}</strong>
                     <span className="portalstatus">Enrollment: {enrollment.status.replace(/_/g, " ").toLowerCase()} · Payment: {enrollment.paymentStatus.replace(/_/g, " ").toLowerCase()}</span>
                     {enrollment.startDate && <span>Starts: {new Date(enrollment.startDate).toLocaleDateString()}</span>}
                     {enrollment.endDate && <span>Ends: {new Date(enrollment.endDate).toLocaleDateString()}</span>}
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                ))}</ul>
+              )}
+            </section>
+          )}
 
-          <div className="dash portal-learning-materials">
-            <Icon n="book" s={24} />
-            <h3>Learning materials</h3>
-            {learningMaterialsMessage ? <p>{learningMaterialsMessage}</p> : (
-              <div className="portal-learning-video-grid">
-                {learningVideos.map((video) => (
-                  <article className="portal-learning-video" key={video.key}>
-                    <h4>{video.title || "Student learning video"}</h4>
-                    <VideoEmbed url={video.url} title={video.title || "Student learning video"} />
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+          {activeSection === "materials" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-materials-heading">
+              <div className="portal-panel-heading"><div><span className="ey">STUDY RESOURCES</span><h2 id="portal-materials-heading">Learning materials</h2><p>Videos and resources provided by BSDA.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : learningMaterialsMessage ? <p className="portal-section-message" role="status">{learningMaterialsMessage}</p> : (
+                <div className="portal-learning-video-grid">{learningVideos.map((video) => (
+                  <article className="portal-learning-video" key={video.key}><h3>{video.title || "Student learning video"} </h3><VideoEmbed url={video.url} title={video.title || "Student learning video"} /></article>
+                ))}</div>
+              )}
+            </section>
+          )}
+        </main>
 
         {isEditingProfile && (
           <div
@@ -494,6 +473,9 @@ export function Portal() {
   );
 }
 
+function PortalSectionSkeleton() {
+  return <div className="portal-section-skeleton" role="status" aria-label="Loading section details"><span /><span /><span /><span /></div>;
+}
 
 function StudentPortalSkeleton() {
   return (
