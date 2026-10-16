@@ -67,12 +67,15 @@
 - Calculate progress only when numerator and denominator are known; otherwise represent it as unavailable.
 - Verify edge cases such as zero entitlement, cancelled bookings, no-shows, duplicate lesson rows, and missing dates.
 
-### Step 8 — Profile updates and source of truth — READ-ONLY FULLDATA CONTRACT IMPLEMENTED
-- Audit current POST/PATCH writes to `StudentProfiles`.
-- Do not write profile edits to a collection that the GET endpoint does not read.
-- Keep FullData read-only unless a supported and approved write contract is established.
-- If editable personal fields are required, implement a separate private student-owned profile record with clear field ownership, and merge it predictably with FullData without overwriting authoritative CMS fields.
-- Verify ownership checks and input validation.
+### Step 8 — Profile updates and source of truth — IMPLEMENTED; Wix write verification pending
+- The authenticated student can edit first name, last name, preferred name, phone number, and profile image URL from the portal.
+- `PATCH /api/students/profile` derives the member and contact identity from the Wix Astro-managed session; the client cannot supply a member ID, contactId, login email, status, eligibility, or CMS record ID.
+- Existing FullData rows are updated by merging only the editable allowlisted fields into the full existing record, preserving non-editable CMS values.
+- If no row matches the authenticated member, saving the profile inserts a FullData row tied to the authenticated contactId and loginEmail. New rows are marked `pending` for both `activityStatus` and `status`; profile completion does not grant booking approval.
+- Profile image input accepts a public HTTPS URL or a Wix Media image URI. Direct local-file upload is not implemented in this version.
+- The profile GET endpoint now returns a member's own profile even when their academy status is pending/inactive, so they can edit personal details. Booking eligibility remains represented separately, and the bookings endpoint continues to enforce active status.
+- PATCH requires JSON, same-origin Origin validation, bounded request size, strict field allowlisting, name/phone length checks, and URL validation. Writes are server-side and use elevated Wix Data operations only after the current member is resolved.
+- Verify that the deployed Wix collection ID `Members/FullData` permits elevated inserts/updates and that its `profilePhoto` field accepts the stored Wix Media/HTTPS string format before relying on production behavior.
 
 ### Step 9 — Final audit and verification — CODE AUDIT COMPLETE; runtime verification pending
 - Re-fetch every changed file and inspect the complete diff.
@@ -149,3 +152,13 @@
 - Run the managed-auth integration test with `npm run dev` (the Wix CLI command), not only `npm run dev:astro`, so the Wix Astro-managed auth routes/session behavior are exercised in the intended development environment.
 - Required manual tests: (1) sign in once from /login; (2) create a new member through Wix's login page and complete any verification; (3) verify /api/auth/session reports authenticated after redirect; (4) refresh /portal and confirm the session remains; (5) sign out and verify the session endpoint reports unauthenticated; (6) expire/revoke the session and confirm protected endpoints deny access; (7) repeat on mobile Safari/Chrome; (8) attempt to change client-side identifiers and confirm server responses remain scoped to the authenticated contactId.
 - Wix-side prerequisites: the published connected Wix site must be available; /portal and any configured post-login return paths must be permitted as authorization redirect URIs if the Wix project requires them; enable desired social providers on the Wix-hosted login page rather than invoking custom provider flows from the Astro frontend.
+
+
+## Editable FullData profile implementation (2026-10-16)
+- Added self-service profile editing in `src/pages/Portal.tsx` and responsive styling in `src/styles/portal-profile.css`.
+- Added `updateStudentProfile()` in `src/services/students/studentProfileApi.ts`.
+- Added protected `PATCH /api/students/profile` to update the authenticated member's existing FullData record or create a pending row for a new Wix member.
+- Editable fields: `firstName`, `lastName`, `nickname`, `phone`, and `profilePhoto` (entered as a public HTTPS URL or Wix Media URI).
+- The authenticated Wix member's `contactId` and `loginEmail` are server-derived. Browser payloads cannot override them or set booking status/approval fields.
+- Corrected a profile-query diagnostic reference to a block-scoped email match variable while revising the endpoint.
+- Source files were fetched again from GitHub after each edit and statically inspected. A local TypeScript check/build and live Wix CMS insert/update tests have not been run in this environment. The profile write path is therefore implemented but not yet runtime-verified.
