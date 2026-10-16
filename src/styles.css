@@ -10160,3 +10160,29 @@ refactor/codebase-cleanup
   .exit-promo-note { margin: 17px 0; font-size: 11px; }
   .exit-promo-cta { min-height: 46px; }
 }
+
+
+/* Desktop quick-action rail: keep all three existing actions expanded.
+   Mobile retains the compact, expandable rail to preserve screen space. */
+@media (min-width: 981px) {
+  .floatingQuickActions .floatingQuickAction,
+  .floatingQuickActions.home-intro .floatingQuickAction {
+    width: 132px;
+    gap: 9px;
+    animation: none;
+  }
+
+  .floatingQuickActions .floatingQuickAction span,
+  .floatingQuickActions.home-intro .floatingQuickAction span {
+    max-width: 90px;
+    opacity: 1;
+    animation: none;
+  }
+
+  .floatingQuickActions .floatingQuickAction:hover,
+  .floatingQuickActions .floatingQuickAction:focus-visible {
+    width: 132px;
+    background: var(--red);
+    color: #fff;
+  }
+}
