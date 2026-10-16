@@ -3,38 +3,75 @@ import { Link, useLocation } from "react-router-dom";
 import { Icon } from "./Icon";
 
 const SESSION_KEY = "bsda-exit-promo-shown";
+const EXCLUDED_ROUTES = ["/login", "/auth/callback", "/portal", "/booking", "/payment/return"];
+
+function isExcludedRoute(pathname: string) {
+  return EXCLUDED_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"))
+    || pathname.startsWith("/admin");
+}
+
+function hasShownPopup() {
+  try {
+    return window.sessionStorage.getItem(SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPopupShown() {
+  try {
+    window.sessionStorage.setItem(SESSION_KEY, "1");
+  } catch {
+    // Component state still prevents repeated displays while this instance is mounted.
+  }
+}
 
 export function ExitIntentPopup() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // This is intentionally desktop-only: mobile browsers do not have a cursor.
+    if (isExcludedRoute(pathname) || hasShownPopup()) return;
+
     const desktop = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 768px)");
-    if (!desktop.matches) return;
-    if (["/login", "/auth/callback", "/portal", "/booking", "/payment/return"].some(
-      (route) => pathname === route || pathname.startsWith("/admin"),
-    )) return;
+    const mobile = window.matchMedia("(max-width: 767px), (hover: none) and (pointer: coarse)");
+    let triggered = false;
 
-    try {
-      if (window.sessionStorage.getItem(SESSION_KEY) === "1") return;
-    } catch {
-      // If session storage is unavailable, keep the interaction functional for this page.
-    }
-
-    const onMouseLeave = (event: MouseEvent) => {
-      if (event.clientY > 0) return;
-      try {
-        if (window.sessionStorage.getItem(SESSION_KEY) === "1") return;
-        window.sessionStorage.setItem(SESSION_KEY, "1");
-      } catch {
-        // State still prevents repeat displays during this mounted page session.
-      }
+    const showPopup = () => {
+      if (triggered || hasShownPopup()) return;
+      triggered = true;
+      markPopupShown();
       setOpen(true);
     };
 
+    // Desktop exit intent: cursor leaves through the top edge of the viewport.
+    const onMouseLeave = (event: MouseEvent) => {
+      if (!desktop.matches || event.clientY > 0) return;
+      showPopup();
+    };
+
+    // Mobile has no cursor, so use a deliberate upward-scroll gesture after the
+    // visitor has scrolled down far enough to engage with the page.
+    let lastScrollY = window.scrollY;
+    let mobileArmed = window.scrollY > 320;
+    const onScroll = () => {
+      if (!mobile.matches) return;
+      const currentY = window.scrollY;
+      if (currentY > 320) mobileArmed = true;
+      const scrollingUp = currentY < lastScrollY - 80;
+      if (mobileArmed && scrollingUp && currentY > 100) {
+        showPopup();
+      }
+      lastScrollY = currentY;
+    };
+
     document.documentElement.addEventListener("mouseleave", onMouseLeave);
-    return () => document.documentElement.removeEventListener("mouseleave", onMouseLeave);
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      document.documentElement.removeEventListener("mouseleave", onMouseLeave);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -49,9 +86,12 @@ export function ExitIntentPopup() {
   if (!open) return null;
 
   return (
-    <div className="exit-promo-overlay" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) setOpen(false);
-    }}>
+    <div
+      className="exit-promo-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setOpen(false);
+      }}
+    >
       <section
         className="exit-promo-dialog"
         role="dialog"
