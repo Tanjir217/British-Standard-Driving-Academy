@@ -294,7 +294,7 @@ export function Portal() {
                 {enrollments.slice(0, 3).map((enrollment) => (
                   <li key={enrollment.id}>
                     <strong>{enrollment.planName || "Wix pricing plan"}</strong>
-                    <span className="portalstatus">{enrollment.status.replace(/_/g, " ").toLowerCase()}</span>
+                    <span className="portalstatus">Enrollment: {enrollment.status.replace(/_/g, " ").toLowerCase()} · Payment: {enrollment.paymentStatus.replace(/_/g, " ").toLowerCase()}</span>
                     {enrollment.startDate && <span>Starts: {new Date(enrollment.startDate).toLocaleDateString()}</span>}
                     {enrollment.endDate && <span>Ends: {new Date(enrollment.endDate).toLocaleDateString()}</span>}
                   </li>
