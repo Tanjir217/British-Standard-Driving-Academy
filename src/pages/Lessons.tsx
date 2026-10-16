@@ -166,11 +166,6 @@ export function Lessons() {
       <div className="container">
         {selection && (
           <div className="lesson-path-selection-summary" role="status">
-            <div>
-              <span className="ey">YOUR LESSON PREFERENCES</span>
-              <strong>{selection.transmission} · {goalLabels[selection.goal]}</strong>
-              <p>Your lesson path and recommended packages are loaded from the Wix CMS.</p>
-            </div>
             <button className="btn light" type="button" onClick={() => setShowLessonPath(true)}>Change choices</button>
           </div>
         )}
