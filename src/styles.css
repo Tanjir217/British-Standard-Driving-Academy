@@ -10238,8 +10238,8 @@ refactor/codebase-cleanup
 }
 .lesson-path-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 23px;
+  right: 20px;
   display: grid;
   place-items: center;
   width: 36px;
