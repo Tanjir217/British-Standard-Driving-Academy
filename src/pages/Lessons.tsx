@@ -1,20 +1,159 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "../components/Heading";
 import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
 import { Reveal } from "../components/Reveal";
 import { lessons } from "../data/site";
+import { packageService } from "../services/packages/packageService";
+import type { Package } from "../services/domain/types";
+
+type LessonPathRecord = {
+  id: string;
+  title: string;
+  slug: string;
+  introText: string;
+  learnerCategory: string;
+  transmission: string;
+  isActive: boolean;
+};
+
+type LessonPathPlanRecord = {
+  id: string;
+  title: string;
+  lessonPathSlug: string;
+  pricingPlanId: string;
+  displayOrder: number;
+  isRecommended: boolean;
+  recommendationLabel: string;
+};
+
+type LessonPathApiResponse = {
+  ok: boolean;
+  lessonPaths?: LessonPathRecord[];
+  lessonPathPlans?: LessonPathPlanRecord[];
+  message?: string;
+};
+
+type RecommendedPlan = {
+  mapping: LessonPathPlanRecord;
+  plan: Package;
+};
+
+const goalLabels: Record<LessonPathSelection["goal"], string> = {
+  beginner: "Beginner",
+  "partly-trained": "Partly trained",
+  refresher: "Refresher",
+  "full-experience": "Full experience",
+  "test-ready": "Test-ready learner",
+  motorway: "Motorway training",
+  "pdi-adi": "PDI and ADI training",
+};
+
+function formatMoney(amountMinor: number, currency: string) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100);
+}
 
 export function Lessons() {
   const [showLessonPath, setShowLessonPath] = useState(true);
   const [selection, setSelection] = useState<LessonPathSelection | null>(null);
+  const [lessonPaths, setLessonPaths] = useState<LessonPathRecord[]>([]);
+  const [lessonPathPlans, setLessonPathPlans] = useState<LessonPathPlanRecord[]>([]);
+  const [recommendedPlans, setRecommendedPlans] = useState<RecommendedPlan[]>([]);
+  const [cmsLoading, setCmsLoading] = useState(true);
+  const [cmsError, setCmsError] = useState("");
+  const [planWarning, setPlanWarning] = useState("");
   const dismissLessonPath = useCallback(() => setShowLessonPath(false), []);
 
   const continueWithSelection = (nextSelection: LessonPathSelection) => {
     setSelection(nextSelection);
     setShowLessonPath(false);
   };
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/lesson-paths", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        const payload = await response.json() as LessonPathApiResponse;
+        if (!response.ok || !payload.ok || !Array.isArray(payload.lessonPaths) || !Array.isArray(payload.lessonPathPlans)) {
+          throw new Error(payload.message || "Lesson recommendations could not be loaded.");
+        }
+        if (active) {
+          setLessonPaths(payload.lessonPaths);
+          setLessonPathPlans(payload.lessonPathPlans);
+          setCmsError("");
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) setCmsError(error instanceof Error ? error.message : "Lesson recommendations could not be loaded.");
+      })
+      .finally(() => {
+        if (active) setCmsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setRecommendedPlans([]);
+    setPlanWarning("");
+    if (!selection) return () => { active = false; };
+
+    const selectedCategory = goalLabels[selection.goal];
+    const matchingPath = lessonPaths.find((path) =>
+      path.isActive &&
+      path.learnerCategory.toLowerCase() === selectedCategory.toLowerCase() &&
+      path.transmission.toLowerCase() === selection.transmission.toLowerCase()
+    );
+
+    if (!matchingPath) {
+      if (!cmsLoading && !cmsError) {
+        setPlanWarning("There is no active lesson path configured for this combination yet.");
+      }
+      return () => { active = false; };
+    }
+
+    const mappings = lessonPathPlans
+      .filter((mapping) => mapping.lessonPathSlug === matchingPath.slug && mapping.pricingPlanId)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+
+    if (mappings.length === 0) {
+      setPlanWarning("This lesson path is configured, but no active package is linked to its exact slug in LessonPathPlans.");
+      return () => { active = false; };
+    }
+
+    Promise.all(mappings.map(async (mapping) => {
+      const result = await packageService.getById(mapping.pricingPlanId);
+      if (!result.ok) {
+        return { mapping, plan: null as Package | null };
+      }
+      return { mapping, plan: result.data };
+    }))
+      .then((results) => {
+        if (!active) return;
+        const valid = results.filter((result): result is { mapping: LessonPathPlanRecord; plan: Package } => result.plan !== null);
+        setRecommendedPlans(valid);
+        if (valid.length !== mappings.length) {
+          setPlanWarning("One or more linked plan IDs could not be retrieved from Wix Pricing Plans. Check that pricingPlanId contains a real Pricing Plan ID, not a Bookings service ID.");
+        } else {
+          setPlanWarning("");
+        }
+      })
+      .catch(() => {
+        if (active) setPlanWarning("Wix Pricing Plans could not be loaded. Please try again.");
+      });
+
+    return () => { active = false; };
+  }, [selection, lessonPaths, lessonPathPlans, cmsLoading, cmsError]);
 
   return (
     <section className="page">
@@ -26,19 +165,46 @@ export function Lessons() {
           <div className="lesson-path-selection-summary" role="status">
             <div>
               <span className="ey">YOUR LESSON PREFERENCES</span>
-              <strong>{selection.transmission} · {selection.goal === "pdi-adi" ? "PDI and ADI training" : ({
-                beginner: "Beginner",
-                "partly-trained": "Partly trained",
-                refresher: "Refresher",
-                "full-experience": "Full experience",
-                "test-ready": "Test-ready learner",
-                motorway: "Motorway training",
-              } as Record<string, string>)[selection.goal]}</strong>
-              <p>Your choices are selected for this visit. Personalised lesson recommendations will be connected after the Wix CMS is configured.</p>
+              <strong>{selection.transmission} · {goalLabels[selection.goal]}</strong>
+              <p>Your lesson path and recommended packages are loaded from the Wix CMS.</p>
             </div>
             <button className="btn light" type="button" onClick={() => setShowLessonPath(true)}>Change choices</button>
           </div>
         )}
+
+        {selection && (
+          <section className="lesson-recommendations" aria-live="polite">
+            <Heading
+              ey="YOUR PERSONAL LESSON PATH"
+              title={recommendedPlans.length ? "Recommended for your next step." : "Finding the right lesson path."}
+              text="Recommendations are matched to your selected learner category and transmission using your Wix CMS configuration."
+            />
+            {cmsLoading && <p role="status">Loading lesson paths from Wix…</p>}
+            {!cmsLoading && cmsError && <p role="alert">{cmsError}</p>}
+            {!cmsLoading && !cmsError && planWarning && <p role="status">{planWarning}</p>}
+            {!cmsLoading && !cmsError && recommendedPlans.length > 0 && (
+              <div className="cards pagecards">
+                {recommendedPlans.map(({ mapping, plan }) => (
+                  <article className="servicecard" key={mapping.id}>
+                    <div>
+                      {mapping.isRecommended && <span className="cardey">{mapping.recommendationLabel || "Recommended"}</span>}
+                      <h3>{plan.name}</h3>
+                      <p className="cardey">{formatMoney(plan.priceMinor, plan.currency)}</p>
+                      <p>{plan.description || mapping.title}</p>
+                      {plan.features.length > 0 && (
+                        <ul>{plan.features.map((feature, index) => <li key={index}>{feature}</li>)}</ul>
+                      )}
+                    </div>
+                    <Link className="btn red full" to={`/packages`}>
+                      View package options <span>→</span>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         <Heading
           center
           ey="Driving Lesson"
@@ -46,24 +212,24 @@ export function Lessons() {
           text="Each lesson type has a clear outcome so learners understand what they are improving and why it matters."
         />
         <div className="lessoncards light">
-          {lessons.map((l, i) => (
-            <Reveal key={l[0]}>
-              <LessonCard lesson={l} index={i} light />
+          {lessons.map((lesson, index) => (
+            <Reveal key={lesson[0]}>
+              <LessonCard lesson={lesson} index={index} light />
             </Reveal>
           ))}
         </div>
         <div className="timeline">
-          {["Understand", "Practice", "Refine", "Perform"].map((x, i) => (
-            <div key={x}>
-              <b>0{i + 1}</b>
-              <h3>{x}</h3>
+          {["Understand", "Practice", "Refine", "Perform"].map((label, index) => (
+            <div key={label}>
+              <b>0{index + 1}</b>
+              <h3>{label}</h3>
               <p>
                 {[
                   "Learn the control, rule or decision.",
                   "Repeat it under real road conditions.",
                   "Correct habits before they become faults.",
                   "Use the skill independently and safely.",
-                ][i]}
+                ][index]}
               </p>
             </div>
           ))}
@@ -74,7 +240,7 @@ export function Lessons() {
             <h2>Let us recommend your first lesson.</h2>
           </div>
           <Link className="btn red" to="/packages">
-            Ask an instructor <span>→</span>
+            View packages <span>→</span>
           </Link>
         </div>
       </div>
