@@ -36,7 +36,7 @@ async function fetchLessons(): Promise<ServiceResult<StudentLessonRecord[]>> {
       return {
         ok: false,
         error: {
-          code: response.status === 401 ? "UNAUTHORIZED" : "SERVER_ERROR",
+          code: response.status === 401 ? "UNAUTHENTICATED" : "SERVER_ERROR",
           message: payload?.message || "Lesson records could not be loaded.",
         },
       };
