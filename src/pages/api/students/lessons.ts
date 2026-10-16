@@ -105,7 +105,7 @@ function toLesson(record: WixRecord) {
   };
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
   try {
     const member = await authenticatedMember();
     if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your lessons." }, 401);
