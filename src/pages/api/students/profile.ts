@@ -93,11 +93,21 @@ async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMe
 
 
 function imageUrl(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (!value || typeof value !== "object") return "";
-  const image = value as Record<string, unknown>;
-  for (const candidate of [image.url, image.src, image.imageUrl, image.uri]) {
-    if (typeof candidate === "string" && candidate) return candidate;
+  let candidate = "";
+  if (typeof value === "string") candidate = value;
+  else if (value && typeof value === "object") {
+    const image = value as Record<string, unknown>;
+    for (const item of [image.url, image.src, image.imageUrl, image.uri]) {
+      if (typeof item === "string" && item) {
+        candidate = item;
+        break;
+      }
+    }
+  }
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : "";
   }
   return "";
 }
