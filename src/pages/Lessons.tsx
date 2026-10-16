@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "../components/Heading";
-import { PackageCard } from "../components/PackageCard";
 // Legacy mock-card component retained for reference while testing the CMS-driven implementation.
 // import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
@@ -184,19 +183,39 @@ export function Lessons() {
             {!cmsLoading && !cmsError && recommendedPlans.length > 0 && (
               <div className="cards pagecards">
                 {recommendedPlans.map(({ mapping, plan }) => (
-                  <PackageCard
-                    key={mapping.id}
-                    full
-                    p={{
-                      id: plan.id,
-                      name: plan.name,
-                      price: formatMoney(plan.priceMinor, plan.currency),
-                      eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
-                      description: plan.description || mapping.title,
-                      features: plan.features,
-                      popular: mapping.isRecommended,
-                    }}
-                  />
+                  <article className="lesson-plan-card" key={mapping.id}>
+                    <div className="lesson-plan-card__topline">
+                      <span className="lesson-plan-card__eyebrow">
+                        {plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme"}
+                      </span>
+                      {mapping.isRecommended && (
+                        <span className="lesson-plan-card__recommended">
+                          {mapping.recommendationLabel || "Recommended"}
+                        </span>
+                      )}
+                    </div>
+                    <h3>{plan.name}</h3>
+                    {(plan.description || mapping.title) && (
+                      <p className="lesson-plan-card__description">{plan.description || mapping.title}</p>
+                    )}
+                    <div className="lesson-plan-card__price">
+                      {formatMoney(plan.priceMinor, plan.currency)}
+                      <span> / package</span>
+                    </div>
+                    {plan.features.length > 0 && (
+                      <ul className="lesson-plan-card__features">
+                        {plan.features.map((feature, index) => (
+                          <li key={index}>
+                            <span aria-hidden="true">✓</span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <Link className="btn red full lesson-plan-card__action" to={`/booking?package=${encodeURIComponent(plan.id)}`}>
+                      Select &amp; continue <span aria-hidden="true">→</span>
+                    </Link>
+                  </article>
                 ))}
               </div>
             )}
