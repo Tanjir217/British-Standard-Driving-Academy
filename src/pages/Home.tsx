@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
@@ -95,7 +95,6 @@ export function Home() {
     description: service.description?.trim() ?? "",
     features: [] as string[],
   }));
-  const homepageCards = [...packageCards, ...serviceCards];
 
   useEffect(() => {
     let active = true;
