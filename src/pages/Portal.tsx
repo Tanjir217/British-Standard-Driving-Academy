@@ -429,11 +429,8 @@ export function Portal() {
               onClick={(event) => event.stopPropagation()}
             >
               <div className="portal-profile-editor-heading">
-                <div>
-                  <span className="ey">Personal information</span>
-                  <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
-                  <p>These details are saved to your own FullData record. Your sign-in email is managed by Wix and cannot be changed here.</p>
-                </div>
+                <span className="ey">Personal information</span>
+                <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
               </div>
               <form className="portal-profile-form" onSubmit={handleSaveProfile}>
                 <label>
