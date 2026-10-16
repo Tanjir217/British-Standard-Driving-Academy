@@ -123,3 +123,27 @@
 - The learning-video slots use the existing `SiteContent` CMS and `/api/content` endpoint; verify the collection is readable and the six `portal-video-N` keys are enabled as desired.
 - Re-fetched and inspected every changed source/document file after implementation; checked that the portal's raw diagnostic panel, obsolete placeholder copy, FullData fake progress values, and profile POST/PATCH writes are absent.
 - The latest GitHub commit status reports the Vercel check as pending. No successful build/typecheck result is available yet; this session does not have the local project runtime needed to run `npm run check` or `npm run build`.
+
+
+## Authentication correction — Path A (2026-10-16)
+
+### Root cause confirmed from code and official Wix documentation
+- The previous student login form called Wix Headless SDK custom email/password methods (auth.login, auth.register, and a browser OAuth token handoff), then attempted to access server endpoints that require the Wix Astro-managed session.
+- This created two distinct authentication states: a browser-held Headless OAuth token and the Wix Astro request session. A successful first flow did not guarantee the Astro session existed, so the portal displayed a second Wix sign-in prompt.
+- Wix's official documentation states that custom member login is not currently supported by the Wix Astro integration; its automatic authentication does not recognize members who sign in through a separately implemented custom flow. Astro projects should use the built-in /api/auth/login and /api/auth/logout routes.
+
+### Code changes on this branch
+- Replaced the student email/password, registration, verification-code, password-reset, and custom Google flows with one BSDA-branded entry screen that redirects to Wix's built-in login route. Wix's login page handles sign-in, account creation, email verification, and password recovery.
+- Added GET /api/auth/session, which returns only the current member's basic identity from the Wix Astro-managed server session. It does not accept a browser-supplied member ID.
+- Changed the student portal's current-member lookup to call that same-origin endpoint. It no longer falls back to browser OAuth tokens or sessionStorage identity hints.
+- Changed student profile, lessons, bookings, and learning-materials APIs to accept only the Wix Astro-managed session. Removed bearer-token fallback authentication.
+- Changed the student API clients to send same-origin cookies without reading or attaching browser-held Wix access tokens.
+- Changed sign-out to submit a browser POST to Wix's built-in logout route so the Astro-managed session can be cleared.
+- Removed the portal's second-login prompt. If the session/profile endpoint reports a real authentication failure, the portal displays a sign-in error and offers a return to the single login entry point.
+- The admin dashboard's active route already uses the Wix Astro-managed flow. Legacy, currently unmounted OAuth callback/admin-login code still exists in the repository and should not be used for the student portal.
+
+### Verification status
+- Source edits were fetched back from GitHub after each change and checked for removal of the student login's custom credential/registration calls, the duplicate portal sign-in prompt, browser identity hints, and bearer-token fallback in the student API clients/endpoints.
+- Full typecheck/build and real browser/Wix lifecycle tests are still required. This GitHub editing session does not have a local checkout or a connected browser session to execute login, registration, logout, session-expiry, mobile, or cross-student access tests.
+- Required manual tests: (1) sign in once from /login; (2) create a new member through Wix's login page and complete any verification; (3) verify /api/auth/session reports authenticated after redirect; (4) refresh /portal and confirm the session remains; (5) sign out and verify the session endpoint reports unauthenticated; (6) expire/revoke the session and confirm protected endpoints deny access; (7) repeat on mobile Safari/Chrome; (8) attempt to change client-side identifiers and confirm server responses remain scoped to the authenticated contactId.
+- Wix-side prerequisites: the published connected Wix site must be available; /portal and any configured post-login return paths must be permitted as authorization redirect URIs if the Wix project requires them; enable desired social providers on the Wix-hosted login page rather than invoking custom provider flows from the Astro frontend.
