@@ -5,6 +5,8 @@ import "../styles/portal-profile.css";
 import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
 import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../services/students/studentBookingApi";
 import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
+import { getSiteContent, type SiteContentItem } from "../services/siteContentService";
+import { VideoEmbed } from "../components/VideoEmbed";
 import {
   getCurrentMember,
   signOutMember,
@@ -60,6 +62,8 @@ export function Portal() {
   const [bookingsMessage, setBookingsMessage] = useState("Loading bookings…");
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
   const [enrollmentMessage, setEnrollmentMessage] = useState("Loading enrollment…");
+  const [learningVideos, setLearningVideos] = useState<SiteContentItem[]>([]);
+  const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("Loading learning materials…");
 
   useEffect(() => {
     let active = true;
@@ -151,6 +155,18 @@ export function Portal() {
           setEnrollmentMessage(enrollmentResult.data.length ? "" : "No Wix Pricing Plans orders were found for this account.");
         } else {
           setEnrollmentMessage(enrollmentResult.error.message);
+        }
+
+        try {
+          const contentMap = await getSiteContent();
+          if (!active) return;
+          const videos = Array.from({ length: 6 }, (_, index) => contentMap[`portal-video-${index + 1}`])
+            .filter((item): item is SiteContentItem => Boolean(item?.enabled && item.url?.trim()));
+          setLearningVideos(videos);
+          setLearningMaterialsMessage(videos.length ? "" : "No learning videos have been published yet.");
+        } catch (contentError) {
+          if (!active) return;
+          setLearningMaterialsMessage(contentError instanceof Error ? contentError.message : "Learning materials could not be loaded.");
         }
       } catch (err) {
         if (!active) return;
@@ -287,12 +303,20 @@ export function Portal() {
             )}
           </div>
 
-          <PortalCard
-            icon="book"
-            title="Learning materials"
-            text="No student learning-material source is configured in the current codebase."
-            status="Source not configured"
-          />
+          <div className="dash portal-learning-materials">
+            <Icon n="book" s={24} />
+            <h3>Learning materials</h3>
+            {learningMaterialsMessage ? <p>{learningMaterialsMessage}</p> : (
+              <div className="portal-learning-video-grid">
+                {learningVideos.map((video) => (
+                  <article className="portal-learning-video" key={video.key}>
+                    <h4>{video.title || "Student learning video"}</h4>
+                    <VideoEmbed url={video.url} title={video.title || "Student learning video"} />
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {studentProfile && (
