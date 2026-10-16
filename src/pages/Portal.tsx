@@ -323,6 +323,9 @@ export function Portal() {
           <div className="panel dashboardpanel">
             <div>
               <span className="ey">Learner profile</span>
+              {studentProfile.coverPhotoUrl && (
+                <img className="portal-profile-cover" src={studentProfile.coverPhotoUrl} alt="" loading="lazy" />
+              )}
               {studentProfile.profilePhotoUrl && (
                 <img className="portal-profile-photo" src={studentProfile.profilePhotoUrl} alt="" loading="lazy" />
               )}
