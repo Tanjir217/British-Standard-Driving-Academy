@@ -83,11 +83,14 @@
 
 ## Expected Wix-side items to confirm
 - Exact FullData collection ID and actual field IDs/types (not just display labels).
-- Exact Lessons Records collection ID and field IDs for student identity, booking ID, status, timestamps, and instructor feedback.
+- `Members/FullData` is the existing profile source; known field IDs include `contactId`, `loginEmail`, `firstName`, `lastName`, `phone`, `nickname`, `profilePhoto`, `coverPhoto`, `activityStatus`, and `status`.
+- `LessonRecords` is the collection ID used by the existing admin API. The student endpoint defaults to field ID `studentId`, which must contain the matching FullData `contactId`. If the actual field ID differs, set `BSDA_LESSON_STUDENT_ID_FIELD` to the exact Wix field ID.
+- Optional server environment overrides: `BSDA_FULLDATA_COLLECTION_ID`, `BSDA_LESSON_RECORDS_COLLECTION_ID`, and `BSDA_LESSON_STUDENT_ID_FIELD`.
 - CMS permissions remain private/admin-only for protected collections; server-side elevated reads must remain ownership-filtered.
-- Existing Wix Bookings setup must associate bookings with the signed-in member/contact. Staff/customer identity must not be inferred from email alone.
-- If package entitlement is not stored in an existing order/enrollment record, decide where that authoritative relationship will live.
-- Identify the existing learning-material collection/source if one is intended for students.
+- Wix Bookings needs the app's required booking-read permission scopes and a queryable `contactDetails.contactId` value on bookings.
+- Wix Pricing Plans member-order listing requires a logged-in member and a published Wix site; verify the installed SDK and Wix runtime expose the current-member order call.
+- The existing managed video source is `SiteContent`, with enabled keys `portal-video-1` through `portal-video-6`.
+- Lesson progress still requires an agreed completion definition and authoritative package entitlement quantity; do not infer remaining lessons from plan labels or public plans.
 
 ## Completion criteria
 - FullData profile is loaded from Wix server-side for the authenticated member.
