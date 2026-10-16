@@ -352,6 +352,7 @@ export function Portal() {
                 <img className="portal-profile-photo" src={studentProfile.profilePhotoUrl} alt="" loading="lazy" />
               )}
               <h2>{studentProfile.fullName || "Student profile"}</h2>
+              {profileMessage && !isEditingProfile && <p className="portal-profile-form-message" role="status">{profileMessage}</p>}
               <p>{studentProfile.phone || "No phone number saved"}</p>
               <p>{assignedInstructorName ? `Instructor: ${assignedInstructorName}` : "Instructor assignment is not available in booking records yet."}</p>
               {studentProfile.transmission && (
@@ -362,7 +363,6 @@ export function Portal() {
             </div>
             <div className="dashboardpanelactions">
               <button className="btn light" onClick={() => setIsEditingProfile(true)}>Edit profile</button>
-              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Complete profile</button>
               <button className="btn red" onClick={() => navigate("/booking")}>
                 Book a lesson <Icon n="arrow" />
               </button>
@@ -378,6 +378,7 @@ export function Portal() {
               <p>{profileMessage}</p>
             </div>
             <div className="dashboardpanelactions">
+              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Complete profile</button>
               <button className="btn red" onClick={() => navigate("/booking")}>
                 Book a lesson <Icon n="arrow" />
               </button>
