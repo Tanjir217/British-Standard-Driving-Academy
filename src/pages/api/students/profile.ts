@@ -108,10 +108,8 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
   const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
   const email = typeof record.loginEmail === "string" ? record.loginEmail : (member.loginEmail || "");
-  const activity = String(record.activityStatus ?? record.status ?? "").toLowerCase();
-  const status = ["active", "paused", "completed", "inactive"].includes(activity)
-    ? activity as "active" | "paused" | "completed" | "inactive"
-    : undefined;
+  const statusValue = String(record.activityStatus ?? record.status ?? "").trim();
+  const status = statusValue || undefined;
   const transmissionValue = String(record.transmission ?? "").trim().toLowerCase();
   const transmission = ["manual", "automatic", "either"].includes(transmissionValue)
     ? transmissionValue as "manual" | "automatic" | "either"
