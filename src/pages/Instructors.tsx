@@ -7,7 +7,7 @@ import { instructors } from "../data/site";
 export function Instructors() {
   return (
     <section className="page instructorspage">
-      <header className="instructors-hero">
+      <div className="instructors-hero">
         <div className="container instructors-hero-inner">
           <div className="instructors-hero-copy">
             <span className="ey">Meet your driving team</span>
@@ -21,7 +21,7 @@ export function Instructors() {
             <div className="instructors-hero-badge"><Icon n="shield" s={20} /><span><b>Safety first</b><small>Confidence for every mile</small></span></div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="container instructors-content">
         <div className="instructors-intro">
