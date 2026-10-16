@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import "../styles/portal-profile.css";
+import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
 import {
   getCurrentMember,
   signOutMember,
@@ -51,17 +52,8 @@ export function Portal() {
   const [managedLoginRequired, setManagedLoginRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [fullDataDebug, setFullDataDebug] = useState<{
-    ok: boolean;
-    collectionId?: string;
-    returnedRecords?: number;
-    matchedBy?: string | null;
-    matched?: boolean;
-    records?: Array<Record<string, unknown>>;
-    message?: string;
-    errorMessage?: string;
-  } | null>(null);
-  const [fullDataDebugLoading, setFullDataDebugLoading] = useState(false);
+  const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
+  const [lessonsMessage, setLessonsMessage] = useState("Loading lesson records…");
 
   useEffect(() => {
     let active = true;
@@ -98,47 +90,6 @@ export function Portal() {
         };
         setMember(summary);
 
-        // Temporary local diagnostic: use the contactId attached to the current
-        // Wix member profile. This path deliberately does not use member IDs.
-        const memberWithContactId = currentMember as typeof currentMember & {
-          contactId?: string | null;
-          contact?: { contactId?: string | null; firstName?: string; lastName?: string; phones?: string[] } | null;
-        };
-        const contactId = String(
-          memberWithContactId.contactId ?? memberWithContactId.contact?.contactId ?? "",
-        ).trim();
-
-        if (import.meta.env.DEV) {
-          setFullDataDebugLoading(true);
-          if (!contactId) {
-            setFullDataDebug({
-              ok: false,
-              errorMessage: "The current Wix member response does not contain contactId. No member ID or email fallback was used.",
-              message: "CONTACT_ID_MISSING",
-            });
-            setFullDataDebugLoading(false);
-          } else {
-            fetch("/api/debug/full-data?contactId=" + encodeURIComponent(contactId), {
-              cache: "no-store",
-            })
-              .then(async (response) => {
-                const data = await response.json();
-                if (active) setFullDataDebug(data);
-              })
-              .catch((debugError) => {
-                if (active) {
-                  setFullDataDebug({
-                    ok: false,
-                    errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
-                  });
-                }
-              })
-              .finally(() => {
-                if (active) setFullDataDebugLoading(false);
-              });
-          }
-        }
-
         // Profile data comes only from the protected server endpoint. If no
         // profile exists, provision it from the authenticated member's contact
         // details; the endpoint derives the actual member ID from the session.
@@ -168,6 +119,14 @@ export function Portal() {
               "Your Wix member details are available. Academy profile data is temporarily unavailable and will appear when the student records service is restored.",
             );
           }
+        }
+        const lessonResult = await lessonService.listForCurrentStudent();
+        if (!active) return;
+        if (lessonResult.ok) {
+          setLessons(lessonResult.data);
+          setLessonsMessage(lessonResult.data.length ? "" : "No lesson records are available yet.");
+        } else {
+          setLessonsMessage(lessonResult.error.message);
         }
       } catch (err) {
         if (!active) return;
@@ -224,97 +183,6 @@ export function Portal() {
             Sign out
           </button>
         </div>
-
-        {import.meta.env.DEV && (
-          <section
-            aria-label="Temporary FullData CMS diagnostic"
-            style={{
-              marginTop: 24,
-              padding: 20,
-              border: "2px dashed #d97706",
-              borderRadius: 12,
-              background: "#fffaf0",
-              color: "#1f2937",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div>
-                <span className="ey" style={{ color: "#92400e" }}>Temporary developer diagnostic</span>
-                <h2 style={{ margin: "6px 0" }}>Raw Wix FullData CMS values</h2>
-                <p style={{ margin: 0, fontSize: 14 }}>
-                  Local development only. This panel independently queries FullData and displays only the row matched to your signed-in Wix account.
-                </p>
-              </div>
-              <button
-                className="btn light"
-                onClick={() => {
-                  setFullDataDebug(null);
-                  setFullDataDebugLoading(true);
-                  const currentContactId = String(
-                    (member as MemberSummary & {
-                      contactId?: string | null;
-                      contact?: { contactId?: string | null };
-                    } | null)?.contactId ?? member?.contact?.contactId ?? "",
-                  ).trim();
-                  if (!currentContactId) {
-                    setFullDataDebug({
-                      ok: false,
-                      errorMessage: "The current Wix member response does not contain contactId.",
-                    });
-                    setFullDataDebugLoading(false);
-                    return;
-                  }
-                  fetch("/api/debug/full-data?contactId=" + encodeURIComponent(currentContactId), {
-                    cache: "no-store",
-                  })
-                    .then(async (response) => {
-                      const data = await response.json();
-                      setFullDataDebug(data);
-                    })
-                    .catch((debugError) => setFullDataDebug({
-                      ok: false,
-                      errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
-                    }))
-                    .finally(() => setFullDataDebugLoading(false));
-                }}
-              >
-                Refresh CMS data
-              </button>
-            </div>
-            {fullDataDebugLoading ? (
-              <p>Loading FullData CMS records…</p>
-            ) : fullDataDebug?.ok ? (
-              <>
-                <p style={{ margin: "12px 0", fontSize: 13 }}>
-                  Collection: <strong>{fullDataDebug.collectionId}</strong> · Your matching records: <strong>{fullDataDebug.returnedRecords}</strong> · Matched by: <strong>{String((fullDataDebug as typeof fullDataDebug & { matchedBy?: string | null })?.matchedBy || "not found")}</strong>
-                </p>
-                <pre
-                  style={{
-                    margin: 0,
-                    padding: 16,
-                    maxHeight: 520,
-                    overflow: "auto",
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "anywhere",
-                    background: "#111827",
-                    color: "#e5e7eb",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                  }}
-                >{JSON.stringify(fullDataDebug.records ?? [], null, 2)}</pre>
-                <p style={{ margin: "10px 0 0", fontSize: 12, color: "#92400e" }}>
-                  This temporary panel is local-development-only and returns only the matched record for your authenticated account. Remove it after diagnosis.
-                </p>
-              </>
-            ) : (
-              <p role="alert" style={{ color: "#b91c1c" }}>
-                {fullDataDebug?.errorMessage || fullDataDebug?.message || "Could not load the FullData diagnostic response."}
-              </p>
-            )}
-          </section>
-        )}
 
         <div className="dashgrid">
           <div className="dash darkdash">
