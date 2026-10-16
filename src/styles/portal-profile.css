@@ -240,3 +240,38 @@
   }
 }
 
+
+/* Real student lesson records and profile media. */
+.portal-lesson-list {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-lesson-list li {
+  display: grid;
+  gap: 5px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(20, 29, 46, 0.1);
+  overflow-wrap: anywhere;
+}
+
+.portal-lesson-list li:first-child {
+  border-top: 0;
+}
+
+.portal-lesson-list li > span {
+  font-size: 0.9rem;
+}
+
+.portal-profile-photo {
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: 12px 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f0eeea;
+}
