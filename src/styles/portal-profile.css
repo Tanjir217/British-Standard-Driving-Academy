@@ -507,7 +507,7 @@
   backdrop-filter: blur(3px);
 }
 
-.portal-profile-modal {
+.panel.portal-profile-editor.portal-profile-modal {
   display: block;
   width: min(100%, 760px);
   max-height: calc(100vh - 48px);
