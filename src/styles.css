@@ -1331,6 +1331,20 @@ nav .navbook:hover {
 .booking--spaced {
   margin-top: 48px;
 }
+
+/* Package checkout only: remove the side information panel and space its actions. */
+.booking--spaced:has(> .form > .payment + .payment) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.booking--spaced:has(> .form > .payment + .payment) > .aside {
+  display: none;
+}
+
+.booking--spaced:has(> .form > .payment + .payment) > .form > .btn.full + .formerror + .btn.full,
+.booking--spaced:has(> .form > .payment + .payment) > .form > .btn.full + .btn.full {
+  margin-top: 20px;
+}
 .form,
 .aside,
 .login {
