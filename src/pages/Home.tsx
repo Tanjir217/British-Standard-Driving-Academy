@@ -10,9 +10,6 @@ import {
   getHomeReels,
   type VideoLibraryItem,
 } from "../services/videoLibraryService";
-import { packageService } from "../services/packages/packageService";
-import { bookingService, type BookingServiceCatalogItem } from "../services/bookings/bookingService";
-import type { Package } from "../services/domain/types";
 
 type PromotionalBanner = {
   id: string;
@@ -46,25 +43,6 @@ function safeBannerLink(linkUrl: string): string {
   return value.startsWith("/") || /^https?:\/\//i.test(value) ? value : "";
 }
 
-function formatMoney(amountMinor: number, currency: string) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
-}
-
-function toPackageCard(plan: Package) {
-  return {
-    id: plan.id,
-    name: plan.name,
-    price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow:
-      plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
-    description: plan.description,
-    features: plan.features,
-  };
-}
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
@@ -73,28 +51,14 @@ export function Home() {
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 600px)").matches,
   );
-  const [packages, setPackages] = useState<Package[]>([]);
   const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBanner[]>([]);
-  const [bookingServices, setBookingServices] = useState<BookingServiceCatalogItem[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
   const [reelUrls, setReelUrls] = useState<VideoLibraryItem[]>([]);
 
-  const packageCards = packages.map((plan) => ({
-    ...toPackageCard(plan),
-    kind: "package" as const,
-  }));
-  const serviceCards = bookingServices.map((service) => ({
-    kind: "service" as const,
-    id: service.id,
-    name: service.name,
-    price: formatMoney(service.priceMinor, service.currency),
-    eyebrow: "Booking Service",
-    description: service.description?.trim() ?? "",
-    features: [] as string[],
-  }));
+
 
   useEffect(() => {
     let active = true;
@@ -112,32 +76,6 @@ export function Home() {
       .catch((error) => {
         console.error("Unable to load homepage promotional banners.", error);
         if (active) setPromotionalBanners([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    Promise.all([packageService.list(), bookingService.listServices()])
-      .then(([packageResult, serviceResult]) => {
-        if (!active) return;
-        if (packageResult.ok) setPackages(packageResult.data.slice(0, 4));
-        if (serviceResult.ok) {
-          const normalizeServiceName = (name: string) =>
-            name.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
-          setBookingServices(
-            serviceResult.data
-              .filter((service) => normalizeServiceName(service.name) !== "standard driving lesson 1 hour")
-              .slice(0, 4),
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Unable to load homepage packages and services.", error);
       });
 
     return () => {
