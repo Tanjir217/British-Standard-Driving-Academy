@@ -6,7 +6,6 @@ import {
   registerWithEmail,
   verifyMemberEmail,
   sendWixPasswordResetEmail,
-  getWixLogoutUrl,
   getWixTokens,
   isWixMemberLoggedIn,
   persistWixTokens,
@@ -267,13 +266,6 @@ function clearLocalMemberSession() {
   }
 }
 
-function isLocalDevelopmentHost() {
-  return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1"
-  );
-}
 
 export async function signOutMember() {
   // Submit a real POST navigation so the Wix Astro integration can clear its
