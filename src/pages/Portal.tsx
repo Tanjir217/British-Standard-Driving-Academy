@@ -190,16 +190,33 @@ export function Portal() {
             <strong>{studentProfile?.status || "Profile pending"}</strong>
           </div>
 
-          <PortalCard
-            icon="calendar"
-            title="Lessons & bookings"
-            text="Your upcoming and completed lessons will be connected to the BSDA booking system here."
-          />
+          <div className="dash">
+            <Icon n="calendar" s={24} />
+            <h3>Lesson records</h3>
+            {lessonsMessage ? (
+              <p role={lessonsMessage.toLowerCase().includes("could not") || lessonsMessage.toLowerCase().includes("failed") ? "alert" : undefined}>{lessonsMessage}</p>
+            ) : (
+              <ul className="portal-lesson-list">
+                {lessons.slice(0, 5).map((lesson) => (
+                  <li key={lesson.id}>
+                    <strong>{lesson.lessonType || "Driving lesson"}</strong>
+                    <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt)))
+                      ? new Date(String(lesson.startedAt)).toLocaleDateString()
+                      : "Date not recorded"}</span>
+                    <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
+                    {lesson.instructorName && <span>Instructor: {lesson.instructorName}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <div className="dash">
             <Icon n="car" s={24} />
             <h3>Learning progress</h3>
-            {studentProfile ? (
+            {studentProfile?.lessonsCompleted !== null && studentProfile?.lessonsCompleted !== undefined &&
+             studentProfile?.lessonsRemaining !== null && studentProfile?.lessonsRemaining !== undefined &&
+             studentProfile?.progressPercent !== null && studentProfile?.progressPercent !== undefined ? (
               <>
                 <p>{studentProfile.lessonsCompleted} lessons completed · {studentProfile.lessonsRemaining} remaining</p>
                 <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress">
@@ -209,8 +226,8 @@ export function Portal() {
               </>
             ) : (
               <>
-                <p>Your instructor progress, completed lessons and next learning targets will appear here.</p>
-                <span className="portalstatus">Waiting for learner profile</span>
+                <p>Progress is not available yet because verified lesson completion and package entitlement data are not both present.</p>
+                <span className="portalstatus">Awaiting verified records</span>
               </>
             )}
           </div>
@@ -218,7 +235,8 @@ export function Portal() {
           <PortalCard
             icon="book"
             title="Learning materials"
-            text="Theory practice, preparation resources and training videos will be available here."
+            text="No student learning-material source is configured in the current codebase."
+            status="Source not configured"
           />
         </div>
 
@@ -226,14 +244,16 @@ export function Portal() {
           <div className="panel dashboardpanel">
             <div>
               <span className="ey">Learner profile</span>
-              <h2>{studentProfile.fullName}</h2>
-              <p>
-                {studentProfile.phone || "No phone number saved"}
-                {" · "}
-                {studentProfile.transmission === "either"
+              {studentProfile.profilePhotoUrl && (
+                <img className="portal-profile-photo" src={studentProfile.profilePhotoUrl} alt="" loading="lazy" />
+              )}
+              <h2>{studentProfile.fullName || "Student profile"}</h2>
+              <p>{studentProfile.phone || "No phone number saved"}</p>
+              {studentProfile.transmission && (
+                <p>{studentProfile.transmission === "either"
                   ? "Manual or automatic"
-                  : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}
-              </p>
+                  : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}</p>
+              )}
             </div>
             <button className="btn red" onClick={() => navigate("/booking")}>
               Book a lesson <Icon n="arrow" />
