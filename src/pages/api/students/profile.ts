@@ -147,8 +147,8 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
   const email = typeof record.loginEmail === "string" ? record.loginEmail : (member.loginEmail || "");
   const activity = String(record.activityStatus ?? record.status ?? "").toLowerCase();
   const status = ["active", "paused", "completed", "inactive"].includes(activity)
-    ? activity
-    : "active";
+    ? activity as "active" | "paused" | "completed" | "inactive"
+    : undefined;
   const transmissionValue = String(record.transmission ?? "").trim().toLowerCase();
   const transmission = ["manual", "automatic", "either"].includes(transmissionValue)
     ? transmissionValue as "manual" | "automatic" | "either"
