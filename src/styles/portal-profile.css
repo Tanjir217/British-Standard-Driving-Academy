@@ -444,3 +444,38 @@
     align-items: stretch;
   }
 }
+
+
+/* Profile editor modal: keep it centered in the viewport rather than in page flow. */
+.portal-profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(3px);
+}
+
+.portal-profile-modal {
+  width: min(100%, 920px);
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 640px) {
+  .portal-profile-modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .portal-profile-modal {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+}
