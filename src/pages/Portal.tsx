@@ -269,6 +269,7 @@ export function Portal() {
                 <span className="portalstatus">Awaiting verified records</span>
               </>
             )}
+            <p>{lessons.length} lesson record{lessons.length === 1 ? "" : "s"} retrieved from Wix CMS.</p>
             <h4>Lesson history</h4>
             {lessonsMessage ? <p>{lessonsMessage}</p> : (
               <ul className="portal-lesson-list">
