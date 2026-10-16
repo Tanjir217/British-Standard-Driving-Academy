@@ -35,9 +35,9 @@ export const studentService: StudentService = {
           transmission: profile.transmission ?? "either",
           assignedInstructorId: profile.assignedInstructorId,
           enrolledPackageId: profile.enrolledPackageId,
-          lessonsCompleted: profile.lessonsCompleted,
-          lessonsRemaining: profile.lessonsRemaining,
-          progressPercent: profile.progressPercent,
+          lessonsCompleted: profile.lessonsCompleted ?? 0,
+          lessonsRemaining: profile.lessonsRemaining ?? 0,
+          progressPercent: profile.progressPercent ?? 0,
           status: profile.status,
         },
       };
