@@ -24,7 +24,7 @@ export interface StudentProfileApiRecord {
   lessonsCompleted: number | null;
   lessonsRemaining: number | null;
   progressPercent: number | null;
-  status: "active" | "paused" | "completed" | "inactive";
+  status?: "active" | "paused" | "completed" | "inactive";
 }
 
 type ProfileResponse = {
