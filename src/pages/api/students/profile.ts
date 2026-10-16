@@ -45,52 +45,24 @@ type AuthenticatedMember = {
   contact?: { contactId?: string | null; email?: string | null } | null;
 };
 
-async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMember | null> {
-  // Prefer the cookie-backed Wix Astro managed session. This is the primary
-  // login flow used by the portal; the browser OAuth token is a migration fallback.
-  try {
-    const managed = await members.getCurrentMember();
-    const current = managed.member as Record<string, any> | undefined;
-    const currentId = current?._id ?? current?.id;
-    if (typeof currentId === "string" && currentId) {
-      const contact = current.contact && typeof current.contact === "object" ? current.contact : null;
-      return {
-        ...current,
-        _id: currentId,
-        loginEmail: current.loginEmail ?? current.email ?? contact?.email ?? null,
-        contactId: current.contactId ?? contact?.contactId ?? null,
-      } as AuthenticatedMember;
-    }
-  } catch {
-    // Continue to the explicit Headless OAuth token fallback below.
-  }
+async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
+  // The Wix Astro integration owns the request session. Do not accept browser
+  // OAuth tokens or caller-supplied member identifiers as an alternate login.
+  const response = await members.getCurrentMember();
+  const current = response.member as Record<string, any> | undefined;
+  const currentId = current?._id ?? current?.id;
+  if (typeof currentId !== "string" || !currentId) return null;
 
-  const authorization = request.headers.get("authorization") || "";
-  const match = authorization.match(/^Bearer\\s+(.+)$/i);
-  const accessToken = match?.[1]?.trim();
-  if (!accessToken) return null;
-
-  const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (response.status === 401 || response.status === 403) return null;
-  if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
-
-  const payload = await response.json() as Record<string, any>;
-  const member = (payload.member ?? payload) as Record<string, any>;
-  const id = member._id ?? member.id;
-  if (typeof id !== "string" || !id) return null;
-  const contact = member.contact && typeof member.contact === "object" ? member.contact : null;
+  const contact = current.contact && typeof current.contact === "object"
+    ? current.contact
+    : null;
   return {
-    ...member,
-    _id: id,
-    loginEmail: member.loginEmail ?? member.email ?? contact?.email ?? null,
-    contactId: member.contactId ?? contact?.contactId ?? null,
+    ...current,
+    _id: currentId,
+    loginEmail: current.loginEmail ?? current.email ?? contact?.email ?? null,
+    contactId: current.contactId ?? contact?.contactId ?? null,
   } as AuthenticatedMember;
 }
-
 
 function imageUrl(value: unknown): string {
   let candidate = "";
@@ -211,7 +183,7 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    const member = await getAuthenticatedMember(request);
+    const member = await getAuthenticatedMember();
     if (!member) {
       return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
     }
