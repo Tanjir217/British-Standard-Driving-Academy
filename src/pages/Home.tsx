@@ -17,6 +17,38 @@ import { packageService } from "../services/packages/packageService";
 import { bookingService, type BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 
+type PromotionalBanner = {
+  id: string;
+  title: string;
+  image: unknown;
+  imageUrl: string;
+  altText: string;
+  linkUrl: string;
+  sortOrder: number;
+};
+
+function resolveBannerImage(image: unknown, imageUrl: string): string {
+  const candidate =
+    imageUrl ||
+    (typeof image === "string"
+      ? image
+      : image && typeof image === "object"
+        ? String((image as { url?: unknown; src?: unknown }).url ?? (image as { src?: unknown }).src ?? "")
+        : "");
+  if (!candidate) return "";
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : "";
+  }
+  return "";
+}
+
+function safeBannerLink(linkUrl: string): string {
+  const value = linkUrl.trim();
+  return value.startsWith("/") || /^https?:\/\//i.test(value) ? value : "";
+}
+
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -45,6 +77,7 @@ export function Home() {
       window.matchMedia("(max-width: 600px)").matches,
   );
   const [packages, setPackages] = useState<Package[]>([]);
+  const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBanner[]>([]);
   const [bookingServices, setBookingServices] = useState<BookingServiceCatalogItem[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
@@ -85,6 +118,29 @@ export function Home() {
     }, 3000);
     return () => window.clearInterval(timer);
   }, [packageInteracted, homepageCards.length]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/promotional-banners")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Promotional banners request failed.");
+        return response.json() as Promise<{ ok?: boolean; banners?: PromotionalBanner[] }>;
+      })
+      .then((result) => {
+        if (active && result.ok && Array.isArray(result.banners)) {
+          setPromotionalBanners(result.banners);
+        }
+      })
+      .catch((error) => {
+        console.error("Unable to load homepage promotional banners.", error);
+        if (active) setPromotionalBanners([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -438,6 +494,42 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {promotionalBanners.some((banner) => resolveBannerImage(banner.image, banner.imageUrl)) && (
+        <section className="promotionalBanners section" aria-label="Promotional offers">
+          <div className="container">
+            <div className="promotionalBannersGrid">
+              {promotionalBanners.map((banner) => {
+                const imageSrc = resolveBannerImage(banner.image, banner.imageUrl);
+                if (!imageSrc) return null;
+                const link = safeBannerLink(banner.linkUrl);
+                const image = (
+                  <img
+                    src={imageSrc}
+                    alt={banner.altText || banner.title || "BSDA promotion"}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                );
+                return (
+                  <article className="promotionalBanner" key={banner.id || imageSrc}>
+                    {link ? (
+                      <a
+                        href={link}
+                        aria-label={banner.title || banner.altText || "View promotion"}
+                        target={link.startsWith("http") ? "_blank" : undefined}
+                        rel={link.startsWith("http") ? "noopener noreferrer" : undefined}
+                      >
+                        {image}
+                      </a>
+                    ) : image}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* <section className="homeMotionStats" aria-label="BSDA highlights">
         <div className="homeMotionTicker" aria-hidden="true">
