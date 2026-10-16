@@ -19,6 +19,16 @@ import {
   type StudentProfileUpdate,
 } from "../services/students/studentProfileApi";
 
+function profileImagePreviewUrl(value: string, fallback = ""): string {
+  const candidate = value.trim();
+  if (/^https:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : fallback;
+  }
+  return fallback;
+}
+
 type MemberSummary = {
   loginEmail?: string | null;
   email?: string | null;
@@ -419,7 +429,7 @@ export function Portal() {
               </label>
               {profileDraft.profilePhotoUrl.trim() && (
                 <div className="portal-profile-preview portal-profile-form-wide">
-                  <img src={profileDraft.profilePhotoUrl.trim().startsWith("wix:image://v1/") ? studentProfile?.profilePhotoUrl || "" : profileDraft.profilePhotoUrl} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
+                  <img src={profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
                   <span>Image preview</span>
                 </div>
               )}
