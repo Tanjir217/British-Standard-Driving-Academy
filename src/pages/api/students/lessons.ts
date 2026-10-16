@@ -44,7 +44,7 @@ async function authenticatedMember(): Promise<{ id: string; contactId: string; e
   const managed = await members.getCurrentMember();
   const member = managed.member as Record<string, any> | undefined;
   const id = member?._id ?? member?.id;
-  if (typeof id !== "string" || !id) return null;
+  if (!member || typeof id !== "string" || !id) return null;
   const contact = member.contact && typeof member.contact === "object" ? member.contact : {};
   return {
     id,
