@@ -165,7 +165,7 @@ export function Lessons() {
       )}
       <div className="container">
         {selection && (
-          <div className="lesson-path-selection-summary" role="status">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
             <button className="btn light" type="button" onClick={() => setShowLessonPath(true)}>Change choices</button>
           </div>
         )}
