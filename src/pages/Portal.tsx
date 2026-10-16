@@ -244,7 +244,7 @@ export function Portal() {
     );
   }
 
-  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\\s+/)[0] || "Learner";
+  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "Learner";
   const displayName = firstName || "Learner";
   const sectionItems = [
     { id: "profile" as const, label: "Personal profile", icon: "users" },
