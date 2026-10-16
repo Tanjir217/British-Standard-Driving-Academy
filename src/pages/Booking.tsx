@@ -383,7 +383,7 @@ export function Booking() {
             title="Purchase your lesson package."
             text="Review your selected package, then continue to Wix's secure checkout. After checkout, return to BSDA to schedule your lessons."
           />
-          <div className="booking booking--spaced">
+          <div className="booking booking--spaced booking--package-checkout">
             <div className="form">
               <div className="payment">
                 <span className="ey">Selected package</span>
