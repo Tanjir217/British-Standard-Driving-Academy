@@ -19,22 +19,22 @@ export type LessonPathSelection = {
 
 type LessonPathPopupProps = {
   onContinue: (selection: LessonPathSelection) => void;
+  onDismiss: () => void;
 };
 
-export function LessonPathPopup({ onContinue }: LessonPathPopupProps) {
+export function LessonPathPopup({ onContinue, onDismiss }: LessonPathPopupProps) {
   const [transmission, setTransmission] = useState<LessonPathSelection["transmission"]>("Manual");
   const [goal, setGoal] = useState<LessonPathSelection["goal"] | "">("");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        // The first-visit prompt can be dismissed without making a selection.
-        window.dispatchEvent(new CustomEvent("bsda:lesson-path-dismiss"));
+        onDismiss();
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [onDismiss]);
 
   return (
     <div className="lesson-path-overlay" role="presentation">
@@ -45,6 +45,7 @@ export function LessonPathPopup({ onContinue }: LessonPathPopupProps) {
         aria-labelledby="lesson-path-title"
         aria-describedby="lesson-path-description"
       >
+        <button className="lesson-path-close" type="button" onClick={onDismiss} aria-label="Close lesson preferences"><Icon n="close" s={19} /></button>
         <div className="lesson-path-topline">
           <span className="ey">PERSONALISED LESSON PATH</span>
           <span className="lesson-path-step">LET’S GET STARTED</span>
