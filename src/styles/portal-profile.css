@@ -909,7 +909,9 @@
   align-items: center;
   gap: 24px;
   margin-bottom: 24px;
-  padding: 16px 0 24px;
+  padding: 16px 30px;
+  border: 1px solid rgba(20, 29, 46, 0.09);
+  border-radius: 16px;
 }
 
 .portal-content-greeting {
