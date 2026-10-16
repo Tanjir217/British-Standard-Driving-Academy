@@ -331,14 +331,10 @@
   box-shadow: 0 12px 30px rgba(20, 29, 46, 0.045);
 }
 
-.portal-profile-editor-heading {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 24px;
-}
-
-.portal-profile-editor-heading h2 {
-  margin: 0;
+.portal-profile-editor-title {
+  margin: 0 0 24px;
+  color: #172033;
+  line-height: 1.2;
 }
 
 .portal-profile-form {
