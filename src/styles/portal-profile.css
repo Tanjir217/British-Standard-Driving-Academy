@@ -309,3 +309,13 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.portal-profile-cover {
+  display: block;
+  width: min(100%, 560px);
+  max-height: 180px;
+  margin: 12px 0;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f0eeea;
+}
