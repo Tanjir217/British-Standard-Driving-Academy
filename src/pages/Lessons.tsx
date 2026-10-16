@@ -70,6 +70,7 @@ export function Lessons() {
   const [cmsLoading, setCmsLoading] = useState(true);
   const [cmsError, setCmsError] = useState("");
   const [planWarning, setPlanWarning] = useState("");
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const dismissLessonPath = useCallback(() => setShowLessonPath(false), []);
 
   const continueWithSelection = (nextSelection: LessonPathSelection) => {
@@ -109,7 +110,10 @@ export function Lessons() {
     let active = true;
     setRecommendedPlans([]);
     setPlanWarning("");
-    if (!selection) return () => { active = false; };
+    if (!selection) { setRecommendationsLoading(false); return () => { active = false; }; }
+    setRecommendationsLoading(true);
+    if (cmsLoading) return () => { active = false; };
+    if (cmsError) { setRecommendationsLoading(false); return () => { active = false; }; }
 
     const selectedCategory = goalLabels[selection.goal];
     const matchingPath = lessonPaths.find((path) =>
@@ -119,9 +123,8 @@ export function Lessons() {
     );
 
     if (!matchingPath) {
-      if (!cmsLoading && !cmsError) {
-        setPlanWarning("There is no active lesson path configured for this combination yet.");
-      }
+      setPlanWarning("There is no active lesson path configured for this combination yet.");
+      setRecommendationsLoading(false);
       return () => { active = false; };
     }
 
@@ -131,6 +134,7 @@ export function Lessons() {
 
     if (mappings.length === 0) {
       setPlanWarning("This lesson path is configured, but no active package is linked to its exact slug in LessonPathPlans.");
+      setRecommendationsLoading(false);
       return () => { active = false; };
     }
 
