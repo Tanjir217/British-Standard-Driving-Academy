@@ -38,7 +38,7 @@ async function getMember(): Promise<{ memberId: string; contactId: string; email
   const managed = await members.getCurrentMember();
   const member = managed.member as Record<string, any> | undefined;
   const memberId = member?._id ?? member?.id;
-  if (typeof memberId !== "string" || !memberId) return null;
+  if (!member || typeof memberId !== "string" || !memberId) return null;
   const contact = member.contact && typeof member.contact === "object" ? member.contact : {};
   return {
     memberId,
