@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import "../styles/portal-profile.css";
@@ -15,6 +15,8 @@ import {
   getStudentProfile,
   type StudentProfileApiRecord,
   StudentProfileApiError,
+  updateStudentProfile,
+  type StudentProfileUpdate,
 } from "../services/students/studentProfileApi";
 
 type MemberSummary = {
@@ -34,6 +36,9 @@ export function Portal() {
   const [member, setMember] = useState<MemberSummary | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
@@ -76,6 +81,13 @@ export function Portal() {
           },
         };
         setMember(summary);
+        setProfileDraft({
+          firstName: currentMember.contact?.firstName || "",
+          lastName: currentMember.contact?.lastName || "",
+          nickname: currentMember.profile?.nickname || "",
+          phone: currentMember.contact?.phones?.[0] || "",
+          profilePhotoUrl: currentMember.profile?.photo?.url || "",
+        });
 
         // Profile data comes only from the protected server endpoint. If no
         // profile exists, provision it from the authenticated member's contact
@@ -89,9 +101,17 @@ export function Portal() {
           if (!active) return;
           if (response.profile) {
             setStudentProfile(response.profile);
-            setProfileMessage("Your Wix member profile was loaded from FullData.");
+            setProfileDraft({
+              firstName: response.profile.firstName || "",
+              lastName: response.profile.lastName || "",
+              nickname: response.profile.nickname || "",
+              phone: response.profile.phone || "",
+              profilePhotoUrl: response.profile.profilePhotoUrl || "",
+            });
+            setProfileMessage("Your profile is saved in FullData.");
           } else {
-            setProfileMessage("Your Wix account is signed in, but no matching FullData record was found. Please check the CMS collection and the loginEmail/contactId field values.");
+            setProfileMessage("Complete your profile to create your student record in FullData.");
+            setIsEditingProfile(true);
           }
         } catch (profileError) {
           if (!active) return;
@@ -160,6 +180,31 @@ export function Portal() {
       active = false;
     };
   }, [navigate]);
+
+  async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSavingProfile) return;
+    setIsSavingProfile(true);
+    setProfileMessage("");
+    try {
+      const response = await updateStudentProfile(profileDraft);
+      if (!response.profile) throw new Error("The profile service did not return the saved profile.");
+      setStudentProfile(response.profile);
+      setProfileDraft({
+        firstName: response.profile.firstName || "",
+        lastName: response.profile.lastName || "",
+        nickname: response.profile.nickname || "",
+        phone: response.profile.phone || "",
+        profilePhotoUrl: response.profile.profilePhotoUrl || "",
+      });
+      setProfileMessage("Your profile has been saved to FullData.");
+      setIsEditingProfile(false);
+    } catch (saveError) {
+      setProfileMessage(saveError instanceof Error ? saveError.message : "Your profile could not be saved.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }
 
   if (loading) {
     return <StudentPortalSkeleton />;
@@ -315,9 +360,13 @@ export function Portal() {
                   : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}</p>
               )}
             </div>
-            <button className="btn red" onClick={() => navigate("/booking")}>
-              Book a lesson <Icon n="arrow" />
-            </button>
+            <div className="dashboardpanelactions">
+              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Edit profile</button>
+              <button className="btn light" onClick={() => setIsEditingProfile(true)}>Complete profile</button>
+              <button className="btn red" onClick={() => navigate("/booking")}>
+                Book a lesson <Icon n="arrow" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -334,6 +383,52 @@ export function Portal() {
               </button>
             </div>
           </div>
+        )}
+        {isEditingProfile && (
+          <section className="panel portal-profile-editor" aria-labelledby="portal-profile-editor-title">
+            <div className="portal-profile-editor-heading">
+              <div>
+                <span className="ey">Personal information</span>
+                <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
+                <p>These details are saved to your own FullData record. Your sign-in email is managed by Wix and cannot be changed here.</p>
+              </div>
+              {studentProfile && <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>}
+            </div>
+            <form className="portal-profile-form" onSubmit={handleSaveProfile}>
+              <label>
+                First name
+                <input autoComplete="given-name" required maxLength={80} value={profileDraft.firstName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, firstName: event.target.value }))} />
+              </label>
+              <label>
+                Last name
+                <input autoComplete="family-name" required maxLength={80} value={profileDraft.lastName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, lastName: event.target.value }))} />
+              </label>
+              <label>
+                Preferred name
+                <input autoComplete="nickname" maxLength={80} value={profileDraft.nickname} onChange={(event) => setProfileDraft((draft) => ({ ...draft, nickname: event.target.value }))} />
+              </label>
+              <label>
+                Phone number
+                <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
+              </label>
+              <label className="portal-profile-form-wide">
+                Profile image URL
+                <input type="url" inputMode="url" placeholder="https://… or a Wix image URL" value={profileDraft.profilePhotoUrl} onChange={(event) => setProfileDraft((draft) => ({ ...draft, profilePhotoUrl: event.target.value }))} />
+                <small>Use a public HTTPS image URL or a Wix Media image URL. Direct file upload is not enabled in this version.</small>
+              </label>
+              {profileDraft.profilePhotoUrl.trim() && (
+                <div className="portal-profile-preview portal-profile-form-wide">
+                  <img src={profileDraft.profilePhotoUrl.trim().startsWith("wix:image://v1/") ? studentProfile?.profilePhotoUrl || "" : profileDraft.profilePhotoUrl} alt="Profile image preview" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />
+                  <span>Image preview</span>
+                </div>
+              )}
+              {profileMessage && <p className="portal-profile-form-message portal-profile-form-wide" role="status">{profileMessage}</p>}
+              <div className="portal-profile-form-actions portal-profile-form-wide">
+                <button type="submit" className="btn red" disabled={isSavingProfile}>{isSavingProfile ? "Saving…" : "Save profile"} <Icon n="arrow" /></button>
+                {studentProfile && <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>}
+              </div>
+            </form>
+          </section>
         )}
       </div>
     </section>
