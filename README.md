@@ -49,11 +49,13 @@ npm run preview:astro
 
 Do not run `wix headless link` or any release command until the Wix site binding has been checked. The current repository has an existing `wix.config.json`, and the site ID must be reconciled with the intended `bsda.online` site first.
 
-## Endpoint source files added in the migration branch
+## Student portal endpoint source files on `feat/student-portal-full-data`
 
-- `GET /api/students/profile` — current member's profile or a structured missing-profile state.
-- `POST /api/students/profile` — idempotent profile provisioning for the authenticated member.
-- `PATCH /api/students/profile` — ownership-checked updates to allowed profile fields.
+- `GET /api/students/profile` — read-only profile resolved from `Members/FullData`.
+- `GET /api/students/lessons` — current student's protected `LessonRecords` rows.
+- `GET /api/students/bookings` — current student's Wix Bookings records filtered by verified contactId.
+- `GET /api/students/enrollment` — current member's Wix Pricing Plans orders.
+- `GET /api/students/learning-materials` — enabled `portal-video-1` through `portal-video-6` slots from `SiteContent`.
 - `GET /api/admin/authorization` — fail-closed approved-staff authorization.
 - `GET /api/admin/students`, `PATCH /api/admin/students` — protected student list and limited updates.
 - `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons` — protected lesson record operations.
