@@ -97,29 +97,3 @@ export async function getStudentProfile(): Promise<ProfileResponse> {
   return readResponse(response);
 }
 
-export async function createStudentProfile(input: {
-  firstName: string;
-  lastName: string;
-  phone?: string;
-}): Promise<ProfileResponse> {
-  const response = await fetchAuthenticatedProfile({
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  return readResponse(response);
-}
-
-export async function updateStudentProfile(input: {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  transmission?: "manual" | "automatic" | "either";
-}): Promise<ProfileResponse> {
-  const response = await fetchAuthenticatedProfile({
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  return readResponse(response);
-}
