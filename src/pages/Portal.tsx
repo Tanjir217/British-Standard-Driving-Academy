@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon";
 import "../styles/portal-profile.css";
 import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
 import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../services/students/studentBookingApi";
+import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
 import {
   getCurrentMember,
   signOutMember,
@@ -57,6 +58,8 @@ export function Portal() {
   const [lessonsMessage, setLessonsMessage] = useState("Loading lesson records…");
   const [bookings, setBookings] = useState<StudentBookingRecord[]>([]);
   const [bookingsMessage, setBookingsMessage] = useState("Loading bookings…");
+  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
+  const [enrollmentMessage, setEnrollmentMessage] = useState("Loading enrollment…");
 
   useEffect(() => {
     let active = true;
@@ -139,6 +142,15 @@ export function Portal() {
           setBookingsMessage(bookingResult.data.length ? "" : "No bookings are associated with this account yet.");
         } else {
           setBookingsMessage(bookingResult.error.message);
+        }
+
+        const enrollmentResult = await listEnrollmentsForCurrentStudent();
+        if (!active) return;
+        if (enrollmentResult.ok) {
+          setEnrollments(enrollmentResult.data);
+          setEnrollmentMessage(enrollmentResult.data.length ? "" : "No Wix Pricing Plans orders were found for this account.");
+        } else {
+          setEnrollmentMessage(enrollmentResult.error.message);
         }
       } catch (err) {
         if (!active) return;
@@ -252,6 +264,23 @@ export function Portal() {
                       ? new Date(String(lesson.startedAt)).toLocaleDateString()
                       : "Date not recorded"}</span>
                     <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="dash">
+            <Icon n="package" s={24} />
+            <h3>Packages & enrollment</h3>
+            {enrollmentMessage ? <p>{enrollmentMessage}</p> : (
+              <ul className="portal-lesson-list">
+                {enrollments.slice(0, 3).map((enrollment) => (
+                  <li key={enrollment.id}>
+                    <strong>{enrollment.planName || "Wix pricing plan"}</strong>
+                    <span className="portalstatus">{enrollment.status.replace(/_/g, " ").toLowerCase()}</span>
+                    {enrollment.startDate && <span>Starts: {new Date(enrollment.startDate).toLocaleDateString()}</span>}
+                    {enrollment.endDate && <span>Ends: {new Date(enrollment.endDate).toLocaleDateString()}</span>}
                   </li>
                 ))}
               </ul>
