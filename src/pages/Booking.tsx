@@ -299,10 +299,8 @@ export function Booking() {
   if (accountLoading) {
     return (
       <section className="page">
-        <div className="container authloading">
-          <span className="ey">Account verification</span>
-          <h1>Checking your BSDA account...</h1>
-          <p>Bookings are available only to signed-in users with a matching FullData record.</p>
+        <div className="container authloading booking-account-verification-loading">
+          <img src="/b7c.gif" alt="Checking your BSDA account" />
         </div>
       </section>
     );
