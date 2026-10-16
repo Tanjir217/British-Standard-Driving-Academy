@@ -1,18 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { Reveal } from "../components/Reveal";
 import { VideoShowcase } from "../components/VideoShowcase";
-import { PackageCard } from "../components/PackageCard";
-import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
 import { VideoEmbed } from "../components/VideoEmbed";
 import {
   getHomeReels,
   type VideoLibraryItem,
 } from "../services/videoLibraryService";
-import { lessons } from "../data/site";
 import { packageService } from "../services/packages/packageService";
 import { bookingService, type BookingServiceCatalogItem } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
@@ -84,9 +81,6 @@ export function Home() {
   const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
   const [reelUrls, setReelUrls] = useState<VideoLibraryItem[]>([]);
-  const [packageActiveIndex, setPackageActiveIndex] = useState(0);
-  const [packageInteracted, setPackageInteracted] = useState(false);
-  const packageTouchStartX = useRef<number | null>(null);
 
   const packageCards = packages.map((plan) => ({
     ...toPackageCard(plan),
@@ -102,22 +96,6 @@ export function Home() {
     features: [] as string[],
   }));
   const homepageCards = [...packageCards, ...serviceCards];
-
-  useEffect(() => {
-    // The desktop layout displays every package at once; only rotate the mobile carousel.
-    if (
-      packageInteracted ||
-      homepageCards.length < 2 ||
-      !window.matchMedia("(max-width: 700px)").matches
-    )
-      return;
-    const timer = window.setInterval(() => {
-      setPackageActiveIndex((current) =>
-        Math.min(current + 1, homepageCards.length - 1),
-      );
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [packageInteracted, homepageCards.length]);
 
   useEffect(() => {
     let active = true;
