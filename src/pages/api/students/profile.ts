@@ -162,6 +162,8 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
     if (emailMatches.length === 1) return emailMatches[0];
   }
+  // Do not insert if the bounded query may have truncated the collection.
+  if (rows.length >= 500) throw new Error("FULLDATA_SCAN_LIMIT_REACHED");
   return null;
 }
 
@@ -277,6 +279,9 @@ export const GET: APIRoute = async () => {
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
     }
+    if (reason === "FULLDATA_SCAN_LIMIT_REACHED") {
+      return json({ ok: false, code: "FULLDATA_SCAN_LIMIT_REACHED", message: "The FullData collection exceeds the safe lookup window. Ask the academy to verify your record before creating a duplicate." }, 503);
+    }
     return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from FullData. Verify the site binding and CMS permissions." }, 500);
   }
 };
@@ -316,6 +321,9 @@ export const PATCH: APIRoute = async ({ request }) => {
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support before it can be updated." }, 409);
+    }
+    if (reason === "FULLDATA_SCAN_LIMIT_REACHED") {
+      return json({ ok: false, code: "FULLDATA_SCAN_LIMIT_REACHED", message: "The FullData collection exceeds the safe lookup window. Ask the academy to verify your record before creating a duplicate." }, 503);
     }
     return json({ ok: false, code: "PROFILE_SAVE_FAILED", message: "We could not save your profile to FullData. Verify that the configured collection permits elevated insert and update operations." }, 500);
   }
