@@ -1341,9 +1341,21 @@ nav .navbook:hover {
   display: none;
 }
 
-.booking--package-checkout > .form > .btn.full + .formerror + .btn.full,
-.booking--package-checkout > .form > .btn.full + .btn.full {
-  margin-top: 20px;
+.booking--package-checkout .package-checkout-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.booking--package-checkout .package-checkout-actions > .btn {
+  min-width: 0;
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .booking--package-checkout .package-checkout-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .form,
 .aside,
