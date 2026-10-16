@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading } from "../components/Heading";
+import { PackageCard } from "../components/PackageCard";
 // Legacy mock-card component retained for reference while testing the CMS-driven implementation.
 // import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
@@ -183,20 +184,19 @@ export function Lessons() {
             {!cmsLoading && !cmsError && recommendedPlans.length > 0 && (
               <div className="cards pagecards">
                 {recommendedPlans.map(({ mapping, plan }) => (
-                  <article className="servicecard" key={mapping.id}>
-                    <div>
-                      {mapping.isRecommended && <span className="cardey">{mapping.recommendationLabel || "Recommended"}</span>}
-                      <h3>{plan.name}</h3>
-                      <p className="cardey">{formatMoney(plan.priceMinor, plan.currency)}</p>
-                      <p>{plan.description || mapping.title}</p>
-                      {plan.features.length > 0 && (
-                        <ul>{plan.features.map((feature, index) => <li key={index}>{feature}</li>)}</ul>
-                      )}
-                    </div>
-                    <Link className="btn red full" to={`/packages`}>
-                      View package options <span>→</span>
-                    </Link>
-                  </article>
+                  <PackageCard
+                    key={mapping.id}
+                    full
+                    p={{
+                      id: plan.id,
+                      name: plan.name,
+                      price: formatMoney(plan.priceMinor, plan.currency),
+                      eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
+                      description: plan.description || mapping.title,
+                      features: plan.features,
+                      popular: mapping.isRecommended,
+                    }}
+                  />
                 ))}
               </div>
             )}
