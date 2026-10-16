@@ -428,10 +428,7 @@ export function Portal() {
               aria-labelledby="portal-profile-editor-title"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="portal-profile-editor-heading">
-                <span className="ey">Personal information</span>
-                <h2 id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
-              </div>
+              <h2 className="portal-profile-editor-title" id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
               <form className="portal-profile-form" onSubmit={handleSaveProfile}>
                 <label>
                   First name
@@ -449,21 +446,24 @@ export function Portal() {
                   Phone number
                   <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
                 </label>
-                <label className="portal-profile-form-wide">
-                  Profile image
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    aria-describedby="portal-profile-image-help"
-                    onChange={(event) => {
-                      const file = event.currentTarget.files?.[0] || null;
-                      setProfilePhotoFile(file);
-                      setProfilePhotoPreview(file ? URL.createObjectURL(file) : "");
-                      setProfileMessage("");
-                    }}
-                  />
-                  <small id="portal-profile-image-help">Choose a JPG, PNG, WebP, or GIF image up to 5 MB. The image will upload to Wix Media when you save your profile.</small>
-                </label>
+                {!profilePhotoFile && (
+                  <label className="portal-profile-form-wide">
+                    Profile image
+                    <input
+                      key={profilePhotoFile ? "image-selected" : "image-empty"}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      aria-describedby="portal-profile-image-help"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0] || null;
+                        setProfilePhotoFile(file);
+                        setProfilePhotoPreview(file ? URL.createObjectURL(file) : "");
+                        setProfileMessage("");
+                      }}
+                    />
+                    <small id="portal-profile-image-help">Choose a JPG, PNG, WebP, or GIF image up to 5 MB. The image will upload to Wix Media when you save your profile.</small>
+                  </label>
+                )}
                 {(profilePhotoPreview || profileDraft.profilePhotoUrl.trim()) && (
                   <div className="portal-profile-preview portal-profile-form-wide">
                     <img
@@ -476,6 +476,8 @@ export function Portal() {
                       <button type="button" className="btn light" onClick={() => {
                         setProfilePhotoFile(null);
                         setProfilePhotoPreview("");
+                        const fileInput = document.getElementById("portal-profile-image-input") as HTMLInputElement | null;
+                        if (fileInput) fileInput.value = "";
                       }}>Remove selected image</button>
                     )}
                   </div>
