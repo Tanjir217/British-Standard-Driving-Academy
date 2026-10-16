@@ -11,7 +11,6 @@ import {
   persistWixTokens,
   restoreWixTokens,
   setWixTokens,
-  wixClient,
 } from "../wix";
 
 const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
