@@ -343,10 +343,9 @@ export function Booking() {
   if (loading) {
     return (
       <section className="page">
-        <div className="container authloading">
-          <span className="ey">Booking</span>
-          <h1>Preparing your booking...</h1>
-          <p>Please wait while we prepare your booking.</p>
+        <div className="container authloading booking-account-verification-loading" role="status" aria-label="Preparing your booking">
+          <span className="booking-account-verification-spinner" aria-hidden="true" />
+          <span className="sr-only">Preparing your booking. Please wait...</span>
         </div>
       </section>
     );
