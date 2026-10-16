@@ -18,13 +18,12 @@
 
 ## Step-by-step implementation
 
-### Step 1 — Baseline and branch
-- Create this branch from the current `feat/wix-managed-booking-checkout` head.
-- Record the current profile, authentication, lesson, booking, package, and learning-material architecture.
-- Keep a running list of code work vs. Wix dashboard/data work.
-- Verify branch and baseline files.
+### Step 1 — Baseline and branch — COMPLETE
+- Created `feat/student-portal-full-data` from `feat/wix-managed-booking-checkout`.
+- Inspected profile, authentication, lessons, bookings, packages, content management, and current CMS endpoint patterns.
+- Added this plan and verified it by fetching it back from GitHub.
 
-### Step 2 — FullData profile contract and secure reads
+### Step 2 — FullData profile contract and secure reads — IMPLEMENTED; runtime verification pending
 - Keep profile reads in the server API, never directly in browser code.
 - Validate the Wix member access token server-side.
 - Resolve the matching FullData record by contactId, detect duplicates, and return only approved profile fields.
@@ -32,14 +31,14 @@
 - Preserve status/approval gates only when supported by the actual configured FullData fields.
 - Verify endpoint behavior for unauthenticated, missing, duplicate, inactive, and successful matches.
 
-### Step 3 — Student portal profile UI
+### Step 3 — Student portal profile UI — IMPLEMENTED; browser verification pending
 - Remove the temporary raw FullData debug panel from the normal portal UI.
 - Display FullData identity, contact, photo, account status, and timestamps where present.
 - Add explicit loading, missing-profile, incomplete-data, and API-error states.
 - Keep booking and lesson statistics unavailable until backed by verified data.
 - Verify responsive and accessibility-friendly markup.
 
-### Step 4 — Lesson Records backend adapter
+### Step 4 — Lesson Records backend adapter — IMPLEMENTED; Wix field/permission verification pending
 - Add a server-side, authenticated endpoint for the signed-in student's lesson records.
 - Use a configurable Wix CMS collection ID, defaulting to the agreed Lessons Records collection.
 - Restrict the query to the authenticated student's verified FullData contactId/approved identifier.
@@ -48,34 +47,34 @@
 - Do not infer completion from bookings or create lesson records from the frontend.
 - Verify missing configuration, authorization, query failure, and empty result behavior.
 
-### Step 5 — Booking history integration
+### Step 5 — Booking history integration — IMPLEMENTED; Wix query/permission verification pending
 - Inspect supported Wix Bookings APIs already installed in this repository.
 - Implement only queries whose API contract and authenticated ownership filter can be verified.
 - Show upcoming and past bookings with real service, time, status, and staff data.
 - If the Wix API does not support a safe authenticated current-member query with the current integration, document the precise Wix-side configuration or server API work still required rather than guessing an endpoint.
 
-### Step 6 — Package, instructor, and learning material data
+### Step 6 — Package, instructor, and learning material data — PARTIALLY IMPLEMENTED
 - Reuse the existing Wix Pricing Plans and staff services where appropriate.
 - Resolve a student's package only from a verified order/enrollment association.
 - Resolve instructor assignments only from a real booking or explicit assignment record.
 - Connect learning materials only to an existing verified source; otherwise show an honest empty state.
 - Do not present a public pricing plan as proof that the student purchased it.
 
-### Step 7 — Progress calculations
+### Step 7 — Progress calculations — BLOCKED ON AUTHORITATIVE ENTITLEMENT/STATUS DATA
 - Define completed-lesson statuses from actual lesson records.
 - Derive completed lessons from verified completed records.
 - Derive remaining lessons only when package entitlement/lesson quantity is known from a verified enrollment.
 - Calculate progress only when numerator and denominator are known; otherwise represent it as unavailable.
 - Verify edge cases such as zero entitlement, cancelled bookings, no-shows, duplicate lesson rows, and missing dates.
 
-### Step 8 — Profile updates and source of truth
+### Step 8 — Profile updates and source of truth — READ-ONLY FULLDATA CONTRACT IMPLEMENTED
 - Audit current POST/PATCH writes to `StudentProfiles`.
 - Do not write profile edits to a collection that the GET endpoint does not read.
 - Keep FullData read-only unless a supported and approved write contract is established.
 - If editable personal fields are required, implement a separate private student-owned profile record with clear field ownership, and merge it predictably with FullData without overwriting authoritative CMS fields.
 - Verify ownership checks and input validation.
 
-### Step 9 — Final audit and verification
+### Step 9 — Final audit and verification — IN PROGRESS
 - Re-fetch every changed file and inspect the complete diff.
 - Search for remaining hardcoded/mock dashboard values and placeholder copy.
 - Run `npm run check` and `npm run build` if a local checkout/runtime is available; record exact results.
@@ -97,3 +96,26 @@
 - Bookings/packages/instructor/material sections either show verified backend data or a clear, honest unavailable/empty state.
 - All feasible code changes are committed to this branch and re-inspected.
 - Any work that cannot safely be implemented from repository evidence is listed explicitly for Wix-side setup or additional schema details.
+
+
+## Implementation results (2026-10-16)
+
+### Code completed on this branch
+- Protected GET profile API now prefers the Wix Astro managed member session, falls back to a validated Headless OAuth bearer token, resolves `Members/FullData`, matches contactId first, and uses email fallback only when Wix did not return contactId.
+- Profile mapping no longer fabricates `transmission: "either"`, lesson counts, remaining entitlement, or progress percentages when those fields are absent in FullData.
+- Removed the temporary raw FullData debug panel from the student portal.
+- Student portal now requests and displays profile, lesson records, booking records, current-member pricing plan orders, and the six managed `portal-video-N` content slots.
+- Added protected `GET /api/students/lessons` using `LessonRecords` and configurable student field ID (`studentId` by default).
+- Added protected `GET /api/students/bookings`, filtered by Wix's supported `contactDetails.contactId` query field and rechecked against the authenticated FullData contactId.
+- Added protected `GET /api/students/enrollment` using the current-member Pricing Plans order API.
+- Removed unused student-profile POST/PATCH writes to the competing `StudentProfiles` collection from this branch; FullData is currently read-only and authoritative for identity/profile fields.
+- Added responsive CSS for profile photos, lesson history, and learning videos.
+
+### Not fully verifiable from repository edits alone
+- The exact field ID `studentId` in `LessonRecords` must contain the student's FullData `contactId` as intended by the project data contract.
+- Wix Bookings and Pricing Plans calls must be exercised against the connected Wix site with the current app/site permissions.
+- The current Wix order object may not include a display-ready plan name in every response; verify returned order fields in the local response.
+- Assigned instructor display depends on booking records containing a resource name.
+- Progress and remaining lesson count remain unavailable until lesson completion semantics and package entitlement quantities are authoritatively defined.
+- The learning-video slots use the existing `SiteContent` CMS and `/api/content` endpoint; verify the collection is readable and the six `portal-video-N` keys are enabled as desired.
+- No local build or typecheck has been run by this GitHub-only editing session.
