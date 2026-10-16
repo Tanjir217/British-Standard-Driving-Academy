@@ -8,7 +8,11 @@ export interface StudentLessonRecord {
   status: string;
   startedAt: string | null;
   durationMinutes: number | null;
+  instructorId?: string;
   instructorName: string;
+  objectives?: string[];
+  strengths?: string[];
+  improvements?: string[];
   instructorNotes: string;
   progressScore: number | null;
 }
