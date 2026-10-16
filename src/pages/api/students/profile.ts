@@ -149,6 +149,13 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
   const status = ["active", "paused", "completed", "inactive"].includes(activity)
     ? activity
     : "active";
+  const transmissionValue = String(record.transmission ?? "").trim().toLowerCase();
+  const transmission = ["manual", "automatic", "either"].includes(transmissionValue)
+    ? transmissionValue as "manual" | "automatic" | "either"
+    : undefined;
+  const completed = record.lessonsCompleted == null ? null : Number(record.lessonsCompleted);
+  const remaining = record.lessonsRemaining == null ? null : Number(record.lessonsRemaining);
+  const progress = record.progressPercent == null ? null : Number(record.progressPercent);
   return {
     id: String(record._id ?? ""),
     memberId: member._id,
@@ -168,13 +175,12 @@ function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
     lastLoginDate: record.lastLoginDate ?? null,
     createdDate: record._createdDate ?? null,
     updatedDate: record._updatedDate ?? null,
-    transmission: "either" as const,
-    lessonsCompleted: 0,
-    lessonsRemaining: 0,
-    progressPercent: 0,
+    ...(transmission ? { transmission } : {}),
+    lessonsCompleted: completed !== null && Number.isFinite(completed) ? completed : null,
+    lessonsRemaining: remaining !== null && Number.isFinite(remaining) ? remaining : null,
+    progressPercent: progress !== null && Number.isFinite(progress) ? Math.min(100, Math.max(0, progress)) : null,
   };
 }
-
 async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecord | null> {
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
   const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
@@ -212,15 +218,16 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
     return contactMatches[0];
   }
 
-  const emailMatches = email
-    ? records.filter((record) =>
-        String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email,
-      )
-    : [];
-  if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-  if (emailMatches.length === 1) {
-    console.info("[BSDA FullData profile] FullData match found by email.");
-    return emailMatches[0];
+  // Email fallback is permitted only when Wix did not expose contactId.
+  if (!contactId && email) {
+    const emailMatches = records.filter((record) =>
+      String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email,
+    );
+    if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    if (emailMatches.length === 1) {
+      console.info("[BSDA FullData profile] FullData match found by email.");
+      return emailMatches[0];
+    }
   }
 
   console.info("[BSDA FullData profile] No matching record in queried rows.", {
