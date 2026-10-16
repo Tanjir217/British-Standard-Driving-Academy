@@ -4,7 +4,8 @@ import { Heading } from "../components/Heading";
 import { LessonCard } from "../components/LessonCard";
 import { LessonPathPopup, type LessonPathSelection } from "../components/LessonPathPopup";
 import { Reveal } from "../components/Reveal";
-import { lessons } from "../data/site";
+// Legacy static lesson data retained for reference; the CMS-driven lesson path is being tested instead.
+// import { lessons } from "../data/site";
 import "../package-page-grid.css";
 import { packageService } from "../services/packages/packageService";
 import type { Package } from "../services/domain/types";
@@ -206,19 +207,24 @@ export function Lessons() {
           </section>
         )}
 
-        <Heading
-          center
-          ey="Driving Lesson"
-          title="A progression, not random practice."
-          text="Each lesson type has a clear outcome so learners understand what they are improving and why it matters."
-        />
-        <div className="lessoncards light">
-          {lessons.map((lesson, index) => (
-            <Reveal key={lesson[0]}>
-              <LessonCard lesson={lesson} index={index} light />
-            </Reveal>
-          ))}
-        </div>
+        {/*
+          LEGACY MOCK LESSON CARDS — intentionally commented out, not deleted.
+          Restore this block only when the static mock data is needed again.
+          <Heading
+            center
+            ey="Driving Lesson"
+            title="A progression, not random practice."
+            text="Each lesson type has a clear outcome so learners understand what they are improving and why it matters."
+          />
+          <div className="lessoncards light">
+            {lessons.map((lesson, index) => (
+              <Reveal key={lesson[0]}>
+                <LessonCard lesson={lesson} index={index} light />
+              </Reveal>
+            ))}
+          </div>
+        */}
+
         <div className="timeline">
           {["Understand", "Practice", "Refine", "Perform"].map((label, index) => (
             <div key={label}>
