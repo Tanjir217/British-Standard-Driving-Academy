@@ -74,7 +74,7 @@
 - If editable personal fields are required, implement a separate private student-owned profile record with clear field ownership, and merge it predictably with FullData without overwriting authoritative CMS fields.
 - Verify ownership checks and input validation.
 
-### Step 9 — Final audit and verification — IN PROGRESS
+### Step 9 — Final audit and verification — CODE AUDIT COMPLETE; runtime verification pending
 - Re-fetch every changed file and inspect the complete diff.
 - Search for remaining hardcoded/mock dashboard values and placeholder copy.
 - Run `npm run check` and `npm run build` if a local checkout/runtime is available; record exact results.
@@ -121,4 +121,5 @@
 - Assigned instructor display depends on booking records containing a resource name.
 - Progress and remaining lesson count remain unavailable until lesson completion semantics and package entitlement quantities are authoritatively defined.
 - The learning-video slots use the existing `SiteContent` CMS and `/api/content` endpoint; verify the collection is readable and the six `portal-video-N` keys are enabled as desired.
-- No local build or typecheck has been run by this GitHub-only editing session.
+- Re-fetched and inspected every changed source/document file after implementation; checked that the portal's raw diagnostic panel, obsolete placeholder copy, FullData fake progress values, and profile POST/PATCH writes are absent.
+- The latest GitHub commit status reports the Vercel check as pending. No successful build/typecheck result is available yet; this session does not have the local project runtime needed to run `npm run check` or `npm run build`.
