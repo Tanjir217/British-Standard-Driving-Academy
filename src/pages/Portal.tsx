@@ -32,7 +32,7 @@ export function Portal() {
   const [profileMessage, setProfileMessage] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "" });
+  const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "", transmission: "either" });
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState("");
   const [loading, setLoading] = useState(true);
@@ -96,6 +96,7 @@ export function Portal() {
           nickname: response.profile.nickname || "",
           phone: response.profile.phone || "",
           profilePhotoUrl: response.profile.profilePhotoUrl || "",
+          transmission: response.profile.transmission || "either",
         });
         setProfileMessage("Your profile is saved in StudentProfiles.");
       } catch (profileError) {
@@ -240,6 +241,7 @@ export function Portal() {
         nickname: response.profile.nickname || "",
         phone: response.profile.phone || "",
         profilePhotoUrl: response.profile.profilePhotoUrl || "",
+        transmission: response.profile.transmission || "either",
       });
       setProfilePhotoFile(null);
       setProfilePhotoPreview("");
@@ -484,6 +486,17 @@ export function Portal() {
                 <label>
                   Phone number
                   <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
+                </label>
+                <label>
+                  Transmission preference
+                  <select
+                    value={profileDraft.transmission}
+                    onChange={(event) => setProfileDraft((draft) => ({ ...draft, transmission: event.target.value as StudentProfileUpdate["transmission"] }))}
+                  >
+                    <option value="either">Either manual or automatic</option>
+                    <option value="manual">Manual</option>
+                    <option value="automatic">Automatic</option>
+                  </select>
                 </label>
                 {!profilePhotoFile && (
                   <label className="portal-profile-form-wide">
