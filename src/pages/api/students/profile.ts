@@ -375,7 +375,7 @@ async function persistEditableProfile(member: AuthenticatedMember, fullDataRecor
   const fullName = [input.firstName, input.lastName].filter(Boolean).join(" ");
   const changes: WixRecord = {
     title: fullName,
-    memberId: member._id,
+    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim(),
     fullName,
     firstName: input.firstName,
     lastName: input.lastName,
