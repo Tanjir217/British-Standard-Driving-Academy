@@ -59,10 +59,11 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ ok: false, code: "INVALID_IMAGE", message: "Choose a JPG, PNG, WebP, or GIF image up to 5 MB." }, 400);
     }
 
-    const generateUploadUrl = auth.elevate(files.generateFileUploadUrl) as (mimeType: string, options: Record<string, unknown>) => Promise<{ uploadUrl?: string }>;
+    // Wix's generated upload URL accepts the MIME type and upload options.
+    // Keep the request minimal and use the documented filename option.
+    const generateUploadUrl = auth.elevate(files.generateFileUploadUrl) as (mimeType: string, options: { fileName: string; private?: boolean }) => Promise<{ uploadUrl?: string }>;
     const result = await generateUploadUrl(mimeType, {
       fileName,
-      sizeInBytes,
       private: false,
     });
     if (!result?.uploadUrl || !/^https:\/\//i.test(result.uploadUrl)) {
