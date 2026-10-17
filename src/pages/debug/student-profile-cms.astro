@@ -21,13 +21,11 @@ export const prerender = false;
       <pre id="result" aria-live="polite">Waiting for the backend response…</pre>
     </main>
     <script>
-      const runButton = document.querySelector<HTMLButtonElement>("#run");
-      const status = document.querySelector<HTMLElement>("#status");
-      const result = document.querySelector<HTMLPreElement>("#result");
-
-      if (!runButton || !status || !result) {
-        throw new Error("StudentProfile CMS debug page is missing a required element.");
-      }
+      // These elements are part of this page's static markup. Non-null assertions
+      // preserve their concrete DOM types inside the async callback as well.
+      const runButton = document.querySelector<HTMLButtonElement>("#run")!;
+      const status = document.querySelector<HTMLElement>("#status")!;
+      const result = document.querySelector<HTMLPreElement>("#result")!;
 
       async function runTest() {
         runButton.disabled = true;
