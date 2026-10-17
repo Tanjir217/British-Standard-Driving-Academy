@@ -80,19 +80,21 @@ There is no Vercel API/serverless proxy in the admin authentication or dashboard
 
 ## Authentication and session handling
 
-The browser uses the current Wix `OAuthStrategy` with the public Headless client ID.
+The student portal uses the Wix Astro integration's built-in managed authentication flow. The branded `/login` screen redirects to `/api/auth/login`; Wix hosts the credential, registration, verification, and recovery flow. The Astro integration exchanges the OAuth response and manages the authenticated request session. Sign-out submits a POST to `/api/auth/logout`.
 
-Anonymous visitor authentication is handled by the Wix SDK automatically on the first API call. Member login uses the current OAuth PKCE flow.
+Do not use the custom Headless SDK `auth.login()` / `auth.register()` flow for the student portal. Wix's current documentation says this custom member-login flow is not supported by the Astro integration because it does not establish the session the integration expects.
 
-The current foundation keeps OAuth flow state and the temporary member token session in `sessionStorage`. It does not put Wix secrets or client secrets in the browser.
+The browser does not store or attach Wix member access tokens for student API calls. `GET /api/auth/session` reads the current member from the server-side Astro session and returns only the current member's basic identity.
 
 ## Security boundary
 
-Direct browser access is limited to Wix operations that are authorized for the current member token.
+Student profile data is read server-side from `Members/FullData` using the Wix Astro-managed session. Lesson Records, bookings, enrollment, and learning-material endpoints also require that session. Protected student APIs resolve identity from the authenticated Wix member, match FullData by contactId where applicable, and enforce ownership on the server. They do not accept browser-supplied identity IDs or fall back to bearer tokens from the legacy browser OAuth client.
 
-Student Profiles and Lesson Records are Admin-only Wix CMS collections. They therefore remain behind a future protected application backend boundary rather than being read directly from React.
+The browser-side Wix SDK client remains in the repository for existing non-portal integrations and legacy code; it is not an alternate authentication path for student portal endpoints. directly from React.
 
-Removing the Vercel `api/admin/*` functions does not remove this CMS security requirement. It only removes an unnecessary proxy for the current admin Bookings dashboard.
+Pricing-plan enrollment uses Wix's current-member order API. Student learning videos use the existing managed `SiteContent` slots (`portal-video-1` through `portal-video-6`).
+
+Keep StudentProfiles and LessonRecords Admin-only in Wix CMS. Do not make these collections publicly readable to support the student portal. The protected endpoint queries and field IDs must be verified against the actual Wix site before production use.
 
 ## Source-of-truth rules
 

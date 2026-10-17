@@ -4,6 +4,7 @@ import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
 import { SiteLayout } from "./components/SiteLayout";
 import { Home } from "./pages/Home";
 import { Booking } from "./pages/Booking";
+import { PaymentReturn } from "./pages/PaymentReturn";
 import { Packages } from "./pages/Packages";
 import { Lessons } from "./pages/Lessons";
 import { Instructors } from "./pages/Instructors";
@@ -17,7 +18,6 @@ import { Contact } from "./pages/Contact";
 import { JoinOurTeam } from "./pages/JoinOurTeam";
 import { NotFound } from "./pages/NotFound";
 import { AdminGate } from "./pages/AdminGate";
-import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminLogin } from "./pages/AdminLogin";
 import "./styles.css";
 
@@ -36,9 +36,11 @@ function AppRoutes() {
   const query = new URLSearchParams(search);
   const wixAdminRoute = pathname === "/" ? query.get("bsdaAdmin") : null;
   const wixAuthRoute = pathname === "/" ? query.get("bsdaAuth") : null;
+  const wixPaymentRoute = pathname === "/" ? query.get("bsdaPayment") : null;
 
   // Wix static hosting may return 404 for deep SPA routes. OAuth/member
   // callbacks therefore return through the root document with a query marker.
+  if (wixPaymentRoute === "return") return <PaymentReturn />;
   if (wixAdminRoute === "login") return <AdminLogin />;
   if (wixAdminRoute === "dashboard") return <AdminGate />;
   if (wixAdminRoute === "auth-callback" || wixAuthRoute === "callback") return <AuthCallback />;

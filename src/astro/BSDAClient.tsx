@@ -11,6 +11,9 @@ import { Portal } from "../pages/Portal";
 import { Login } from "../pages/Login";
 import { AuthCallback } from "../pages/AuthCallback";
 import { FAQ } from "../pages/FAQ";
+import { About } from "../pages/About";
+import { Contact } from "../pages/Contact";
+import { JoinOurTeam } from "../pages/JoinOurTeam";
 import { NotFound } from "../pages/NotFound";
 import { AdminDashboard } from "../pages/AdminDashboard";
 import "../styles.css";
@@ -26,8 +29,20 @@ function ScrollToTop() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation();
-  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
+  const { pathname, search } = useLocation();
+  const query = new URLSearchParams(search);
+
+  // Wix OAuth redirects to the root document with this query marker because
+  // some Wix-hosted setups do not resolve SPA deep links as server routes.
+  // The root URL must render AuthCallback before Home so the authorization
+  // code is exchanged and the member is navigated to the saved return path.
+  const isRootAuthCallback =
+    pathname === "/" && query.get("bsdaAuth") === "callback";
+  if (isRootAuthCallback || pathname === "/auth/callback") {
+    return <AuthCallback />;
+  }
+
+  const isAuthRoute = pathname === "/login";
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
   if (isAdminRoute) {
@@ -43,7 +58,6 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     );
@@ -60,6 +74,9 @@ function AppRoutes() {
         <Route path="/instructors/:instructorId" element={<InstructorDetail />} />
         <Route path="/portal" element={<Portal />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/join-our-team" element={<JoinOurTeam />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteLayout>

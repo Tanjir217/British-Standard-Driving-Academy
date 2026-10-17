@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Brand } from "./Brand";
 import { Icon } from "./Icon";
+import { ExitIntentPopup } from "./ExitIntentPopup";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [headerOpen, setHeaderOpen] = useState(false);
@@ -10,6 +11,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showQuickIntro, setShowQuickIntro] = useState(pathname === "/");
+  const [heroInView, setHeroInView] = useState(pathname === "/");
 
   useEffect(() => {
     if (pathname !== "/") {
@@ -37,6 +39,26 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   }, []);
 
 
+  useEffect(() => {
+    if (pathname !== "/") {
+      setHeroInView(false);
+      return;
+    }
+
+    const hero = document.querySelector(".hero");
+    if (!hero) {
+      setHeroInView(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeroInView(entry.isIntersecting),
+      { threshold: 0.01 },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, [pathname]);
+
   const nav = [
     ["/packages", "Packages"],
     ["/lessons", "Lessons"],
@@ -48,7 +70,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className={scrolled ? "site scrolled" : "site"}>
+    <div className={`site${scrolled ? " scrolled" : ""}${heroInView ? " hero-in-view" : ""}`} >
       <div className="scrollbar" style={{ width: `${progress}%` }} />
 
       <div className="topbar">
@@ -121,6 +143,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         </Link>
       </div>
       <main>{children}</main>
+      <ExitIntentPopup />
 
       <footer>
         <div className="container footlead">
@@ -174,6 +197,24 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <Link to="/contact">Send an enquiry</Link>
             <Link to="/join-our-team">Join Our Team</Link>
             <Link to="/faq">Read FAQs</Link>
+          </div>
+        </div>
+
+        <div className="container footerSocial" aria-label="Social media">
+          <span>Follow BSDA</span>
+          <div className="footerSocialLinks">
+            <a href="https://www.facebook.com/" target="_blank" rel="noreferrer" aria-label="Facebook" title="Facebook">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8z" fill="currentColor"/></svg>
+            </a>
+            <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram" title="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.8"/><circle cx="17.7" cy="6.6" r="1.1" fill="currentColor"/></svg>
+            </a>
+            <a href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube" title="YouTube">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="4" fill="none" stroke="currentColor" strokeWidth="1.8"/><path d="m10 9 5 3-5 3z" fill="currentColor"/></svg>
+            </a>
+            <a href="https://www.tiktok.com/" target="_blank" rel="noreferrer" aria-label="TikTok" title="TikTok">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v11.1a4.1 4.1 0 1 1-3.5-4.05v3.2a1.1 1.1 0 1 0 .3.85V3h3.2c.3 2.1 1.5 3.4 3.7 3.8v3.1A8 8 0 0 1 14 8.2" fill="currentColor"/></svg>
+            </a>
           </div>
         </div>
 

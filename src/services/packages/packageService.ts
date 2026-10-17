@@ -13,26 +13,44 @@ function inferLessonHours(name: string): number {
 }
 
 function toPackage(plan: any): Package {
-  const amount = plan?.pricingVariants?.[0]?.pricingStrategies?.[0]?.flatRate?.amount;
-  const perks = Array.isArray(plan?.perks)
-    ? plan.perks
-        .map((perk: { description?: unknown }) =>
-          typeof perk?.description === "string" ? perk.description.trim() : "",
-        )
-        .filter(Boolean)
-    : [];
-
+  const variants = Array.isArray(plan?.pricingVariants) ? plan.pricingVariants : [];
+  const strategy = variants[0]?.pricingStrategies?.[0];
+  const amount = strategy?.flatRate?.amount ?? strategy?.fixed?.amount ?? plan?.price?.amount;
+  const currency =
+    strategy?.flatRate?.currency ??
+    variants[0]?.currency ??
+    plan?.currency ??
+    "GBP";
+  const rawPerks = Array.isArray(plan?.perks) ? plan.perks : [];
+  const features = rawPerks
+    .map((perk: unknown) => {
+      if (typeof perk === "string") return perk.trim();
+      if (!perk || typeof perk !== "object") return "";
+      const item = perk as { description?: unknown; name?: unknown; title?: unknown };
+      for (const value of [item.description, item.name, item.title]) {
+        if (typeof value === "string" && value.trim()) return value.trim();
+      }
+      return "";
+    })
+    .filter(Boolean);
   const price = Number(amount ?? 0);
+  const name = typeof plan?.name === "string" ? plan.name : "Untitled plan";
+  const description =
+    typeof plan?.description === "string"
+      ? plan.description.trim()
+      : typeof plan?.details === "string"
+        ? plan.details.trim()
+        : "";
 
   return {
     id: plan?._id ?? plan?.id ?? "",
-    name: plan?.name ?? "Untitled plan",
-    description: "",
+    name,
+    description,
     priceMinor: Number.isFinite(price) ? Math.round(price * 100) : 0,
-    currency: plan?.currency ?? "GBP",
-    lessonHours: inferLessonHours(plan?.name ?? ""),
+    currency,
+    lessonHours: inferLessonHours(name),
     transmission: "either" as Transmission,
-    features: perks,
+    features,
     status: (plan?.archived ? "archived" : "active") as RecordStatus,
   };
 }

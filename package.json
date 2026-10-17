@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wix dev",
-    "build": "wix build",
+    "build": "astro build",
     "preview": "wix preview",
     "release": "wix release",
     "check": "astro check",
@@ -14,9 +14,11 @@
     "preview:astro": "astro preview"
   },
   "dependencies": {
+    "@wix/media": "^1.0.278",
     "@wix/bookings": "^1.0.1699",
     "@wix/data": "^1.0.526",
     "@wix/members": "^1.0.525",
+    "@wix/redirects": "^1.0.131",
     "@wix/pricing-plans": "^1.0.409",
     "@wix/sdk": "^1.21.16",
     "react": "^18.3.1",
@@ -36,7 +38,6 @@
     "@wix/cli": "^1.1.258",
     "typescript": "^5.9.2",
     "vite": "^7.1.9",
-    "@wix/cli": "^1.1.247",
     "@astrojs/check": "^0.9.4"
   }
 }

@@ -1,6 +1,3 @@
-import { ensureCurrentStudentProfile } from "../students/studentProfileProvisioningService";
-
-import { members as managedMembers } from "@wix/members";
 import {
   clearWixTokens,
   completeWixLoginFromUrl,
@@ -8,15 +5,12 @@ import {
   loginWithEmail,
   registerWithEmail,
   verifyMemberEmail,
-  exchangeDirectLoginSession,
   sendWixPasswordResetEmail,
-  getWixLogoutUrl,
   getWixTokens,
   isWixMemberLoggedIn,
   persistWixTokens,
   restoreWixTokens,
   setWixTokens,
-  wixClient,
 } from "../wix";
 
 const ADMIN_LOGIN_MARKER = "bsda.admin.login.completed";
@@ -62,6 +56,9 @@ function safeReturnPath(value?: string) {
 /** Starts the Wix Astro integration managed member session flow. */
 export function beginManagedMemberLogin(returnTo = "/portal") {
   const safePath = safeReturnPath(returnTo);
+  // Discard any pre-migration browser OAuth state before starting the single
+  // Wix Astro-managed login flow. The managed session itself is cookie-backed.
+  clearLocalMemberSession();
   const loginUrl = "/api/auth/login?returnToUrl=" + encodeURIComponent(safePath);
   window.location.assign(loginUrl);
 }
@@ -148,17 +145,21 @@ export async function createMemberAccount(
   email: string,
   password: string,
   profile: { firstName: string; lastName: string; phones?: string[] },
+  returnTo = "/portal",
 ) {
   return finishDirectAuthentication(
     await registerWithEmail(email, password, profile),
-    "/portal",
+    returnTo,
   );
 }
 
-export async function completeMemberVerification(verificationCode: string) {
+export async function completeMemberVerification(
+  verificationCode: string,
+  returnTo = "/portal",
+) {
   return finishDirectAuthentication(
     await verifyMemberEmail(verificationCode),
-    "/portal",
+    returnTo,
   );
 }
 
@@ -186,28 +187,9 @@ export function completeMemberLogin(): Promise<string> {
       const returnTo = safeReturnPath(result.originalUrl);
       markAdminLoginCompleted(returnTo);
 
-      // Student CMS writes are performed by the Wix-hosted backend only.
-      // Never provision an admin dashboard session as a student profile.
-      const destination = new URL(returnTo, window.location.origin);
-      const isAdminDestination =
-        destination.pathname.startsWith("/admin") ||
-        (destination.pathname === "/" &&
-          destination.searchParams.get("bsdaAdmin") === "dashboard");
-
-      if (!isAdminDestination) {
-        try {
-          await ensureCurrentStudentProfile();
-        } catch (provisioningError) {
-          // A profile provisioning failure must not strand a signed-in member on the callback page.
-          // The portal performs its own protected profile lookup and reports its result in development.
-          if (import.meta.env.DEV) {
-            console.warn("[BSDA] Student profile provisioning failed after sign-in", {
-              message: provisioningError instanceof Error ? provisioningError.message : String(provisioningError),
-            });
-          }
-        }
-      }
-
+      // Student identity and eligibility are resolved from Members/FullData
+      // by the protected profile API. Do not call the legacy
+      // createStudentProfile Velo HTTP Function during login.
       return returnTo;
     })();
   }
@@ -221,21 +203,58 @@ export async function restoreMemberSession() {
   return isWixMemberLoggedIn();
 }
 
-export async function getCurrentMember() {
-  // Prefer the session managed by Wix's Astro integration. This is the
-  // identity used by the new same-origin protected API endpoints.
-  try {
-    const managedResponse = await managedMembers.getCurrentMember();
-    if (managedResponse.member?._id) return managedResponse.member;
-  } catch {
-    // Fall back to the legacy browser OAuth session during migration.
+export type CurrentManagedMember = {
+  _id: string;
+  loginEmail?: string | null;
+  email?: string | null;
+  profile?: { nickname?: string | null; photo?: { url?: string | null } | null } | null;
+  contact?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    phones?: string[];
+    contactId?: string | null;
+  } | null;
+  contactId?: string | null;
+};
+
+/**
+ * Read the current member from the server-side Wix Astro session endpoint.
+ * Do not fall back to browser-held OAuth tokens: Astro's managed session is
+ * the only supported student authentication flow for this project.
+ */
+export async function getCurrentMember(): Promise<CurrentManagedMember | null> {
+  const response = await fetch("/api/auth/session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  const payload = await response.json().catch(() => null) as {
+    ok?: boolean;
+    authenticated?: boolean;
+    member?: Record<string, unknown> | null;
+    message?: string;
+  } | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.message || "We could not verify your Wix sign-in session. Please sign in again.");
   }
+  if (payload.authenticated !== true || !payload.member) return null;
 
-  await restoreMemberSession();
-  if (!isWixMemberLoggedIn()) return null;
-
-  const response = await wixClient.members.getCurrentMember();
-  return response.member ?? null;
+  const member = payload.member;
+  const contact = member.contact && typeof member.contact === "object"
+    ? member.contact as CurrentManagedMember["contact"]
+    : null;
+  return {
+    _id: String(member.id ?? ""),
+    loginEmail: typeof member.loginEmail === "string" ? member.loginEmail : null,
+    email: typeof member.email === "string" ? member.email : null,
+    contactId: typeof member.contactId === "string" ? member.contactId : null,
+    profile: member.profile && typeof member.profile === "object"
+      ? member.profile as CurrentManagedMember["profile"]
+      : null,
+    contact,
+  };
 }
 
 function clearLocalMemberSession() {
@@ -249,58 +268,18 @@ function clearLocalMemberSession() {
   }
 }
 
-function isLocalDevelopmentHost() {
-  return (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1"
-  );
-}
 
 export async function signOutMember() {
-  // Clear the Wix Astro integration cookie-backed session when present.
-  // This request is same-origin; no token is sent to client-side storage.
-  try {
-    const managedResponse = await managedMembers.getCurrentMember();
-    if (managedResponse.member?._id) {
-      await fetch("/api/auth/logout?returnToUrl=%2Flogin", {
-        method: "POST",
-        credentials: "same-origin",
-      });
-      clearLocalMemberSession();
-      window.location.replace("/login");
-      return;
-    }
-  } catch {
-    // The current account may still be using the legacy OAuth session below.
-  }
-
-  /*
-   * IMPORTANT:
-   * Wix's logout() returns a URL. The actual logout happens only after the
-   * browser navigates to that URL. Therefore a try/catch cannot catch Wix's
-   * "not a valid redirect domain" page after navigation.
-   *
-   * localhost is not an approved Wix redirect domain in this project, so
-   * local development must perform the local token logout directly. In
-   * production, Wix logout is used and redirects to /login.
-   */
-  if (isLocalDevelopmentHost()) {
-    clearLocalMemberSession();
-    window.location.replace("/login");
-    return;
-  }
-
-  try {
-    const postLogoutUrl = new URL("/login", window.location.origin).toString();
-    const logoutUrl = await getWixLogoutUrl(postLogoutUrl);
-
-    clearLocalMemberSession();
-    window.location.assign(logoutUrl);
-  } catch {
-    clearLocalMemberSession();
-    window.location.replace("/login");
-  }
+  // Submit a real POST navigation so the Wix Astro integration can clear its
+  // managed session cookie and redirect back to the login page.
+  clearLocalMemberSession();
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/api/auth/logout?returnToUrl=%2Flogin";
+  form.hidden = true;
+  document.body.append(form);
+  form.submit();
+  form.remove();
 }
 
 export {

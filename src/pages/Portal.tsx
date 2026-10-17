@@ -1,404 +1,582 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import "../styles/portal-profile.css";
-import {
-  getCurrentMember,
-  signOutMember,
-  beginManagedMemberLogin,
-} from "../services/auth/authService";
+import { lessonService, type StudentLessonRecord } from "../services/lessons/lessonService";
+import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../services/students/studentBookingApi";
+import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
+import { listStudentLearningVideos, type StudentLearningVideo } from "../services/students/studentLearningMaterialsApi";
+import { VideoEmbed } from "../components/VideoEmbed";
+import { getCurrentMember, signOutMember } from "../services/auth/authService";
 import {
   getStudentProfile,
-  type StudentProfileApiRecord,
   StudentProfileApiError,
+  type StudentProfileApiRecord,
+  updateStudentProfile,
+  type StudentProfileUpdate,
 } from "../services/students/studentProfileApi";
 
-type MemberSummary = {
-  loginEmail?: string | null;
-  email?: string | null;
-  profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
-  contact?: {
-    firstName?: string;
-    lastName?: string;
-    phones?: string[];
-    contactId?: string | null;
-  };
-};
-
-type PendingIdentity = { email?: string; firstName?: string; lastName?: string; phone?: string };
-
-function readPendingIdentity(): PendingIdentity {
-  try {
-    const raw = sessionStorage.getItem("bsda.pending.member.identity");
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as PendingIdentity;
-    return {
-      email: typeof parsed.email === "string" ? parsed.email : "",
-      firstName: typeof parsed.firstName === "string" ? parsed.firstName : "",
-      lastName: typeof parsed.lastName === "string" ? parsed.lastName : "",
-      phone: typeof parsed.phone === "string" ? parsed.phone : "",
-    };
-  } catch {
-    return {};
+function profileImagePreviewUrl(value: string, fallback = ""): string {
+  const candidate = value.trim();
+  if (/^https:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : fallback;
   }
+  return fallback;
 }
 
 export function Portal() {
   const navigate = useNavigate();
-  const [member, setMember] = useState<MemberSummary | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfileApiRecord | null>(null);
   const [profileMessage, setProfileMessage] = useState("");
-  const [managedLoginRequired, setManagedLoginRequired] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isTransmissionMenuOpen, setIsTransmissionMenuOpen] = useState(false);
+  const transmissionOptions: Array<{ value: StudentProfileUpdate["transmission"]; label: string; description: string }> = [
+    { value: "either", label: "Either transmission", description: "Manual or automatic lessons" },
+    { value: "manual", label: "Manual", description: "Learn in a manual car" },
+    { value: "automatic", label: "Automatic", description: "Learn in an automatic car" },
+  ];
+  const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "", transmission: "either" });
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [fullDataDebug, setFullDataDebug] = useState<{
-    ok: boolean;
-    collectionId?: string;
-    returnedRecords?: number;
-    matchedBy?: string | null;
-    matched?: boolean;
-    records?: Array<Record<string, unknown>>;
-    message?: string;
-    errorMessage?: string;
-  } | null>(null);
-  const [fullDataDebugLoading, setFullDataDebugLoading] = useState(false);
+  const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
+  const [lessonsMessage, setLessonsMessage] = useState("");
+  const [bookings, setBookings] = useState<StudentBookingRecord[]>([]);
+  const [bookingsMessage, setBookingsMessage] = useState("");
+  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
+  const [enrollmentMessage, setEnrollmentMessage] = useState("");
+  const [learningVideos, setLearningVideos] = useState<StudentLearningVideo[]>([]);
+  const [learningMaterialsMessage, setLearningMaterialsMessage] = useState("");
+  const [activeSection, setActiveSection] = useState<"profile" | "bookings" | "progress" | "enrollment" | "materials">("profile");
+  const [sectionLoading, setSectionLoading] = useState(false);
+  const [loadedSections, setLoadedSections] = useState<string[]>([]);
 
   useEffect(() => {
+    return () => {
+      if (profilePhotoPreview.startsWith("blob:")) URL.revokeObjectURL(profilePhotoPreview);
+    };
+  }, [profilePhotoPreview]);
+
+  // Initial portal entry performs one data request: the protected profile endpoint.
+  // That endpoint also verifies the Wix member session and returns 401 when signed out.
+  useEffect(() => {
     let active = true;
-
-    async function loadPortal() {
+    async function loadProfile() {
+      let redirectingToLogin = false;
+      const redirectToLogin = () => {
+        redirectingToLogin = true;
+        navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+      };
       try {
-        const currentMember = await getCurrentMember();
+        // Verify the server-managed Wix session before requesting or rendering
+        // student data. Cached browser state is not proof of authentication.
+        let currentMember;
+        try {
+          currentMember = await getCurrentMember();
+        } catch {
+          if (!active) return;
+          redirectToLogin();
+          return;
+        }
         if (!active) return;
-
         if (!currentMember) {
-          navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
+          redirectToLogin();
           return;
         }
 
-        const pendingIdentity = readPendingIdentity();
-        const memberRecord = currentMember as typeof currentMember & {
-          email?: string | null;
-          profile?: { nickname?: string | null; photo?: { url?: string | null } | null };
-          contact?: (typeof currentMember.contact & { contactId?: string | null }) | null;
-          contactId?: string | null;
-        };
-        const summary: MemberSummary = {
-          loginEmail: currentMember.loginEmail || memberRecord.email || pendingIdentity.email || null,
-          email: memberRecord.email || pendingIdentity.email || null,
-          profile: memberRecord.profile,
-          contact: {
-            firstName: currentMember.contact?.firstName || pendingIdentity.firstName || undefined,
-            lastName: currentMember.contact?.lastName || pendingIdentity.lastName || undefined,
-            phones: currentMember.contact?.phones?.length
-              ? currentMember.contact.phones
-              : pendingIdentity.phone ? [pendingIdentity.phone] : undefined,
-            contactId: memberRecord.contact?.contactId ?? memberRecord.contactId ?? null,
-          },
-        };
-        setMember(summary);
-
-        // Temporary local diagnostic: use the contactId attached to the current
-        // Wix member profile. This path deliberately does not use member IDs.
-        const memberWithContactId = currentMember as typeof currentMember & {
-          contactId?: string | null;
-          contact?: { contactId?: string | null; firstName?: string; lastName?: string; phones?: string[] } | null;
-        };
-        const contactId = String(
-          memberWithContactId.contactId ?? memberWithContactId.contact?.contactId ?? "",
-        ).trim();
-
-        if (import.meta.env.DEV) {
-          setFullDataDebugLoading(true);
-          if (!contactId) {
-            setFullDataDebug({
-              ok: false,
-              errorMessage: "The current Wix member response does not contain contactId. No member ID or email fallback was used.",
-              message: "CONTACT_ID_MISSING",
-            });
-            setFullDataDebugLoading(false);
-          } else {
-            fetch("/api/debug/full-data?contactId=" + encodeURIComponent(contactId), {
-              cache: "no-store",
-            })
-              .then(async (response) => {
-                const data = await response.json();
-                if (active) setFullDataDebug(data);
-              })
-              .catch((debugError) => {
-                if (active) {
-                  setFullDataDebug({
-                    ok: false,
-                    errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
-                  });
-                }
-              })
-              .finally(() => {
-                if (active) setFullDataDebugLoading(false);
-              });
-          }
-        }
-
-        // Profile data comes only from the protected server endpoint. If no
-        // profile exists, provision it from the authenticated member's contact
-        // details; the endpoint derives the actual member ID from the session.
-        try {
-          // The profile endpoint reads the authenticated member's matching
-          // record from Wix CMS FullData. Do not create or mutate records in
-          // this member-data collection from the student portal.
-          const response = await getStudentProfile();
-
-          if (!active) return;
-          if (response.profile) {
-            setStudentProfile(response.profile);
-            setProfileMessage("Your Wix member profile was loaded from FullData.");
-          } else {
-            setProfileMessage("Your Wix account is signed in, but no matching FullData record was found. Please check the CMS collection and the loginEmail/contactId field values.");
-          }
-        } catch (profileError) {
-          if (!active) return;
-          if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
-            setManagedLoginRequired(true);
-            setProfileMessage("Your current sign-in is not connected to the Wix-managed session required for secure profile access. Continue with Wix secure sign-in to finish connecting your portal.");
-          } else {
-            // Keep the portal useful while CMS collections/permissions are
-            // being repaired. The authenticated Wix member remains the source
-            // for basic identity fields; academy-specific data stays pending.
-            setProfileMessage(
-              "Your Wix member details are available. Academy profile data is temporarily unavailable and will appear when the student records service is restored.",
-            );
-          }
-        }
-      } catch (err) {
+        const response = await getStudentProfile();
         if (!active) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "We couldn't load your account.",
+        if (!response.profile) {
+          // Never render a placeholder or dummy learner on a protected route.
+          redirectToLogin();
+          return;
+        }
+
+        setStudentProfile(response.profile);
+        setProfileDraft({
+          firstName: response.profile.firstName || "",
+          lastName: response.profile.lastName || "",
+          nickname: response.profile.nickname || "",
+          phone: response.profile.phone || "",
+          profilePhotoUrl: response.profile.profilePhotoUrl || "",
+          transmission: response.profile.transmission || "either",
+        });
+        setProfileMessage("Your profile is saved in StudentProfiles.");
+      } catch (profileError) {
+        if (!active) return;
+        if (profileError instanceof StudentProfileApiError &&
+            (profileError.status === 401 || profileError.code === "UNAUTHENTICATED")) {
+          redirectToLogin();
+          return;
+        }
+        setProfileMessage(
+          profileError instanceof Error
+            ? profileError.message
+            : "We couldn't load your student profile. Please retry in a moment.",
         );
       } finally {
-        if (active) setLoading(false);
+        if (active && !redirectingToLogin) setLoading(false);
+      }
+    }
+    void loadProfile();
+    return () => { active = false; };
+  }, [navigate]);
+
+  // Each dashboard section requests its own data only when opened. Successfully
+  // loaded sections are cached in component state to avoid repeat requests on tab changes.
+  useEffect(() => {
+    if (activeSection === "profile" || loadedSections.includes(activeSection)) return;
+    let active = true;
+    setSectionLoading(true);
+
+    async function loadSection() {
+      try {
+        if (activeSection === "bookings") {
+          const result = await listBookingsForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setBookings(result.data);
+            setBookingsMessage(result.data.length ? "" : "No bookings are associated with this account yet.");
+          } else setBookingsMessage(result.error.message);
+        } else if (activeSection === "progress") {
+          const result = await lessonService.listForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setLessons(result.data);
+            setLessonsMessage(result.data.length ? "" : "No lesson records are available yet.");
+          } else setLessonsMessage(result.error.message);
+        } else if (activeSection === "enrollment") {
+          const result = await listEnrollmentsForCurrentStudent();
+          if (!active) return;
+          if (result.ok) {
+            setEnrollments(result.data);
+            setEnrollmentMessage(result.data.length ? "" : "No Wix Pricing Plans orders were found for this account.");
+          } else setEnrollmentMessage(result.error.message);
+        } else if (activeSection === "materials") {
+          try {
+            const videos = await listStudentLearningVideos();
+            if (!active) return;
+            setLearningVideos(videos);
+            setLearningMaterialsMessage(videos.length ? "" : "No learning videos have been published yet.");
+          } catch (contentError) {
+            if (!active) return;
+            setLearningMaterialsMessage(contentError instanceof Error ? contentError.message : "Learning materials could not be loaded.");
+          }
+        }
+        if (active) setLoadedSections((current) => current.includes(activeSection) ? current : [...current, activeSection]);
+      } catch {
+        if (!active) return;
+        if (activeSection === "bookings") setBookingsMessage("Bookings could not be loaded. Please try again later.");
+        else if (activeSection === "progress") setLessonsMessage("Learning progress could not be loaded. Please try again later.");
+        else if (activeSection === "enrollment") setEnrollmentMessage("Package and enrollment data could not be loaded. Please try again later.");
+        else if (activeSection === "materials") setLearningMaterialsMessage("Learning materials could not be loaded. Please try again later.");
+      } finally {
+        if (active) setSectionLoading(false);
       }
     }
 
-    void loadPortal();
-    return () => {
-      active = false;
-    };
-  }, [navigate]);
+    void loadSection();
+    return () => { active = false; };
+  }, [activeSection, loadedSections]);
 
+  async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSavingProfile) return;
+    setIsSavingProfile(true);
+    setProfileMessage("");
+    try {
+      let profilePhotoUrl = profileDraft.profilePhotoUrl;
+      if (profilePhotoFile) {
+        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(profilePhotoFile.type)) {
+          throw new Error("Choose a JPG, PNG, WebP, or GIF image.");
+        }
+        if (profilePhotoFile.size > 5 * 1024 * 1024) {
+          throw new Error("The profile image must be 5 MB or smaller.");
+        }
+
+        const uploadUrlResponse = await fetch("/api/students/profile-image-upload", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: profilePhotoFile.name,
+            mimeType: profilePhotoFile.type,
+            sizeInBytes: profilePhotoFile.size,
+          }),
+        });
+        const uploadUrlPayload = await uploadUrlResponse.json().catch(() => null) as {
+          ok?: boolean;
+          uploadUrl?: string;
+          message?: string;
+        } | null;
+        if (!uploadUrlResponse.ok || !uploadUrlPayload?.ok || !uploadUrlPayload.uploadUrl) {
+          throw new Error(uploadUrlPayload?.message || "We could not prepare the image upload.");
+        }
+
+        const uploadResponse = await fetch(uploadUrlPayload.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": profilePhotoFile.type },
+          body: profilePhotoFile,
+        });
+        const uploadedPayload = await uploadResponse.json().catch(() => null) as {
+          file?: { url?: string; media?: { image?: { image?: { url?: string } } } };
+        } | null;
+        if (!uploadResponse.ok) throw new Error("Wix Media could not save the selected image.");
+        const uploadedUrl = uploadedPayload?.file?.media?.image?.image?.url || uploadedPayload?.file?.url;
+        if (!uploadedUrl) throw new Error("Wix Media did not return the uploaded image URL.");
+        const parsedUploadedUrl = new URL(uploadedUrl);
+        if (parsedUploadedUrl.protocol !== "https:" || parsedUploadedUrl.hostname !== "static.wixstatic.com") {
+          throw new Error("Wix Media returned an unexpected image URL.");
+        }
+        profilePhotoUrl = uploadedUrl;
+      }
+
+      const response = await updateStudentProfile({ ...profileDraft, profilePhotoUrl });
+      if (!response.profile) throw new Error("The profile service did not return the saved profile.");
+      setStudentProfile(response.profile);
+      setProfileDraft({
+        firstName: response.profile.firstName || "",
+        lastName: response.profile.lastName || "",
+        nickname: response.profile.nickname || "",
+        phone: response.profile.phone || "",
+        profilePhotoUrl: response.profile.profilePhotoUrl || "",
+        transmission: response.profile.transmission || "either",
+      });
+      setProfilePhotoFile(null);
+      setProfilePhotoPreview("");
+      setProfileMessage("Your profile has been saved to StudentProfiles.");
+      setIsEditingProfile(false);
+    } catch (saveError) {
+      setProfileMessage(saveError instanceof Error ? saveError.message : "Your profile could not be saved.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }
+
+  // Keep the protected portal invisible while its first request is being
+  // checked; failures navigate to login rather than showing an account error page.
   if (loading) {
     return (
-      <section className="page portal">
-        <div className="container authloading">
-          <span className="ey">Student portal</span>
-          <h1>Loading your account...</h1>
-          <p>Please wait while we securely restore your session.</p>
+      <section className="page portal-skeleton-page" aria-busy="true" aria-live="polite">
+        <div className="container portal-skeleton">
+          <span className="portal-skeleton-screen-reader">Loading your student profile...</span>
+          <div className="portal-skeleton-head">
+            <div className="portal-skeleton-heading">
+              <span className="portal-skeleton-line portal-skeleton-eyebrow" />
+              <span className="portal-skeleton-line portal-skeleton-title" />
+              <span className="portal-skeleton-line portal-skeleton-email" />
+            </div>
+            <span className="portal-skeleton-line portal-skeleton-signout" />
+          </div>
+          <div className="portal-skeleton-grid">
+            <div className="portal-skeleton-card portal-skeleton-status-card">
+              <span className="portal-skeleton-line portal-skeleton-label" />
+              <span className="portal-skeleton-line portal-skeleton-status" />
+              <span className="portal-skeleton-line portal-skeleton-copy" />
+              <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+            </div>
+            <div className="portal-skeleton-card">
+              <span className="portal-skeleton-icon" />
+              <span className="portal-skeleton-line portal-skeleton-card-title" />
+              <span className="portal-skeleton-line portal-skeleton-copy" />
+              <span className="portal-skeleton-line portal-skeleton-progress" />
+            </div>
+          </div>
+          <div className="portal-skeleton-profile">
+            <div className="portal-skeleton-heading">
+              <span className="portal-skeleton-line portal-skeleton-label" />
+              <span className="portal-skeleton-line portal-skeleton-profile-title" />
+              <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-medium" />
+            </div>
+            <span className="portal-skeleton-line portal-skeleton-book-button" />
+          </div>
         </div>
       </section>
     );
   }
 
-  if (error) {
-    return (
-      <section className="page portal">
-        <div className="container authloading">
-          <span className="ey">Student portal</span>
-          <h1>We couldn't load your account.</h1>
-          <p>{error}</p>
-          <button className="btn red" onClick={() => navigate("/login")}>
-            Sign in again <Icon n="arrow" />
-          </button>
-        </div>
-      </section>
-    );
-  }
-
-  const firstName = studentProfile?.fullName?.trim().split(/\s+/)[0] || member?.contact?.firstName?.trim();
-  const displayName = firstName || "learner";
+  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "";
+  const displayName = firstName;
+  const sectionItems = [
+    { id: "profile" as const, label: "Personal profile", icon: "users" },
+    { id: "bookings" as const, label: "Bookings", icon: "calendar" },
+    { id: "progress" as const, label: "Learning progress / report", icon: "car" },
+    { id: "enrollment" as const, label: "Package & enrollment", icon: "wallet" },
+    { id: "materials" as const, label: "Learning materials", icon: "book" },
+  ];
 
   return (
     <section className="page portal">
-      <div className="container dashboard">
-        <div className="dashhead">
-          <div>
-            <span className="ey">Student dashboard</span>
-            <h1>Good to see you, {displayName}.</h1>
-            <p className="dashboardemail">
-              {studentProfile?.email || member?.loginEmail || "Your BSDA member account"}
-            </p>
+      <div className="container portal-layout">
+        <aside className="portal-sidebar" aria-label="Student portal navigation">
+          <div className="portal-sidebar-brand">
+            <span className="ey">BSDA STUDENT PORTAL</span>
+            <h2>My learning</h2>
           </div>
-          <button className="btn light" onClick={() => void signOutMember()}>
-            Sign out
-          </button>
-        </div>
-
-        {import.meta.env.DEV && (
-          <section
-            aria-label="Temporary FullData CMS diagnostic"
-            style={{
-              marginTop: 24,
-              padding: 20,
-              border: "2px dashed #d97706",
-              borderRadius: 12,
-              background: "#fffaf0",
-              color: "#1f2937",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div>
-                <span className="ey" style={{ color: "#92400e" }}>Temporary developer diagnostic</span>
-                <h2 style={{ margin: "6px 0" }}>Raw Wix FullData CMS values</h2>
-                <p style={{ margin: 0, fontSize: 14 }}>
-                  Local development only. This panel independently queries FullData and displays only the row matched to your signed-in Wix account.
-                </p>
-              </div>
+          <nav className="portal-sidebar-nav">
+            {sectionItems.map((item) => (
               <button
-                className="btn light"
-                onClick={() => {
-                  setFullDataDebug(null);
-                  setFullDataDebugLoading(true);
-                  const currentContactId = String(
-                    (member as MemberSummary & {
-                      contactId?: string | null;
-                      contact?: { contactId?: string | null };
-                    } | null)?.contactId ?? member?.contact?.contactId ?? "",
-                  ).trim();
-                  if (!currentContactId) {
-                    setFullDataDebug({
-                      ok: false,
-                      errorMessage: "The current Wix member response does not contain contactId.",
-                    });
-                    setFullDataDebugLoading(false);
-                    return;
-                  }
-                  fetch("/api/debug/full-data?contactId=" + encodeURIComponent(currentContactId), {
-                    cache: "no-store",
-                  })
-                    .then(async (response) => {
-                      const data = await response.json();
-                      setFullDataDebug(data);
-                    })
-                    .catch((debugError) => setFullDataDebug({
-                      ok: false,
-                      errorMessage: debugError instanceof Error ? debugError.message : "Diagnostic request failed",
-                    }))
-                    .finally(() => setFullDataDebugLoading(false));
-                }}
+                key={item.id}
+                type="button"
+                className={`portal-nav-item${activeSection === item.id ? " is-active" : ""}`}
+                aria-current={activeSection === item.id ? "page" : undefined}
+                onClick={() => setActiveSection(item.id)}
               >
-                Refresh CMS data
+                <Icon n={item.icon} s={20} />
+                <span>{item.label}</span>
+                <span className="portal-nav-chevron" aria-hidden="true">›</span>
               </button>
+            ))}
+          </nav>
+          <button className="portal-sidebar-signout" type="button" onClick={() => void signOutMember()}>
+            <Icon n="arrow" s={18} /> Sign out
+          </button>
+        </aside>
+
+        <main className="portal-main-content">
+          <header className="portal-content-header">
+            <div className="portal-content-greeting">
+              <span className="ey">STUDENT DASHBOARD</span>
+              <h1>Hello, {displayName}.</h1>
+              <p>{studentProfile?.email || "Your BSDA student account"}</p>
             </div>
-            {fullDataDebugLoading ? (
-              <p>Loading FullData CMS records…</p>
-            ) : fullDataDebug?.ok ? (
-              <>
-                <p style={{ margin: "12px 0", fontSize: 13 }}>
-                  Collection: <strong>{fullDataDebug.collectionId}</strong> · Your matching records: <strong>{fullDataDebug.returnedRecords}</strong> · Matched by: <strong>{String((fullDataDebug as typeof fullDataDebug & { matchedBy?: string | null })?.matchedBy || "not found")}</strong>
-                </p>
-                <pre
-                  style={{
-                    margin: 0,
-                    padding: 16,
-                    maxHeight: 520,
-                    overflow: "auto",
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "anywhere",
-                    background: "#111827",
-                    color: "#e5e7eb",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                  }}
-                >{JSON.stringify(fullDataDebug.records ?? [], null, 2)}</pre>
-                <p style={{ margin: "10px 0 0", fontSize: 12, color: "#92400e" }}>
-                  This temporary panel is local-development-only and returns only the matched record for your authenticated account. Remove it after diagnosis.
-                </p>
-              </>
-            ) : (
-              <p role="alert" style={{ color: "#b91c1c" }}>
-                {fullDataDebug?.errorMessage || fullDataDebug?.message || "Could not load the FullData diagnostic response."}
-              </p>
+            {activeSection === "profile" && (
+              <div className="portal-header-avatar" aria-label="Your profile photo">
+                {studentProfile?.profilePhotoUrl ? (
+                  <img src={profileImagePreviewUrl(studentProfile.profilePhotoUrl)} alt="Your profile" />
+                ) : (
+                  <span aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
             )}
-          </section>
-        )}
+          </header>
 
-        <div className="dashgrid">
-          <div className="dash darkdash">
-            <span className="ey">Account status</span>
-            <strong>{studentProfile?.status || "Profile pending"}</strong>
-            <p>{profileMessage || "Checking your saved student profile."}</p>
-          </div>
-
-          <PortalCard
-            icon="calendar"
-            title="Lessons & bookings"
-            text="Your upcoming and completed lessons will be connected to the BSDA booking system here."
-          />
-
-          <div className="dash">
-            <Icon n="car" s={24} />
-            <h3>Learning progress</h3>
-            {studentProfile ? (
-              <>
-                <p>{studentProfile.lessonsCompleted} lessons completed · {studentProfile.lessonsRemaining} remaining</p>
-                <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress">
-                  <span style={{ width: `${studentProfile.progressPercent}%` }} />
+          {activeSection === "profile" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-profile-heading">
+              <div className="portal-panel-heading">
+                <div>
+                  <span className="ey">YOUR ACCOUNT</span>
+                  <h2 id="portal-profile-heading">Personal information</h2>
+                  <p>Review and update the personal details associated with your BSDA student profile.</p>
                 </div>
-                <span className="portalstatus">{studentProfile.progressPercent}% complete</span>
-              </>
-            ) : (
-              <>
-                <p>Your instructor progress, completed lessons and next learning targets will appear here.</p>
-                <span className="portalstatus">Waiting for learner profile</span>
-              </>
-            )}
-          </div>
-
-          <PortalCard
-            icon="book"
-            title="Learning materials"
-            text="Theory practice, preparation resources and training videos will be available here."
-          />
-        </div>
-
-        {studentProfile && (
-          <div className="panel dashboardpanel">
-            <div>
-              <span className="ey">Learner profile</span>
-              <h2>{studentProfile.fullName}</h2>
-              <p>
-                {studentProfile.phone || "No phone number saved"}
-                {" · "}
-                {studentProfile.transmission === "either"
-                  ? "Manual or automatic"
-                  : studentProfile.transmission === "manual" ? "Manual" : "Automatic"}
-              </p>
-            </div>
-            <button className="btn red" onClick={() => navigate("/booking")}>
-              Book a lesson <Icon n="arrow" />
-            </button>
-          </div>
-        )}
-
-        {!studentProfile && (
-          <div className="panel dashboardpanel">
-            <div>
-              <span className="ey">Next stage</span>
-              <h2>Your account is connected.</h2>
-              <p>{profileMessage}</p>
-            </div>
-            <div className="dashboardpanelactions">
-              {managedLoginRequired && (
-                <button className="btn light" onClick={() => beginManagedMemberLogin("/portal")}>
-                  Continue with Wix secure sign-in
+                <span className={`portal-account-status${studentProfile?.status?.toLowerCase() === "active" ? " is-active" : ""}`}>
+                  {studentProfile?.status || "Profile pending"}
+                </span>
+              </div>
+              {profileMessage && <p className="portal-section-message" role="status">{profileMessage}</p>}
+              <dl className="portal-profile-details">
+                <div><dt>First name</dt><dd>{studentProfile?.firstName || profileDraft.firstName || "Not provided"}</dd></div>
+                <div><dt>Last name</dt><dd>{studentProfile?.lastName || profileDraft.lastName || "Not provided"}</dd></div>
+                <div><dt>Preferred name</dt><dd>{studentProfile?.nickname || profileDraft.nickname || "Not provided"}</dd></div>
+                <div><dt>Email address</dt><dd>{studentProfile?.email || "Not available"}</dd></div>
+                <div><dt>Phone number</dt><dd>{studentProfile?.phone || profileDraft.phone || "Not provided"}</dd></div>
+                <div><dt>Transmission preference</dt><dd>{studentProfile?.transmission || "Not set"}</dd></div>
+              </dl>
+              <div className="portal-profile-detail-actions">
+                <button className="btn red" type="button" onClick={() => setIsEditingProfile(true)}>
+                  {studentProfile ? "Edit personal information" : "Complete profile"}
                 </button>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "bookings" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-bookings-heading">
+              <div className="portal-panel-heading"><div><span className="ey">YOUR SCHEDULE</span><h2 id="portal-bookings-heading">Bookings</h2><p>Appointments associated with your account.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : bookingsMessage ? <p className="portal-section-message" role="status">{bookingsMessage}</p> : (
+                <ul className="portal-lesson-list">{bookings.map((booking) => (
+                  <li key={booking.id}><strong>{booking.serviceName || "Driving appointment"}</strong>
+                    <span>{booking.startDate && !Number.isNaN(Date.parse(booking.startDate)) ? new Date(booking.startDate).toLocaleString() : "Date not recorded"}</span>
+                    <span className="portalstatus">{booking.status.replace(/_/g, " ").toLowerCase()}</span>
+                    {booking.instructorName && <span>Instructor: {booking.instructorName}</span>}
+                    {booking.paymentStatus && <span>Payment: {booking.paymentStatus.replace(/_/g, " ").toLowerCase()}</span>}
+                  </li>
+                ))}</ul>
               )}
-              <button className="btn red" onClick={() => navigate("/booking")}>
-                Book a lesson <Icon n="arrow" />
-              </button>
-            </div>
+            </section>
+          )}
+
+          {activeSection === "progress" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-progress-heading">
+              <div className="portal-panel-heading"><div><span className="ey">LESSON REPORT</span><h2 id="portal-progress-heading">Learning progress</h2><p>Lesson history and progress information recorded by your instructor.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : lessonsMessage ? <p className="portal-section-message" role="status">{lessonsMessage}</p> : (
+                <>
+                  {studentProfile?.lessonsCompleted != null && studentProfile?.lessonsRemaining != null && studentProfile?.progressPercent != null ? (
+                    <div className="portal-progress-summary">
+                      <div><span>Lessons completed</span><strong>{studentProfile.lessonsCompleted}</strong></div>
+                      <div><span>Lessons remaining</span><strong>{studentProfile.lessonsRemaining}</strong></div>
+                      <div><span>Overall progress</span><strong>{studentProfile.progressPercent}%</strong></div>
+                      <div className="portalprogress" role="progressbar" aria-valuenow={studentProfile.progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Learning progress"><span style={{ width: `${studentProfile.progressPercent}%` }} /></div>
+                    </div>
+                  ) : <p>Verified completion and package entitlement data is not available in your profile yet.</p>}
+                  <h3>Lesson report</h3>
+                  <ul className="portal-lesson-list">{lessons.map((lesson) => (
+                    <li key={lesson.id}><strong>{lesson.lessonType || "Driving lesson"}</strong>
+                      <span>{lesson.startedAt && !Number.isNaN(Date.parse(String(lesson.startedAt))) ? new Date(String(lesson.startedAt)).toLocaleDateString() : "Date not recorded"}</span>
+                      <span className="portalstatus">{lesson.status || "Status not recorded"}</span>
+                      {lesson.instructorName && <span>Instructor: {lesson.instructorName}</span>}
+                      {lesson.instructorNotes && <span>Instructor notes: {lesson.instructorNotes}</span>}
+                      {lesson.objectives?.length ? <span>Objectives: {lesson.objectives.join(", ")}</span> : null}
+                      {lesson.strengths?.length ? <span>Strengths: {lesson.strengths.join(", ")}</span> : null}
+                      {lesson.improvements?.length ? <span>Areas to improve: {lesson.improvements.join(", ")}</span> : null}
+                    </li>
+                  ))}</ul>
+                </>
+              )}
+            </section>
+          )}
+
+          {activeSection === "enrollment" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-enrollment-heading">
+              <div className="portal-panel-heading"><div><span className="ey">YOUR PURCHASES</span><h2 id="portal-enrollment-heading">Packages & enrollment</h2><p>Your Wix Pricing Plans and enrollment details.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : enrollmentMessage ? <p className="portal-section-message" role="status">{enrollmentMessage}</p> : (
+                <ul className="portal-lesson-list">{enrollments.map((enrollment) => (
+                  <li key={enrollment.id}><strong>{enrollment.planName || "Wix pricing plan"}</strong>
+                    <span className="portalstatus">Enrollment: {enrollment.status.replace(/_/g, " ").toLowerCase()} · Payment: {enrollment.paymentStatus.replace(/_/g, " ").toLowerCase()}</span>
+                    {enrollment.startDate && <span>Starts: {new Date(enrollment.startDate).toLocaleDateString()}</span>}
+                    {enrollment.endDate && <span>Ends: {new Date(enrollment.endDate).toLocaleDateString()}</span>}
+                  </li>
+                ))}</ul>
+              )}
+            </section>
+          )}
+
+          {activeSection === "materials" && (
+            <section className="portal-detail-panel" aria-labelledby="portal-materials-heading">
+              <div className="portal-panel-heading"><div><span className="ey">STUDY RESOURCES</span><h2 id="portal-materials-heading">Learning materials</h2><p>Videos and resources provided by BSDA.</p></div></div>
+              {sectionLoading ? <PortalSectionSkeleton /> : learningMaterialsMessage ? <p className="portal-section-message" role="status">{learningMaterialsMessage}</p> : (
+                <div className="portal-learning-video-grid">{learningVideos.map((video) => (
+                  <article className="portal-learning-video" key={video.key}><h3>{video.title || "Student learning video"} </h3><VideoEmbed url={video.url} title={video.title || "Student learning video"} /></article>
+                ))}</div>
+              )}
+            </section>
+          )}
+        </main>
+
+        {isEditingProfile && (
+          <div
+            className="portal-profile-modal-backdrop"
+            onClick={() => { if (!isSavingProfile) setIsEditingProfile(false); }}
+          >
+            <section
+              className="panel portal-profile-editor portal-profile-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="portal-profile-editor-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2 className="portal-profile-editor-title" id="portal-profile-editor-title">{studentProfile ? "Edit your profile" : "Complete your student profile"}</h2>
+              <form className="portal-profile-form" onSubmit={handleSaveProfile}>
+                <label>
+                  First name
+                  <input autoComplete="given-name" required maxLength={80} value={profileDraft.firstName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, firstName: event.target.value }))} />
+                </label>
+                <label>
+                  Last name
+                  <input autoComplete="family-name" required maxLength={80} value={profileDraft.lastName} onChange={(event) => setProfileDraft((draft) => ({ ...draft, lastName: event.target.value }))} />
+                </label>
+                <label>
+                  Preferred name
+                  <input autoComplete="nickname" maxLength={80} value={profileDraft.nickname} onChange={(event) => setProfileDraft((draft) => ({ ...draft, nickname: event.target.value }))} />
+                </label>
+                <label>
+                  Phone number
+                  <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
+                </label>
+                <div
+                  className="portal-transmission-field"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setIsTransmissionMenuOpen(false);
+                    }
+                  }}
+                >
+                  <span className="portal-transmission-label" id="portal-transmission-label">Transmission preference</span>
+                  <button
+                    type="button"
+                    className="portal-transmission-trigger"
+                    aria-labelledby="portal-transmission-label portal-transmission-value"
+                    aria-haspopup="listbox"
+                    aria-expanded={isTransmissionMenuOpen}
+                    onClick={() => setIsTransmissionMenuOpen((open) => !open)}
+                  >
+                    <span id="portal-transmission-value">{transmissionOptions.find((option) => option.value === profileDraft.transmission)?.label || "Either manual or automatic"}</span>
+                    <svg className={`portal-transmission-chevron${isTransmissionMenuOpen ? " is-open" : ""}`} viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {isTransmissionMenuOpen && (
+                    <div className="portal-transmission-menu" role="listbox" aria-labelledby="portal-transmission-label">
+                      {transmissionOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          role="option"
+                          aria-selected={profileDraft.transmission === option.value}
+                          className={`portal-transmission-option${profileDraft.transmission === option.value ? " is-selected" : ""}`}
+                          onClick={() => {
+                            setProfileDraft((draft) => ({ ...draft, transmission: option.value }));
+                            setIsTransmissionMenuOpen(false);
+                          }}
+                        >
+                          <span className="portal-transmission-option-copy">
+                            <strong>{option.label}</strong>
+                            <small>{option.description}</small>
+                          </span>
+                          {profileDraft.transmission === option.value && <span className="portal-transmission-check" aria-hidden="true">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!profilePhotoFile && (
+                  <label className="portal-profile-form-wide">
+                    Profile image
+                    <input
+                      key={profilePhotoFile ? "image-selected" : "image-empty"}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      aria-describedby="portal-profile-image-help"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0] || null;
+                        setProfilePhotoFile(file);
+                        setProfilePhotoPreview(file ? URL.createObjectURL(file) : "");
+                        setProfileMessage("");
+                      }}
+                    />
+                    <small id="portal-profile-image-help">Choose a JPG, PNG, WebP, or GIF image up to 5 MB. The image will upload to Wix Media when you save your profile.</small>
+                  </label>
+                )}
+                {(profilePhotoPreview || profileDraft.profilePhotoUrl.trim()) && (
+                  <div className="portal-profile-preview portal-profile-form-wide">
+                    <img
+                      src={profilePhotoPreview || profileImagePreviewUrl(profileDraft.profilePhotoUrl, studentProfile?.profilePhotoUrl || "")}
+                      alt="Profile image preview"
+                      onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
+                    />
+                    <span>{profilePhotoFile ? profilePhotoFile.name : "Current profile image"}</span>
+                    {profilePhotoFile && (
+                      <button type="button" className="btn light" onClick={() => {
+                        setProfilePhotoFile(null);
+                        setProfilePhotoPreview("");
+                      }}>Remove selected image</button>
+                    )}
+                  </div>
+                )}
+                {profileMessage && <p className="portal-profile-form-message portal-profile-form-wide" role="status">{profileMessage}</p>}
+                <div className="portal-profile-form-actions portal-profile-form-wide">
+                  <button type="submit" className="btn red" disabled={isSavingProfile}>{isSavingProfile ? "Saving…" : "Save profile"} <Icon n="arrow" /></button>
+                  <button type="button" className="btn light" onClick={() => setIsEditingProfile(false)} disabled={isSavingProfile}>Cancel</button>
+                </div>
+              </form>
+            </section>
           </div>
         )}
       </div>
@@ -406,21 +584,6 @@ export function Portal() {
   );
 }
 
-function PortalCard({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="dash">
-      <Icon n={icon} s={24} />
-      <h3>{title}</h3>
-      <p>{text}</p>
-      <span className="portalstatus">Coming with your learner profile</span>
-    </div>
-  );
+function PortalSectionSkeleton() {
+  return <div className="portal-section-skeleton" role="status" aria-label="Loading section details"><span /><span /><span /><span /></div>;
 }

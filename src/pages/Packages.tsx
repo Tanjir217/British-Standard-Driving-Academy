@@ -6,6 +6,7 @@ import { packageService } from "../services/packages/packageService";
 import { bookingService } from "../services/bookings/bookingService";
 import type { Package } from "../services/domain/types";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
+import "../package-page-grid.css";
 
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat("en-GB", {
@@ -15,69 +16,38 @@ function formatMoney(amountMinor: number, currency: string) {
   }).format(amountMinor / 100);
 }
 
-const packageCopy: Record<
-  string,
-  { eyebrow: string; description: string; features: string[]; popular?: boolean }
-> = {
-  "10-hour block booking": {
-    eyebrow: "10 Hours",
-    description:
-      "A discounted block booking for learners who want consistent progress over a structured period.",
-    features: [
-      "10 driving lessons",
-      "Complete within 1 month",
-      "Progress-focused tuition",
-    ],
-    popular: true,
-  },
-  "20-hour block booking": {
-    eyebrow: "20 Hours",
-    description:
-      "A larger discounted block for learners who want more practice and continuity.",
-    features: [
-      "20 driving lessons",
-      "Complete within 1 month",
-      "Progress-focused tuition",
-    ],
-  },
-  "10-hour intensive programme": {
-    eyebrow: "10 Hours · Intensive",
-    description:
-      "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: [
-      "10 driving lessons",
-      "Complete within 2 weeks",
-      "Intensive training structure",
-    ],
-  },
-  "20-hour intensive programme": {
-    eyebrow: "20 Hours · Intensive",
-    description:
-      "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: [
-      "20 driving lessons",
-      "Complete within 3 weeks",
-      "Intensive training structure",
-    ],
-  },
-};
+function getDescriptionList(description: string) {
+  const normalized = description.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return { intro: "", items: [] as string[] };
 
-function getPackageCopy(plan: Package) {
-  const copy = packageCopy[plan.name.trim().toLowerCase()];
-  return {
-    eyebrow: copy?.eyebrow ?? `${plan.lessonHours} Hours`,
-    description:
-      copy?.description ??
-      "A structured BSDA driving programme managed through our booking and pricing system.",
-    features:
-      plan.features.length > 0
-        ? plan.features
-        : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
-    popular: copy?.popular,
-  };
+  const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
+  const sourceLines = lines.length > 1
+    ? lines
+    : (() => {
+        const colon = normalized.match(/^(.+?:)\s+(.+)$/);
+        const intro = colon?.[1] ?? "";
+        const remainder = colon?.[2] ?? normalized;
+        const sentences = remainder.match(/[^.!?]+[.!?]+(?:["')\]]*)|[^.!?]+$/g) ?? [remainder];
+        return intro ? [intro, ...sentences.map((sentence) => sentence.trim()).filter(Boolean)] : sentences.map((sentence) => sentence.trim()).filter(Boolean);
+      })();
+
+  const intro = sourceLines[0]?.endsWith(":") ? sourceLines[0] : "";
+  const items = (intro ? sourceLines.slice(1) : sourceLines)
+    .map((item) => item.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+  return { intro, items };
 }
 
-function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
+function ServiceCard({
+  service,
+  descriptionAsList = false,
+}: {
+  service: BookingServiceCatalogItem;
+  descriptionAsList?: boolean;
+}) {
+  const description = service.description?.trim() ?? "";
+  const descriptionList = descriptionAsList ? getDescriptionList(description) : null;
+
   return (
     <article className="servicecard">
       <div>
@@ -85,10 +55,23 @@ function ServiceCard({ service }: { service: BookingServiceCatalogItem }) {
           {formatMoney(service.priceMinor, service.currency)}
         </span>
         <h3>{service.name}</h3>
-        <p>{service.description || "Driving service available through BSDA."}</p>
+        {descriptionAsList && descriptionList ? (
+          <div className="servicecardDescription">
+            {descriptionList.intro && <p>{descriptionList.intro}</p>}
+            {descriptionList.items.length > 0 && (
+              <ul className="serviceDescriptionList">
+                {descriptionList.items.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p>{description || "Driving service available through BSDA."}</p>
+        )}
       </div>
-      <Link className="textlink" to="/packages">
-        View packages <span>→</span>
+      <Link className="btn red full servicecardContinue" to={`/booking?service=${encodeURIComponent(service.id)}`}>
+        Select &amp; continue <span>→</span>
       </Link>
     </article>
   );
@@ -143,17 +126,13 @@ export function Packages() {
     };
   }, []);
 
-  const packageCards = packageData.map((plan) => {
-    const copy = getPackageCopy(plan);
-    return {
-      ...plan,
-      price: formatMoney(plan.priceMinor, plan.currency),
-      eyebrow: copy.eyebrow,
-      description: copy.description,
-      features: copy.features,
-      popular: copy.popular,
-    };
-  });
+  const packageCards = packageData.map((plan) => ({
+    ...plan,
+    price: formatMoney(plan.priceMinor, plan.currency),
+    eyebrow: plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
+    description: plan.description,
+    features: plan.features,
+  }));
 
   const standardServices = serviceData.filter(
     (service) =>
@@ -172,7 +151,8 @@ export function Packages() {
           center
           ey=""
           title="Straightforward pricing for every stage of learning."
-          text=""
+          text="Lessons are generally scheduled in 2-hour slots.
+          "
         />
 
         {loading && (
@@ -220,7 +200,7 @@ export function Packages() {
             <Heading
               ey="Additional services"
               title="More than standard lessons."
-              text="Service names, descriptions and prices below are loaded from Wix Bookings."
+              text=""
             />
           </div>
 
@@ -259,13 +239,13 @@ export function Packages() {
                 <Heading
                   ey="Test support"
                   title="Test preparation and test-day car hire."
-                  text="These services are managed as live Wix Bookings services and use their configured prices."
+                  text="Build confidence, improve your skills, and prepare for your practical test. All test-day car hire is subject to eligibility, instructor approval, and availability."
                 />
               </div>
 
               <div className="servicegrid">
                 {testSupportServices.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
+                  <ServiceCard key={service.id} service={service} descriptionAsList />
                 ))}
               </div>
             </div>

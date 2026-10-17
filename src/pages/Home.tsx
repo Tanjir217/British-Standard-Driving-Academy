@@ -4,142 +4,84 @@ import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { Reveal } from "../components/Reveal";
 import { VideoShowcase } from "../components/VideoShowcase";
-import { PackageCard } from "../components/PackageCard";
-import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
 import { VideoEmbed } from "../components/VideoEmbed";
-import { getSiteContent } from "../services/siteContentService";
-import { lessons, instructors } from "../data/site";
-import { packageService } from "../services/packages/packageService";
-import type { Package } from "../services/domain/types";
+import {
+  getHomeReels,
+  type VideoLibraryItem,
+} from "../services/videoLibraryService";
 
-const packageCopy: Record<string, { eyebrow: string; description: string; features: string[]; popular?: boolean }> = {
-  "10-hour block booking": {
-    eyebrow: "10 Hours",
-    description: "A discounted block booking for learners who want consistent progress over a structured period.",
-    features: ["10 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-    popular: true,
-  },
-  "20-hour block booking": {
-    eyebrow: "20 Hours",
-    description: "A larger discounted block for learners who want more practice and continuity.",
-    features: ["20 driving lessons", "Complete within 1 month", "Progress-focused tuition"],
-  },
-  "10-hour intensive programme": {
-    eyebrow: "10 Hours · Intensive",
-    description: "A focused programme designed to complete 10 hours of training within a two-week period.",
-    features: ["10 driving lessons", "Complete within 2 weeks", "Intensive training structure"],
-  },
-  "20-hour intensive programme": {
-    eyebrow: "20 Hours · Intensive",
-    description: "A focused programme designed to complete 20 hours of training within a three-week period.",
-    features: ["20 driving lessons", "Complete within 3 weeks", "Intensive training structure"],
-  },
+type PromotionalBanner = {
+  id: string;
+  title: string;
+  image: unknown;
+  imageUrl: string;
+  altText: string;
+  linkUrl: string;
+  sortOrder: number;
 };
 
-function formatMoney(amountMinor: number, currency: string) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
+function resolveBannerImage(image: unknown, imageUrl: string): string {
+  const candidate =
+    imageUrl ||
+    (typeof image === "string"
+      ? image
+      : image && typeof image === "object"
+        ? String((image as { url?: unknown; src?: unknown }).url ?? (image as { src?: unknown }).src ?? "")
+        : "");
+  if (!candidate) return "";
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : "";
+  }
+  return "";
 }
 
-function toPackageCard(plan: Package) {
-  const copy = packageCopy[plan.name.trim().toLowerCase()];
-  return {
-    id: plan.id,
-    name: plan.name,
-    price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow: copy?.eyebrow ?? (plan.lessonHours ? `${plan.lessonHours} Hours` : "Driving Programme"),
-    description: copy?.description ?? "A structured BSDA driving programme managed through our booking and pricing system.",
-    features: plan.features.length > 0 ? plan.features : copy?.features ?? ["Structured driving tuition", "Flexible scheduling"],
-    popular: copy?.popular,
-  };
+function safeBannerLink(linkUrl: string): string {
+  const value = linkUrl.trim();
+  return value.startsWith("/") || /^https?:\/\//i.test(value) ? value : "";
 }
 
-function AnimatedStat({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const ref = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    let frame = 0;
-    let started = false;
-
-    const animate = () => {
-      const duration = 1300;
-      const start = performance.now();
-
-      const tick = (now: number) => {
-        const progress = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const value = Math.round(target * eased);
-        if (element) {
-          element.textContent =
-            value.toString().padStart(target < 10 ? 2 : 1, "0") + suffix;
-        }
-        if (progress < 1) frame = requestAnimationFrame(tick);
-      };
-
-      frame = requestAnimationFrame(tick);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started) {
-          started = true;
-          animate();
-        }
-      },
-      { threshold: 0.45 },
-    );
-
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-    };
-  }, [target, suffix]);
-
-  return <strong ref={ref}>{target < 10 ? "0" : ""}{target}{suffix}</strong>;
-}
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
-  const [reelsInteracted, setReelsInteracted] = useState(false);
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 600px)").matches,
+  );
+  const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBanner[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
-  const [reelUrls, setReelUrls] = useState<string[]>([]);
-  const [packageActiveIndex, setPackageActiveIndex] = useState(0);
-  const [packageInteracted, setPackageInteracted] = useState(false);
-  const packageTouchStartX = useRef<number | null>(null);
+  const [reelUrls, setReelUrls] = useState<VideoLibraryItem[]>([]);
 
-  useEffect(() => {
-    // The desktop layout displays every package at once; only rotate the mobile carousel.
-    if (packageInteracted || packages.length < 2 || !window.matchMedia("(max-width: 700px)").matches) return;
-    const timer = window.setInterval(() => {
-      setPackageActiveIndex((current) => Math.min(current + 1, packages.length - 1));
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [packageInteracted, packages.length]);
+
 
   useEffect(() => {
     let active = true;
-    packageService.list().then((result) => {
-      if (active && result.ok) setPackages(result.data);
-    });
+
+    fetch("/api/promotional-banners")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Promotional banners request failed.");
+        return response.json() as Promise<{ ok?: boolean; banners?: PromotionalBanner[] }>;
+      })
+      .then((result) => {
+        if (active && result.ok && Array.isArray(result.banners)) {
+          setPromotionalBanners(result.banners);
+        }
+      })
+      .catch((error) => {
+        console.error("Unable to load homepage promotional banners.", error);
+        if (active) setPromotionalBanners([]);
+      });
+
     return () => {
       active = false;
     };
   }, []);
-
-  const packageCards = packages.map(toPackageCard);
-
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 600px)").matches;
@@ -174,12 +116,30 @@ export function Home() {
   }, [lessonResetting]);
 
   const testimonialItems = [
-    ["My lessons finally felt structured. I knew what I had improved and what I needed to practise next.", "Demo learner · Beginner"],
-    ["The calm coaching made a huge difference. I became much more comfortable in busy traffic.", "Demo learner · Refresher"],
-    ["I stopped feeling rushed behind the wheel and started making decisions with confidence.", "Demo learner · New driver"],
-    ["The instructor explained everything clearly and gave me a plan for every lesson.", "Demo learner · Beginner"],
-    ["I felt much more prepared for real traffic, not just the test route.", "Demo learner · Test preparation"],
-    ["The lessons were practical, patient and focused on the areas I actually needed to improve.", "Demo learner · Refresher"],
+    [
+      "My lessons finally felt structured. I knew what I had improved and what I needed to practise next.",
+      "Demo learner · Beginner",
+    ],
+    [
+      "The calm coaching made a huge difference. I became much more comfortable in busy traffic.",
+      "Demo learner · Refresher",
+    ],
+    [
+      "I stopped feeling rushed behind the wheel and started making decisions with confidence.",
+      "Demo learner · New driver",
+    ],
+    [
+      "The instructor explained everything clearly and gave me a plan for every lesson.",
+      "Demo learner · Beginner",
+    ],
+    [
+      "I felt much more prepared for real traffic, not just the test route.",
+      "Demo learner · Test preparation",
+    ],
+    [
+      "The lessons were practical, patient and focused on the areas I actually needed to improve.",
+      "Demo learner · Refresher",
+    ],
   ];
 
   useEffect(() => {
@@ -219,19 +179,27 @@ export function Home() {
     return () => window.cancelAnimationFrame(frame);
   }, [testimonialResetting]);
   const reelViewportRef = useRef<HTMLDivElement | null>(null);
-  const reelItems = reelUrls.length ? reelUrls : ["", "", "", "", "", ""];
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 600px)");
+    const updateViewport = () => setIsMobileViewport(media.matches);
+    updateViewport();
+    media.addEventListener("change", updateViewport);
+    return () => media.removeEventListener("change", updateViewport);
+  }, []);
+  const reelItems = reelUrls.length ? reelUrls : [];
 
   useEffect(() => {
     let active = true;
 
-    getSiteContent()
-      .then((content) => {
-        if (!active) return;
-        setReelUrls(
-          Array.from({ length: 6 }, (_, index) => content[`reel-${index + 1}`]?.url || ""),
-        );
+    getHomeReels(20)
+      .then((items) => {
+        if (active) setReelUrls(items);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error(
+          "Unable to load homepage reels from Wix VideoLibrary.",
+          error,
+        );
         if (active) setReelUrls([]);
       });
 
@@ -246,82 +214,90 @@ export function Home() {
     const card = grid?.querySelector<HTMLElement>(".socialReelCard");
     if (!viewport || !grid || !card) return;
 
-    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
     viewport.scrollBy({
       left: direction * (card.getBoundingClientRect().width + gap),
       behavior: "smooth",
     });
   };
 
-  useEffect(() => {
-    if (reelsInteracted || reelItems.length < 2) return;
-    const isMobile = window.matchMedia("(max-width: 600px)").matches;
-    if (!isMobile) return;
-    const timer = window.setInterval(() => {
-      const viewport = reelViewportRef.current;
-      const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
-      const card = grid?.querySelector<HTMLElement>(".socialReelCard");
-      if (!viewport || !grid || !card) return;
-      const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
-      const step = card.getBoundingClientRect().width + gap;
-      const maxPage = Math.max(0, reelItems.length - 1);
-      if (reelPage >= maxPage) return;
-      viewport.scrollTo({ left: (reelPage + 1) * step, behavior: "smooth" });
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [reelsInteracted, reelItems.length, reelPage]);
+  const scrollReelTo = (index: number) => {
+    const viewport = reelViewportRef.current;
+    const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
+    const card = grid?.querySelector<HTMLElement>(".socialReelCard");
+    if (!viewport || !grid || !card) return;
+
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
+    const step = card.getBoundingClientRect().width + gap;
+    viewport.scrollTo({ left: Math.max(0, index) * step, behavior: "smooth" });
+  };
+
+  const advanceReelAfterEnd = (finishedIndex: number) => {
+    if (
+      typeof window === "undefined" ||
+      !window.matchMedia("(max-width: 600px)").matches
+    )
+      return;
+    if (finishedIndex !== reelPage || finishedIndex >= reelItems.length - 1)
+      return;
+    // Advance only after the active YouTube player reports its ended state.
+    scrollReels(1);
+  };
   const syncReelPage = () => {
     const viewport = reelViewportRef.current;
     const grid = viewport?.querySelector<HTMLElement>(".socialReelsGrid");
     const card = grid?.querySelector<HTMLElement>(".socialReelCard");
     if (!viewport || !grid || !card) return;
 
-    const gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0");
+    const gap = parseFloat(
+      getComputedStyle(grid).columnGap || getComputedStyle(grid).gap || "0",
+    );
     const step = card.getBoundingClientRect().width + gap;
     const page = step > 0 ? Math.round(viewport.scrollLeft / step) : 0;
-    setReelPage(Math.max(0, Math.min(reelItems.length - 1, page)));
+    const maxPage = Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4));
+    setReelPage(Math.max(0, Math.min(maxPage, page)));
   };
   return (
     <>
       <section className="hero">
         <div className="container herogrid">
           <div className="heroCopy">
-            <span className="ey">British-standard driving education</span>
-            <h1>Learn to drive.<br /><em>Learn to live.</em></h1>
-            <p>Confident drivers are built through patient coaching, purposeful practice and a learning path that makes every lesson count.</p>
+            <span className="ey">British-standard driving Academy</span>
+            <h1>
+              Learn to drive.
+              <br />
+              <em>Learn to live.</em>
+            </h1>
+            <p>
+              Confident drivers are built through patient coaching, purposeful
+              practice and a learning path that makes every lesson count.
+            </p>
             <div className="actions">
-              <Link className="btn red" to="/booking">Book your first lesson <Icon n="arrow" /></Link>
-              <Link className="btn light" to="/instructors">Meet our instructors</Link>
+              <Link className="btn red" to="/booking">
+                Book your first lesson <Icon n="arrow" />
+              </Link>
+              <Link className="btn light" to="/instructors">
+                Meet our instructors
+              </Link>
             </div>
             <div className="heroTrust">
-              <span><Icon n="shield" s={16} /> Safety-first coaching</span>
-              <span><Icon n="car" s={16} /> Practical road skills</span>
-              <span><Icon n="calendar" s={16} /> Flexible scheduling</span>
+              <span>
+                <Icon n="shield" s={16} /> Safety-first coaching
+              </span>
+              <span>
+                <Icon n="car" s={16} /> Practical road skills
+              </span>
+              <span>
+                <Icon n="calendar" s={16} /> Flexible scheduling
+              </span>
             </div>
           </div>
 
-          <div className="heroart">
-            <div className="heroRing ringone" />
-            <div className="heroRing ringtwo" />
-            <div className="heroFrame">
-              <div className="heroSky" />
-              <div className="heroBuilding bOne" />
-              <div className="heroBuilding bTwo" />
-              <div className="heroRoad" />
-              <div className="heroDash dashOne" />
-              <div className="heroDash dashTwo" />
-              <div className="heroDash dashThree" />
-              <div className="heroCar" />
-              <div className="heroFramecopy"><small>YOUR NEXT MILE</small><b>Starts here.</b></div>
-            </div>
-            <div className="floatingCard">
-              <span className="ey">Learning path</span>
-              <b>Beginner → Road-ready</b>
-              <i><span /></i>
-            </div>
-          </div>
         </div>
-
       </section>
 
       <section className="quickLinks section">
@@ -332,7 +308,7 @@ export function Home() {
                 image: "/quick-links/driving-lessons.svg",
                 eyebrow: "Start learning",
                 title: "Driving Lessons",
-                text: "",
+                text: "Be Smart, Drive Confident Learn With an expert ADI instructor.",
                 label: "Learn more",
                 to: "/lessons",
               },
@@ -340,23 +316,23 @@ export function Home() {
                 image: "/quick-links/packages.svg",
                 eyebrow: "Choose your pace",
                 title: "Price & Packages",
-                text: "Starter, Plus and Premium lesson paths with transparent pricing.",
+                text: "Choose Your Package. Standard, Priority Or Super Priority",
                 label: "View packages",
                 to: "/packages",
               },
               {
                 image: "/quick-links/learning-portal.svg",
                 eyebrow: "Keep progressing",
-                title: "Get Ready For",
-                text: "Access theory support, mock tests and progress tracking.",
+                title: "BSDA Learning Hub",
+                text: "Get Ready for Test Theory, Practical, ADI & PDI Training.",
                 label: "Student login",
                 to: "/portal",
               },
               {
                 image: "/quick-links/government-links.svg",
                 eyebrow: "Official information",
-                title: "Government Info Links",
-                text: "Find DVLA, theory test booking and practical exam information.",
+                title: "Student Support & Information Center",
+                text: "Your Questioned Answered. Your Driving Journey Supported",
                 label: "More info",
                 to: "/faq",
               },
@@ -374,38 +350,48 @@ export function Home() {
                     />
                   </div>
                   <div className="quickLinkBody">
-                    <span className="ey">{item.eyebrow}</span>
+                    {/* <span className="ey">{item.eyebrow}</span> */}
                     <h2>{item.title}</h2>
-                    {/* <p>{item.text}</p> */}
+                    <p>{item.text}</p>
                     {item.title === "Driving Lessons" && (
-                      <ul className="quickLinkLessonList" aria-label="Driving lesson options">
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Driving lesson options"
+                      >
                         <li>Automatic / manual</li>
-                        {/* <li>Beginner</li> */}
                         <li>Partly trained</li>
                         <li>Refresher</li>
                         <li>Full experience</li>
-                        {/* <li>Motorway training</li>
-                        <li>PDI and ADI training</li> */}
                       </ul>
                     )}
-                    {item.title ==="Get Ready For" && (
-                      <ul className="quickLinkLessonList" aria-label="Learning portal features">
+
+                    {item.title === "BSDA Learning Hub" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Learning portal features"
+                      >
                         <li>Theory Test</li>
                         <li>Practical Test</li>
                         <li>ADI Training</li>
                         <li>Progress tracking</li>
                       </ul>
                     )}
-                    {item.title ==="Government Info Links" && (
-                      <ul className="quickLinkLessonList" aria-label="Government information links">
+                    {item.title === "Student Support & Information Center" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Student support and information"
+                      >
                         <li>DVLA</li>
                         <li>Theory Test Booking</li>
                         <li>Practical Exam</li>
                         <li>Test Fees</li>
-                      </ul> 
+                      </ul>
                     )}
-                    {item.title ==="Price & Packages" && (  
-                      <ul className="quickLinkLessonList" aria-label="Price and package options">
+                    {item.title === "Price & Packages" && (
+                      <ul
+                        className="quickLinkLessonList"
+                        aria-label="Price and package options"
+                      >
                         <li>Standard Lessons </li>
                         <li>Block Bookings</li>
                         <li>Intensive Programs</li>
@@ -424,53 +410,126 @@ export function Home() {
         </div>
       </section>
 
-      <section className="homeMotionStats" aria-label="BSDA highlights">
+      {promotionalBanners.some((banner) => resolveBannerImage(banner.image, banner.imageUrl)) && (
+        <section className="promotionalBanners section" aria-label="Promotional offers">
+          <div className="container">
+            <div className="promotionalBannersGrid">
+              {promotionalBanners.map((banner) => {
+                const imageSrc = resolveBannerImage(banner.image, banner.imageUrl);
+                if (!imageSrc) return null;
+                const link = safeBannerLink(banner.linkUrl);
+                const image = (
+                  <img
+                    src={imageSrc}
+                    alt={banner.altText || banner.title || "BSDA promotion"}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                );
+                return (
+                  <article className="promotionalBanner" key={banner.id || imageSrc}>
+                    {link ? (
+                      <a
+                        href={link}
+                        aria-label={banner.title || banner.altText || "View promotion"}
+                        target={link.startsWith("http") ? "_blank" : undefined}
+                        rel={link.startsWith("http") ? "noopener noreferrer" : undefined}
+                      >
+                        {image}
+                      </a>
+                    ) : image}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* <section className="homeMotionStats" aria-label="BSDA highlights">
         <div className="homeMotionTicker" aria-hidden="true">
           <div className="homeMotionTickerTrack">
-            <span>DRIVING LESSONS</span><i>✦</i>
-            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
-            <span>THEORY TEST SUPPORT</span><i>✦</i>
-            <span>INTENSIVE COURSES</span><i>✦</i>
-            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
-            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
-            <span>DRIVING LESSONS</span><i>✦</i>
-            <span>MANUAL &amp; AUTOMATIC</span><i>✦</i>
-            <span>THEORY TEST SUPPORT</span><i>✦</i>
-            <span>INTENSIVE COURSES</span><i>✦</i>
-            <span>QUALIFIED INSTRUCTORS</span><i>✦</i>
-            <span>ROAD-READY CONFIDENCE</span><i>✦</i>
+            <span>DRIVING LESSONS</span>
+            <i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span>
+            <i>✦</i>
+            <span>THEORY TEST SUPPORT</span>
+            <i>✦</i>
+            <span>INTENSIVE COURSES</span>
+            <i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span>
+            <i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span>
+            <i>✦</i>
+            <span>DRIVING LESSONS</span>
+            <i>✦</i>
+            <span>MANUAL &amp; AUTOMATIC</span>
+            <i>✦</i>
+            <span>THEORY TEST SUPPORT</span>
+            <i>✦</i>
+            <span>INTENSIVE COURSES</span>
+            <i>✦</i>
+            <span>QUALIFIED INSTRUCTORS</span>
+            <i>✦</i>
+            <span>ROAD-READY CONFIDENCE</span>
+            <i>✦</i>
           </div>
         </div>
 
         <div className="homeStats">
           <div className="container homeStatsGrid">
-            <div><AnimatedStat target={120} suffix="+" /><span>Successful Students</span></div>
-            <div><AnimatedStat target={15} suffix="+" /><span>Certified Instructors</span></div>
-            <div><AnimatedStat target={24} suffix="/7" /><span>Learning resources</span></div>
-            <div><AnimatedStat target={100} suffix="%" /><span>Safety-first coaching</span></div>
+            <div>
+              <AnimatedStat target={120} suffix="+" />
+              <span>Successful Students</span>
+            </div>
+            <div>
+              <AnimatedStat target={15} suffix="+" />
+              <span>Certified Instructors</span>
+            </div>
+            <div>
+              <AnimatedStat target={24} suffix="/7" />
+              <span>Learning resources</span>
+            </div>
+            <div>
+              <AnimatedStat target={100} suffix="%" />
+              <span>Safety-first coaching</span>
+            </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="offerstrip">
+      {/* <section className="offerstrip">
         <div className="container offerin">
-          <div><span className="ey">New learner offer</span><h2>Choose your pace. Keep your progress.</h2></div>
-          <div><strong>3 / 8 / 15</strong><span>lesson paths</span></div>
-          <Link className="btn white" to="/packages">See packages <Icon n="arrow" /></Link>
+          <div>
+            <span className="ey">New learner offer</span>
+            <h2>Choose your pace. Keep your progress.</h2>
+          </div>
+          <div>
+            <strong>3 / 8 / 15</strong>
+            <span>lesson paths</span>
+          </div>
+          <Link className="btn white" to="/packages">
+            See packages <Icon n="arrow" />
+          </Link>
         </div>
-      </section>
+      </section> */}
 
-      <section className="section soft">
+      {/* <section className="section soft">
         <div className="container">
           <div className="sectionIntro">
-            <Heading center ey="Choose your path" title="Training built around your goal." text="Start small, train consistently or choose an intensive path when time matters." />
-            <span className="sectionNumber">02</span>
+            <Heading
+              center
+              ey="Choose your path"
+              title="Training built around your goal."
+              text="Start small, train consistently or choose an intensive path when time matters."
+            />
           </div>
           <div
             className="cards package-home-grid package-home-carousel"
             aria-label="Driving lesson packages"
             onTouchStart={(event) => {
-              packageTouchStartX.current = event.changedTouches[0]?.clientX ?? null;
+              packageTouchStartX.current =
+                event.changedTouches[0]?.clientX ?? null;
               setPackageInteracted(true);
             }}
             onTouchEnd={(event) => {
@@ -479,78 +538,145 @@ export function Home() {
               packageTouchStartX.current = null;
               if (startX === null || endX === undefined) return;
               const delta = startX - endX;
-              if (Math.abs(delta) < 40 || packages.length < 2) return;
+              if (Math.abs(delta) < 40 || homepageCards.length < 2) return;
               setPackageActiveIndex((current) =>
-                Math.max(0, Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)))
+                Math.max(
+                  0,
+                  Math.min(homepageCards.length - 1, current + (delta > 0 ? 1 : -1)),
+                ),
               );
             }}
             onPointerDown={() => setPackageInteracted(true)}
             onWheel={() => setPackageInteracted(true)}
           >
-            <div className="package-home-track" style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}>
-              {packageCards.map((p, i) => (
+            <div
+              className="package-home-track"
+              style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}
+            >
+              {homepageCards.map((p, i) => (
                 <div
-                  className={"package-home-slide" + (packageActiveIndex === i ? " is-active" : "")}
+                  className={
+                    "package-home-slide" +
+                    (packageActiveIndex === i ? " is-active" : "")
+                  }
                   key={p.id}
-                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                  onClick={() => {
+                    setPackageActiveIndex(i);
+                    setPackageInteracted(true);
+                  }}
                 >
-                  <Reveal delay={i * 90}><PackageCard p={p} /></Reveal>
+                  <Reveal delay={i * 90}>
+                    {p.kind === "package" ? (
+                      <PackageCard p={p} />
+                    ) : (
+                      <article className="card">
+                        <span className="cardey">{p.eyebrow}</span>
+                        <h3>{p.name}</h3>
+                        {p.description && <p>{p.description}</p>}
+                        <div className="price">
+                          {p.price}
+                          <small>/ service</small>
+                        </div>
+                        <Link className="textlink" to={"/booking?service=" + p.id}>
+                          Book service <Icon n="arrow" s={15} />
+                        </Link>
+                      </article>
+                    )}
+                  </Reveal>
                 </div>
               ))}
             </div>
             <div className="package-home-dots" aria-label="Choose a package">
-              {packageCards.map((p, i) => (
+              {homepageCards.map((p, i) => (
                 <button
                   key={p.id}
                   type="button"
                   className={packageActiveIndex === i ? "is-active" : ""}
                   aria-label={`Show ${p.name}`}
                   aria-pressed={packageActiveIndex === i}
-                  onClick={() => { setPackageActiveIndex(i); setPackageInteracted(true); }}
+                  onClick={() => {
+                    setPackageActiveIndex(i);
+                    setPackageInteracted(true);
+                  }}
                 />
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="section videoSection">
         <div className="container">
           <div className="sectionIntro">
-            <Heading center ey="Inside the learning journey" title="Focused lessons. Real road confidence." text="A visual layer brings movement to the experience without getting in the way of the information." />
-            <span className="sectionNumber">04</span>
+            <Heading
+              center
+              ey="Inside the learning journey"
+              title="Focused lessons. Real road confidence."
+              text="A visual layer brings movement to the experience without getting in the way of the information."
+            />
           </div>
-          <Reveal><VideoShowcase /></Reveal>
+          <Reveal>
+            <VideoShowcase />
+          </Reveal>
         </div>
       </section>
 
-      <section className="section dark">
+      {/* <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
-            <Heading ey="Lesson system" title="Skills that matter beyond the test." text="Four focused lesson paths cover the fundamentals and the situations learners need most." />
-            <span className="sectionNumber lightNumber">03</span>
+            <Heading
+              ey="Lesson system"
+              title="Skills that matter beyond the test."
+              text="Four focused lesson paths cover the fundamentals and the situations learners need most."
+            />
           </div>
           <div className="lessonMobileCarousel">
             <div className="lessonMobileViewport">
               <div
-                className={"lessoncards lessonMobileTrack" + (lessonResetting ? " testimonialTrackReset" : "")}
+                className={
+                  "lessoncards lessonMobileTrack" +
+                  (lessonResetting ? " testimonialTrackReset" : "")
+                }
                 style={{ transform: `translateY(-${lessonIndex * 221}px)` }}
               >
                 {[...lessons, ...lessons, ...lessons].map((l, index) => (
-                  <Reveal key={`${l[0]}-${index}`}><LessonCard lesson={l} index={index % lessons.length} /></Reveal>
+                  <Reveal key={`${l[0]}-${index}`}>
+                    <LessonCard lesson={l} index={index % lessons.length} />
+                  </Reveal>
                 ))}
               </div>
             </div>
-            <div className="lessonMobileControls" aria-label="Lesson system navigation">
-              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current - 1)} aria-label="Show previous lesson"><span>↑</span></button>
-              <button type="button" className="testimonialArrow" onClick={() => setLessonIndex((current) => current + 1)} aria-label="Show next lesson"><span>↓</span></button>
+            <div
+              className="lessonMobileControls"
+              aria-label="Lesson system navigation"
+            >
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setLessonIndex((current) => current - 1)}
+                aria-label="Show previous lesson"
+              >
+                <span>↑</span>
+              </button>
+              <button
+                type="button"
+                className="testimonialArrow"
+                onClick={() => setLessonIndex((current) => current + 1)}
+                aria-label="Show next lesson"
+              >
+                <span>↓</span>
+              </button>
             </div>
           </div>
-          <div className="darklink"><Link className="textlink" to="/lessons">Explore the full lesson system <Icon n="arrow" s={15} /></Link></div>
+          <div className="darklink">
+            <Link className="textlink" to="/lessons">
+              Explore the full lesson system <Icon n="arrow" s={15} />
+            </Link>
+          </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="missionVision section">
+      {/* <section className="missionVision section">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -559,7 +685,6 @@ export function Home() {
               title="Building better drivers for life."
               text="Our mission and vision shape every lesson, from the first control to confident everyday driving."
             />
-            <span className="sectionNumber">04</span>
           </div>
 
           <div className="missionVisionGrid">
@@ -572,7 +697,9 @@ export function Home() {
                 confidence to drive independently.
               </p>
               <div className="missionVisionLine" />
-              <span className="missionVisionTag">Learn · Practise · Progress</span>
+              <span className="missionVisionTag">
+                Learn · Practise · Progress
+              </span>
             </article>
 
             <article className="missionVisionCard visionCard">
@@ -581,14 +708,17 @@ export function Home() {
               <p>
                 To become a trusted driving education academy where learners
                 leave with more than a licence — they leave with the awareness,
-                discipline and road confidence to make better decisions every day.
+                discipline and road confidence to make better decisions every
+                day.
               </p>
               <div className="missionVisionLine" />
-              <span className="missionVisionTag">Confidence · Safety · Independence</span>
+              <span className="missionVisionTag">
+                Confidence · Safety · Independence
+              </span>
             </article>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="socialReels section">
         <div className="container">
@@ -599,25 +729,42 @@ export function Home() {
               title="See BSDA in motion."
               text="Short tips, road moments and learner-focused content from our social channels."
             />
-            <span className="sectionNumber">04</span>
           </div>
 
-          <div
-            className="socialReelsViewport"
-            ref={reelViewportRef}
-            onScroll={syncReelPage}
-            onTouchStart={() => setReelsInteracted(true)}
-            onPointerDown={() => setReelsInteracted(true)}
-          >
-            <div className="socialReelsGrid">
-              {reelItems.map((url, index) => (
-                <article className="socialReelCard" key={"reel-" + (index + 1)}>
-                  <div className="socialReelFrame" aria-label={"Short video " + (index + 1)}>
-                    {url ? (
+          <div className="socialReelsDesktopNav">
+            <button
+              type="button"
+              className="socialReelsSideArrow socialReelsSideArrowPrev"
+              onClick={() => scrollReels(-1)}
+              disabled={reelPage === 0}
+              aria-label="Show previous reels"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <div
+              className="socialReelsViewport"
+              ref={reelViewportRef}
+              onScroll={syncReelPage}
+            >
+              <div className="socialReelsGrid">
+              {reelItems.map((reel, index) => (
+                <article
+                  className="socialReelCard"
+                  key={reel._id || "reel-" + (index + 1)}
+                >
+                  <div
+                    className="socialReelFrame"
+                    aria-label={reel.title || "Short video " + (index + 1)}
+                  >
+                    {reel.videoUrl ? (
                       <VideoEmbed
-                        url={url}
-                        title={"BSDA short video " + (index + 1)}
+                        url={reel.videoUrl}
+                        title={reel.title || "BSDA short video " + (index + 1)}
                         className="socialReelEmbed"
+                        autoPlayWhenVisible={
+                          !isMobileViewport || index === reelPage
+                        }
+                        onEnded={() => advanceReelAfterEnd(index)}
                       />
                     ) : (
                       <div className="socialReelPlaceholder" aria-hidden="true">
@@ -627,28 +774,35 @@ export function Home() {
                   </div>
                 </article>
               ))}
+              {reelItems.length === 0 && (
+                <div className="socialReelPlaceholder socialReelPlaceholderEmpty">
+                  <span>New reels coming soon</span>
+                </div>
+              )}
+              </div>
             </div>
-          </div>
-
-          <div className="socialReelsControls" aria-label="Short video navigation">
             <button
               type="button"
-              className="socialReelArrow"
-              onClick={() => { setReelsInteracted(true); scrollReels(-1); }}
-              disabled={reelPage === 0}
-              aria-label="Show previous short videos"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              type="button"
-              className="socialReelArrow"
-              onClick={() => { setReelsInteracted(true); scrollReels(1); }}
-              disabled={reelPage === reelItems.length - 4}
-              aria-label="Show next short videos"
+              className="socialReelsSideArrow socialReelsSideArrowNext"
+              onClick={() => scrollReels(1)}
+              disabled={reelPage >= Math.max(0, reelItems.length - (isMobileViewport ? 1 : 4))}
+              aria-label="Show next reels"
             >
               <span aria-hidden="true">›</span>
             </button>
+          </div>
+
+          <div className="socialReelsControls package-home-dots" aria-label="Choose a reel">
+            {reelItems.map((reel, index) => (
+              <button
+                key={reel._id || "reel-dot-" + (index + 1)}
+                type="button"
+                className={reelPage === index ? "is-active" : ""}
+                aria-label={"Show reel " + (index + 1)}
+                aria-pressed={reelPage === index}
+                onClick={() => scrollReelTo(index)}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -656,16 +810,29 @@ export function Home() {
         <div className="container testimonialgrid">
           <div>
             <span className="ey">Learner feedback</span>
-            <h2>“The goal is not just passing. It is knowing what to do when the road changes.”</h2>
+            <h2>
+              “The goal is not just passing. It is knowing what to do when the
+              road changes.”
+            </h2>
           </div>
 
           <div className="testimonialCarousel">
             <div className="testimonialViewport">
               <div
-                className={"testimonialTrack" + (testimonialResetting ? " testimonialTrackReset" : "")}
-                style={{ transform: `translateY(-${testimonialIndex * 221}px)` }}
+                className={
+                  "testimonialTrack" +
+                  (testimonialResetting ? " testimonialTrackReset" : "")
+                }
+                style={{
+                  transform: `translateY(-${testimonialIndex * 221}px)`,
+                }}
               >
-                {[...testimonialItems, ...testimonialItems, ...testimonialItems, ...testimonialItems].map(([quote, learner], index) => (
+                {[
+                  ...testimonialItems,
+                  ...testimonialItems,
+                  ...testimonialItems,
+                  ...testimonialItems,
+                ].map(([quote, learner], index) => (
                   <article className="quoteCard" key={index}>
                     <b>“</b>
                     <p>{quote}</p>
@@ -675,7 +842,10 @@ export function Home() {
               </div>
             </div>
 
-            <div className="testimonialControls" aria-label="Learner feedback navigation">
+            <div
+              className="testimonialControls"
+              aria-label="Learner feedback navigation"
+            >
               <button
                 type="button"
                 className="testimonialArrow"
@@ -698,7 +868,6 @@ export function Home() {
       </section>
 
       <FAQSection />
-
     </>
   );
 }
