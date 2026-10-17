@@ -216,11 +216,14 @@ async function createFullDataMember(member: AuthenticatedMember): Promise<WixRec
   const firstName = String(member.contact?.firstName ?? "").trim();
   const lastName = String(member.contact?.lastName ?? "").trim();
   const nickname = String(member.profile?.nickname ?? "").trim();
-  const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
   const email = String(member.loginEmail ?? member.email ?? member.contact?.email ?? "").trim().toLowerCase();
   const contactId = String(member.contactId ?? member._id).trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
+    nickname ||
+    email.split("@")[0] ||
+    "Student";
 
-  if (!email || !fullName || !contactId) {
+  if (!email || !contactId) {
     throw new Error("NEW_MEMBER_PROFILE_DATA_MISSING");
   }
 
@@ -229,6 +232,7 @@ async function createFullDataMember(member: AuthenticatedMember): Promise<WixRec
   // enter the portal; profile-specific fields remain in StudentProfiles.
   const inserted = await elevatedInsert(COLLECTION_ID, {
     title: fullName,
+    fullName,
     contactId,
     loginEmail: email,
     email,
@@ -236,7 +240,7 @@ async function createFullDataMember(member: AuthenticatedMember): Promise<WixRec
     lastName,
     nickname,
     phone: String(member.contact?.phones?.[0] ?? ""),
-    status: "Active",
+    status: "ACTIVE",
     activityStatus: "ACTIVE",
     privacyStatus: "PRIVATE",
     bookingEligible: true,
