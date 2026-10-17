@@ -78,11 +78,9 @@ export function Portal() {
         }
       } catch (profileError) {
         if (!active) return;
-        if (profileError instanceof StudentProfileApiError && profileError.status === 401) {
-          navigate("/login?returnTo=" + encodeURIComponent("/portal"), { replace: true });
-          return;
-        }
-        setError(profileError instanceof Error ? profileError.message : "We couldn't load your profile.");
+        // Any failed initial profile request means the protected portal cannot
+        // be entered. Send the visitor to login instead of rendering an error page.
+        navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
       } finally {
         if (active) setLoading(false);
       }
@@ -225,24 +223,9 @@ export function Portal() {
     }
   }
 
-  if (loading) {
-    return <StudentPortalSkeleton />;
-  }
-
-  if (error) {
-    return (
-      <section className="page portal">
-        <div className="container authloading">
-          <span className="ey">Student portal</span>
-          <h1>We couldn't load your account.</h1>
-          <p>{error}</p>
-          <button className="btn red" onClick={() => navigate("/login")}>
-            Sign in again <Icon n="arrow" />
-          </button>
-        </div>
-      </section>
-    );
-  }
+  // Keep the protected portal invisible while its first request is being
+  // checked; failures navigate to login rather than showing an account error page.
+  if (loading || error) return null;
 
   const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "Learner";
   const displayName = firstName || "Learner";
