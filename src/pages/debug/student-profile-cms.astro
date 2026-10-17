@@ -1,0 +1,69 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>BSDA StudentProfile CMS Debug</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">BSDA · DEVELOPMENT DIAGNOSTICS</p>
+      <h1>StudentProfile CMS connection test</h1>
+      <p>This performs a read-only request from the Astro backend to the Wix CMS collection ID <code>StudentProfile</code>. It checks whether the collection can be queried and returns only record IDs and field names, not profile values. No records are created or changed.</p>
+      <div class="actions">
+        <button id="run" type="button">Run test again</button>
+        <span id="status" role="status">Testing connection…</span>
+      </div>
+      <pre id="result" aria-live="polite">Waiting for the backend response…</pre>
+    </main>
+    <script>
+      const runButton = document.querySelector("#run");
+      const status = document.querySelector("#status");
+      const result = document.querySelector("#result");
+
+      async function runTest() {
+        runButton.disabled = true;
+        status.textContent = "Testing…";
+        status.dataset.state = "pending";
+        result.textContent = "Sending read-only request to Wix CMS…";
+        try {
+          const response = await fetch("/api/debug/student-profile-cms", { cache: "no-store" });
+          const data = await response.json();
+          result.textContent = JSON.stringify(data, null, 2);
+          status.textContent = data.ok ? "Reachable" : "Request failed";
+          status.dataset.state = data.ok ? "success" : "failure";
+        } catch (error) {
+          status.textContent = "Request failed";
+          status.dataset.state = "failure";
+          result.textContent = error instanceof Error ? error.message : "Could not call the debug endpoint.";
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      runButton.addEventListener("click", runTest);
+      void runTest();
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(*) { box-sizing: border-box; }
+  :global(body) { margin: 0; background: #f4f5f8; color: #101a33; font-family: Arial, Helvetica, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 36px 20px 60px; }
+  .eyebrow { color: #d51f2a; font-size: 11px; font-weight: 800; letter-spacing: 1.4px; }
+  h1 { margin: 12px 0; font: 700 clamp(28px, 4vw, 40px)/1.1 Georgia, serif; }
+  p { line-height: 1.65; }
+  .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin: 22px 0; }
+  button { padding: 11px 16px; border: 0; border-radius: 8px; background: #d51f2a; color: white; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  #status { padding: 7px 10px; border-radius: 999px; background: #fff4cf; color: #775600; font-size: 12px; font-weight: 800; }
+  #status[data-state="success"] { background: #e7f7ed; color: #17663d; }
+  #status[data-state="failure"] { background: #fdebed; color: #a41922; }
+  pre { min-height: 180px; padding: 18px; overflow: auto; border: 1px solid #dfe3eb; border-radius: 10px; background: white; color: #101a33; font: 12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+</style>
