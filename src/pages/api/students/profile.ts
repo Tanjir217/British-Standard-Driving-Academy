@@ -273,6 +273,9 @@ export const GET: APIRoute = async () => {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
     console.error("[BSDA FullData profile] GET failed:", reason);
+    if (/unauthenticated|not authenticated|not logged in|member is not logged in|unauthorized|session expired/i.test(reason)) {
+      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
+    }
     if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix authenticated the session but did not provide contactId or loginEmail." }, 422);
     }
