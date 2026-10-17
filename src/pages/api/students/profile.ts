@@ -398,10 +398,21 @@ async function persistEditableProfile(member: AuthenticatedMember, fullDataRecor
     return normalizeRecord(updated) ?? { ...existing, ...changes, _id: recordId };
   }
 
-  const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, changes);
-  const created = normalizeRecord(inserted);
-  if (!created) throw new Error("STUDENT_PROFILE_INSERT_RETURNED_INVALID_RECORD");
-  return created;
+  const stableId = String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim();
+  try {
+    const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, { ...changes, _id: stableId });
+    const created = normalizeRecord(inserted);
+    if (!created) throw new Error("STUDENT_PROFILE_INSERT_RETURNED_INVALID_RECORD");
+    return created;
+  } catch (insertError) {
+    // If GET and PATCH raced, reuse the profile inserted by the other request.
+    const raced = await findStudentProfile(member, fullDataRecord);
+    if (!raced) throw insertError;
+    const recordId = String(raced._id ?? "");
+    if (!recordId) throw new Error("STUDENT_PROFILE_RECORD_ID_MISSING");
+    const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...raced, ...changes, _id: recordId });
+    return normalizeRecord(updated) ?? { ...raced, ...changes, _id: recordId };
+  }
 }
 
 export const GET: APIRoute = async () => {
