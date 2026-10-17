@@ -62,7 +62,7 @@ export function Portal() {
       let redirectingToLogin = false;
       const redirectToLogin = () => {
         redirectingToLogin = true;
-        redirectToLogin();
+        navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
       };
       try {
         // Verify the server-managed Wix session before requesting or rendering
