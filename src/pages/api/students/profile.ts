@@ -212,6 +212,34 @@ async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: W
   return normalized;
 }
 
+
+const profileProvisioning = new Map<string, Promise<{ record: WixRecord; created: boolean }>>();
+
+async function getOrCreateStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord) {
+  const key = String(fullDataRecord.contactId ?? member.contactId ?? member._id ??
+    fullDataRecord.email ?? member.loginEmail ?? "").trim().toLowerCase();
+  if (!key) throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
+
+  // React StrictMode and browser retries can request GET twice at the same time.
+  // Share one in-flight lookup/insert per student within this server process.
+  const inFlight = profileProvisioning.get(key);
+  if (inFlight) return inFlight;
+
+  const operation = (async () => {
+    const existing = await findStudentProfile(member, fullDataRecord);
+    if (existing) return { record: existing, created: false };
+    const createdRecord = await createStudentProfile(member, fullDataRecord);
+    return { record: createdRecord, created: true };
+  })();
+  profileProvisioning.set(key, operation);
+
+  try {
+    return await operation;
+  } finally {
+    if (profileProvisioning.get(key) === operation) profileProvisioning.delete(key);
+  }
+}
+
 async function createStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord) {
   const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
   const firstName = String(fullDataRecord.firstName ?? member.contact?.firstName ?? "").trim();
@@ -379,19 +407,14 @@ export const GET: APIRoute = async () => {
 
     // FullData is the identity/eligibility gate. StudentProfiles is the sole source
     // for profile details; reconcile old duplicate rows before deciding to insert.
-    let record = await findStudentProfile(member, fullDataRecord);
-    let created = false;
-    if (!record) {
-      record = await createStudentProfile(member, fullDataRecord);
-      created = true;
-    }
+    const result = await getOrCreateStudentProfile(member, fullDataRecord);
 
     return json({
       ok: true,
       profileState: "ready",
-      profile: studentProfile(record, member, fullDataRecord),
+      profile: studentProfile(result.record, member, fullDataRecord),
       source: STUDENT_PROFILES_COLLECTION,
-      created,
+      created: result.created,
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
