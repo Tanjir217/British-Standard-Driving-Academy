@@ -142,12 +142,72 @@ function studentProfile(record: WixRecord, member: AuthenticatedMember, fullData
   };
 }
 
-async function findStudentProfile(memberId: string): Promise<WixRecord | null> {
+async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord): Promise<WixRecord | null> {
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-  const result = await elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("memberId", memberId).limit(2).find();
-  const rows = recordsFromQuery(result);
-  if (rows.length > 1) throw new Error("DUPLICATE_STUDENT_PROFILE");
-  return rows[0] ?? null;
+  const queries: Promise<unknown>[] = [];
+  const email = String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim().toLowerCase();
+  const contactId = String(fullDataRecord.contactId ?? member.contactId ?? "").trim();
+
+  // A member can have a changed Wix member ID after account/session migrations.
+  // Match by the verified FullData identity as well as the current Wix member ID.
+  if (member._id) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("memberId", member._id).limit(100).find());
+  if (email) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("email", email).limit(100).find());
+  if (contactId) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("contactId", contactId).limit(100).find());
+
+  const results = await Promise.all(queries);
+  const byId = new Map<string, WixRecord>();
+  for (const result of results) {
+    for (const row of recordsFromQuery(result)) {
+      const id = String(row._id ?? "");
+      if (id) byId.set(id, row);
+    }
+  }
+
+  const candidates = [...byId.values()];
+  if (!candidates.length) return null;
+
+  // Prefer the row already tied to this Wix member, then the verified contact ID,
+  // then the oldest matching row. Keep its existing non-empty profile fields.
+  candidates.sort((a, b) => {
+    const score = (row: WixRecord) =>
+      (String(row.memberId ?? "") === member._id ? 4 : 0) +
+      (contactId && String(row.contactId ?? "") === contactId ? 2 : 0) +
+      (email && String(row.email ?? "").trim().toLowerCase() === email ? 1 : 0);
+    const scoreDiff = score(b) - score(a);
+    if (scoreDiff) return scoreDiff;
+    return String(a._createdDate ?? "").localeCompare(String(b._createdDate ?? ""));
+  });
+
+  const canonical = candidates[0];
+  const merged: WixRecord = { ...canonical };
+  for (const row of candidates.slice(1)) {
+    for (const [key, value] of Object.entries(row)) {
+      const current = merged[key];
+      if ((current == null || current === "") && value != null && value !== "") merged[key] = value;
+    }
+  }
+
+  const canonicalId = String(canonical._id ?? "");
+  if (!canonicalId) throw new Error("STUDENT_PROFILE_RECORD_ID_MISSING");
+  const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
+  const elevatedRemove = auth.elevate(items.remove) as (...args: any[]) => Promise<unknown>;
+
+  // Normalize the identity fields on the canonical row and merge duplicate data
+  // before removing duplicate rows belonging to this same verified account.
+  merged.memberId = member._id;
+  merged.email = email || String(merged.email ?? "").trim().toLowerCase();
+  merged.title = String(merged.fullName ?? merged.title ?? "").trim() || merged.title;
+  const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...merged, _id: canonicalId });
+  const normalized = normalizeRecord(updated) ?? { ...merged, _id: canonicalId };
+
+  for (const duplicate of candidates.slice(1)) {
+    const duplicateId = String(duplicate._id ?? "");
+    if (duplicateId && duplicateId !== canonicalId) {
+      await elevatedRemove(STUDENT_PROFILES_COLLECTION, duplicateId);
+    }
+  }
+
+  return normalized;
 }
 
 async function createStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord) {
@@ -211,48 +271,6 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
   return null;
 }
 
-async function createFullDataMember(member: AuthenticatedMember): Promise<WixRecord> {
-  const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
-  const firstName = String(member.contact?.firstName ?? "").trim();
-  const lastName = String(member.contact?.lastName ?? "").trim();
-  const nickname = String(member.profile?.nickname ?? "").trim();
-  const email = String(member.loginEmail ?? member.email ?? member.contact?.email ?? "").trim().toLowerCase();
-  const contactId = String(member.contactId ?? member._id).trim();
-  const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
-    nickname ||
-    email.split("@")[0] ||
-    "Student";
-
-  if (!email || !contactId) {
-    throw new Error("NEW_MEMBER_PROFILE_DATA_MISSING");
-  }
-
-  // The Wix-managed session proves the person has completed Wix authentication.
-  // Provision their FullData identity row once so newly registered students can
-  // enter the portal; profile-specific fields remain in StudentProfiles.
-  const inserted = await elevatedInsert(COLLECTION_ID, {
-    title: fullName,
-    fullName,
-    contactId,
-    loginEmail: email,
-    email,
-    firstName,
-    lastName,
-    nickname,
-    phone: String(member.contact?.phones?.[0] ?? ""),
-    status: "ACTIVE",
-    activityStatus: "ACTIVE",
-    privacyStatus: "PRIVATE",
-    bookingEligible: true,
-    lessonsCompleted: 0,
-    lessonsRemaining: 0,
-    progressPercent: 0,
-    lastLoginDate: new Date(),
-  });
-  const record = normalizeRecord(inserted);
-  if (!record) throw new Error("FULLDATA_INSERT_RETURNED_INVALID_RECORD");
-  return record;
-}
 
 function validateEditableProfile(value: unknown): EditableProfile | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -311,7 +329,7 @@ async function readJson(request: Request): Promise<unknown> {
 }
 
 async function persistEditableProfile(member: AuthenticatedMember, fullDataRecord: WixRecord, input: EditableProfile) {
-  const existing = await findStudentProfile(member._id);
+  const existing = await findStudentProfile(member, fullDataRecord);
   const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
   const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
   const fullName = [input.firstName, input.lastName].filter(Boolean).join(" ");
@@ -352,13 +370,14 @@ export const GET: APIRoute = async () => {
     if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
 
     // FullData verifies that the authenticated Wix member has a BSDA student record.
-    let fullDataRecord = await findFullDataMember(member);
+    const fullDataRecord = await findFullDataMember(member);
     if (!fullDataRecord) {
-      fullDataRecord = await createFullDataMember(member);
+      return json({ ok: false, code: "STUDENT_NOT_IN_FULLDATA", message: "This Wix account is not linked to an approved BSDA student record in FullData. Please contact the academy before accessing the student portal." }, 403);
     }
 
-    // Profile reads use StudentProfiles. Provision a missing record once, after FullData verification.
-    let record = await findStudentProfile(member._id);
+    // FullData is the identity/eligibility gate. StudentProfiles is the sole source
+    // for profile details; reconcile old duplicate rows before deciding to insert.
+    let record = await findStudentProfile(member, fullDataRecord);
     let created = false;
     if (!record) {
       record = await createStudentProfile(member, fullDataRecord);
@@ -381,14 +400,11 @@ export const GET: APIRoute = async () => {
     if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix did not provide a stable contact ID or email for this account." }, 422);
     }
-    if (reason === "DUPLICATE_FULLDATA_MEMBER" || reason === "DUPLICATE_STUDENT_PROFILE") {
+    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your student record has duplicate entries and needs academy support." }, 409);
     }
     if (reason === "FULLDATA_SCAN_LIMIT_REACHED") {
       return json({ ok: false, code: "FULLDATA_SCAN_LIMIT_REACHED", message: "The FullData collection exceeds the safe lookup window." }, 503);
-    }
-    if (reason === "NEW_MEMBER_PROFILE_DATA_MISSING") {
-      return json({ ok: false, code: "NEW_MEMBER_PROFILE_DATA_MISSING", message: "Wix signed you in, but the account did not provide a name and email. Complete your Wix member profile and try again." }, 422);
     }
     if (reason === "STUDENT_PROFILE_SEED_DATA_MISSING") {
       return json({ ok: false, code: "STUDENT_PROFILE_SEED_DATA_MISSING", message: "Your verified FullData record is missing the name or email needed to create your student profile." }, 422);
@@ -422,8 +438,10 @@ export const PATCH: APIRoute = async ({ request }) => {
   try {
     const member = await getAuthenticatedMember();
     if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before editing your profile." }, 401);
-    let fullDataRecord = await findFullDataMember(member);
-    if (!fullDataRecord) fullDataRecord = await createFullDataMember(member);
+    const fullDataRecord = await findFullDataMember(member);
+    if (!fullDataRecord) {
+      return json({ ok: false, code: "STUDENT_NOT_IN_FULLDATA", message: "This Wix account is not linked to a BSDA student record in FullData. Your profile was not changed." }, 403);
+    }
     const record = await persistEditableProfile(member, fullDataRecord, profile);
     return json({ ok: true, profileState: "ready", profile: studentProfile(record, member, fullDataRecord), source: STUDENT_PROFILES_COLLECTION });
   } catch (error) {
@@ -431,9 +449,6 @@ export const PATCH: APIRoute = async ({ request }) => {
     console.error("[BSDA StudentProfiles profile] PATCH failed:", reason);
     if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
       return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix did not provide a stable contact ID or email for this account." }, 422);
-    }
-    if (reason === "NEW_MEMBER_PROFILE_DATA_MISSING") {
-      return json({ ok: false, code: "NEW_MEMBER_PROFILE_DATA_MISSING", message: "Wix signed you in, but the account did not provide a name and email. Complete your Wix member profile and try again." }, 422);
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
       return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support before it can be updated." }, 409);
