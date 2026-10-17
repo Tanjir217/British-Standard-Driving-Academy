@@ -7547,6 +7547,9 @@ header {
 .package-home-track .card p {
   display: none;
 }
+.package-home-track .card p{
+  display: none;
+}
 .package-home-slide {
   min-width: 0;
 }
