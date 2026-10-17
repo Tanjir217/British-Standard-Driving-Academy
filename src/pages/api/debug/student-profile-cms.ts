@@ -4,7 +4,7 @@ import { items } from "@wix/data";
 
 // This diagnostic intentionally queries only the user-specified StudentProfile collection.
 // Wix CMS collection IDs are case-sensitive; this is not the FullData collection.
-const COLLECTION_ID = "StudentProfile";
+const COLLECTION_ID = "StudentProfiles";
 const SAMPLE_LIMIT = 5;
 
 function json(body: unknown, status = 200): Response {
