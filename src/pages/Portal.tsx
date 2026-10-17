@@ -59,6 +59,11 @@ export function Portal() {
   useEffect(() => {
     let active = true;
     async function loadProfile() {
+      let redirectingToLogin = false;
+      const redirectToLogin = () => {
+        redirectingToLogin = true;
+        redirectToLogin();
+      };
       try {
         // Verify the server-managed Wix session before requesting or rendering
         // student data. Cached browser state is not proof of authentication.
@@ -67,12 +72,12 @@ export function Portal() {
           currentMember = await getCurrentMember();
         } catch {
           if (!active) return;
-          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          redirectToLogin();
           return;
         }
         if (!active) return;
         if (!currentMember) {
-          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          redirectToLogin();
           return;
         }
 
@@ -80,7 +85,7 @@ export function Portal() {
         if (!active) return;
         if (!response.profile) {
           // Never render a placeholder or dummy learner on a protected route.
-          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          redirectToLogin();
           return;
         }
 
@@ -97,7 +102,7 @@ export function Portal() {
         if (!active) return;
         if (profileError instanceof StudentProfileApiError &&
             (profileError.status === 401 || profileError.code === "UNAUTHENTICATED")) {
-          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          redirectToLogin();
           return;
         }
         setProfileMessage(
@@ -106,7 +111,7 @@ export function Portal() {
             : "We couldn't load your student profile. Please retry in a moment.",
         );
       } finally {
-        if (active) setLoading(false);
+        if (active && !redirectingToLogin) setLoading(false);
       }
     }
     void loadProfile();
