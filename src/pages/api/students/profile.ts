@@ -10,6 +10,7 @@ type EditableProfile = {
   nickname: string;
   phone: string;
   profilePhotoUrl: string;
+  transmission: "manual" | "automatic" | "either";
 };
 
 const COLLECTION_ID = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
@@ -312,7 +313,7 @@ async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecor
 function validateEditableProfile(value: unknown): EditableProfile | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
-  const allowedKeys = new Set(["firstName", "lastName", "nickname", "phone", "profilePhotoUrl"]);
+  const allowedKeys = new Set(["firstName", "lastName", "nickname", "phone", "profilePhotoUrl", "transmission"]);
   if (Object.keys(body).some((key) => !allowedKeys.has(key))) return null;
   for (const key of ["firstName", "lastName", "nickname", "phone", "profilePhotoUrl"]) {
     if (body[key] !== undefined && typeof body[key] !== "string") return null;
@@ -323,7 +324,9 @@ function validateEditableProfile(value: unknown): EditableProfile | null {
   const nickname = String(body.nickname ?? "").trim();
   const phone = String(body.phone ?? "").trim();
   const profilePhotoUrl = String(body.profilePhotoUrl ?? "").trim();
+  const transmission = String(body.transmission ?? "either").trim().toLowerCase();
 
+  if (!["manual", "automatic", "either"].includes(transmission)) return null;
   if (!firstName || firstName.length > 80 || !lastName || lastName.length > 80) return null;
   if (nickname.length > 80 || phone.length > 40 || /[<>]/.test(firstName + lastName + nickname)) return null;
   if (phone && !/^[+()0-9.\s-]{5,40}$/.test(phone)) return null;
@@ -339,7 +342,7 @@ function validateEditableProfile(value: unknown): EditableProfile | null {
     }
     if (!isWixImage && !isHttps) return null;
   }
-  return { firstName, lastName, nickname, phone, profilePhotoUrl };
+  return { firstName, lastName, nickname, phone, profilePhotoUrl, transmission: transmission as EditableProfile["transmission"] };
 }
 
 function originIsAllowed(request: Request): boolean {
@@ -380,7 +383,7 @@ async function persistEditableProfile(member: AuthenticatedMember, fullDataRecor
     email: String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim().toLowerCase(),
     phone: input.phone,
     profilePhotoUrl: input.profilePhotoUrl,
-    transmission: String(existing?.transmission ?? fullDataRecord.transmission ?? "either"),
+    transmission: input.transmission,
     lessonsCompleted: existing?.lessonsCompleted ?? 0,
     lessonsRemaining: existing?.lessonsRemaining ?? 0,
     progressPercent: existing?.progressPercent ?? 0,
