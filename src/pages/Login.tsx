@@ -10,6 +10,10 @@ export function Login() {
   const returnTo = params.get("returnTo") || "/portal";
 
   useEffect(() => {
+    // A protected portal profile check can fail even when Wix still has a
+    // member session. In forced-login mode, keep the login screen visible
+    // instead of bouncing the visitor back into the failing portal.
+    if (params.get("force") === "1") return;
     let active = true;
     getCurrentMember()
       .then((member) => {
@@ -22,7 +26,7 @@ export function Login() {
     return () => {
       active = false;
     };
-  }, [navigate, returnTo]);
+  }, [navigate, returnTo, location.search]);
 
   return (
     <main className="authscreen">
