@@ -32,6 +32,12 @@ export function Portal() {
   const [profileMessage, setProfileMessage] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isTransmissionMenuOpen, setIsTransmissionMenuOpen] = useState(false);
+  const transmissionOptions: Array<{ value: StudentProfileUpdate["transmission"]; label: string; description: string }> = [
+    { value: "either", label: "Either transmission", description: "Manual or automatic lessons" },
+    { value: "manual", label: "Manual", description: "Learn in a manual car" },
+    { value: "automatic", label: "Automatic", description: "Learn in an automatic car" },
+  ];
   const [profileDraft, setProfileDraft] = useState<StudentProfileUpdate>({ firstName: "", lastName: "", nickname: "", phone: "", profilePhotoUrl: "", transmission: "either" });
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState("");
@@ -484,17 +490,52 @@ export function Portal() {
                   Phone number
                   <input autoComplete="tel" inputMode="tel" maxLength={40} placeholder="+880 1XXXXXXXXX" value={profileDraft.phone} onChange={(event) => setProfileDraft((draft) => ({ ...draft, phone: event.target.value }))} />
                 </label>
-                <label>
-                  Transmission preference
-                  <select
-                    value={profileDraft.transmission}
-                    onChange={(event) => setProfileDraft((draft) => ({ ...draft, transmission: event.target.value as StudentProfileUpdate["transmission"] }))}
+                <div
+                  className="portal-transmission-field"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setIsTransmissionMenuOpen(false);
+                    }
+                  }}
+                >
+                  <span className="portal-transmission-label" id="portal-transmission-label">Transmission preference</span>
+                  <button
+                    type="button"
+                    className="portal-transmission-trigger"
+                    aria-labelledby="portal-transmission-label portal-transmission-value"
+                    aria-haspopup="listbox"
+                    aria-expanded={isTransmissionMenuOpen}
+                    onClick={() => setIsTransmissionMenuOpen((open) => !open)}
                   >
-                    <option value="either">Either manual or automatic</option>
-                    <option value="manual">Manual</option>
-                    <option value="automatic">Automatic</option>
-                  </select>
-                </label>
+                    <span id="portal-transmission-value">{transmissionOptions.find((option) => option.value === profileDraft.transmission)?.label || "Either manual or automatic"}</span>
+                    <svg className={`portal-transmission-chevron${isTransmissionMenuOpen ? " is-open" : ""}`} viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {isTransmissionMenuOpen && (
+                    <div className="portal-transmission-menu" role="listbox" aria-labelledby="portal-transmission-label">
+                      {transmissionOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          role="option"
+                          aria-selected={profileDraft.transmission === option.value}
+                          className={`portal-transmission-option${profileDraft.transmission === option.value ? " is-selected" : ""}`}
+                          onClick={() => {
+                            setProfileDraft((draft) => ({ ...draft, transmission: option.value }));
+                            setIsTransmissionMenuOpen(false);
+                          }}
+                        >
+                          <span className="portal-transmission-option-copy">
+                            <strong>{option.label}</strong>
+                            <small>{option.description}</small>
+                          </span>
+                          {profileDraft.transmission === option.value && <span className="portal-transmission-check" aria-hidden="true">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {!profilePhotoFile && (
                   <label className="portal-profile-form-wide">
                     Profile image
