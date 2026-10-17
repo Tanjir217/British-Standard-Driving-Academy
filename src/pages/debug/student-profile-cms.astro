@@ -21,9 +21,13 @@ export const prerender = false;
       <pre id="result" aria-live="polite">Waiting for the backend response…</pre>
     </main>
     <script>
-      const runButton = document.querySelector("#run");
-      const status = document.querySelector("#status");
-      const result = document.querySelector("#result");
+      const runButton = document.querySelector<HTMLButtonElement>("#run");
+      const status = document.querySelector<HTMLElement>("#status");
+      const result = document.querySelector<HTMLPreElement>("#result");
+
+      if (!runButton || !status || !result) {
+        throw new Error("StudentProfile CMS debug page is missing a required element.");
+      }
 
       async function runTest() {
         runButton.disabled = true;
