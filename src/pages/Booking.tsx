@@ -5,10 +5,10 @@ import { beginManagedMemberLogin } from "../services/auth/authService";
 import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { packageService } from "../services/packages/packageService";
+import { createWixPricingPlanCheckout } from "../services/packages/packageCheckoutApi";
 import { bookingService } from "../services/bookings/bookingService";
 import type { BookingServiceCatalogItem } from "../services/bookings/bookingService";
-import { fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
-import { submitBooking } from "../services/bookingService";
+import { createWixBookingCheckout, fetchBookingAvailability, type BookingApiSlot } from "../services/bookings/bookingApi";
 import type { Package } from "../services/domain/types";
 import { getStudentProfile, StudentProfileApiError, type StudentProfileApiRecord } from "../services/students/studentProfileApi";
 
@@ -86,10 +86,6 @@ export function Booking() {
   const [catalogError, setCatalogError] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   const [bookingError, setBookingError] = useState("");
-  const [bookingMessage, setBookingMessage] = useState("");
-  const [bookingReference, setBookingReference] = useState("");
-  const [pay, setPay] = useState("bank");
-  const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [accountLoading, setAccountLoading] = useState(true);
   const [studentRecord, setStudentRecord] = useState<StudentProfileApiRecord | null>(null);
@@ -177,7 +173,9 @@ export function Booking() {
   }, [navigate, packageId, requestedServiceId]);
 
   useEffect(() => {
-    if (!selectedServiceId || !lessonDate) {
+    // Package checkout does not need a lesson slot. Only query availability in
+    // the individual-lesson flow, after a service and date have been selected.
+    if (packageId || !selectedServiceId || !lessonDate) {
       setAvailableSlots([]);
       setSelectedSlotKey("");
       return;
@@ -189,48 +187,70 @@ export function Booking() {
     setAvailableSlots([]);
     setSelectedSlotKey("");
 
-    fetchBookingAvailability({
-      serviceId: selectedServiceId,
-      from: lessonDate,
-      to: lessonDate,
-      timeZone: "Europe/London",
-    })
-      .then((result) => {
+    const loadAvailability = async () => {
+      try {
+        const dayResult = await fetchBookingAvailability({
+          serviceId: selectedServiceId,
+          from: lessonDate,
+          to: lessonDate,
+          timeZone: "Europe/London",
+        });
         if (!active) return;
-        if (!result.ok) {
-          setAvailabilityError(result.message || "Unable to load availability.");
+        if (!dayResult.ok) {
+          setAvailabilityError(dayResult.message || "Unable to load availability.");
           return;
         }
-        setAvailableSlots(result.slots);
-        if (result.slots.length === 0) {
-          setAvailabilityError("No available slots were returned for this date. Try another date.");
+
+        if (dayResult.slots.length > 0) {
+          setAvailableSlots(dayResult.slots);
+          return;
         }
-      })
-      .catch((error) => {
+
+        // If the selected day has no slots, search the selected day plus the
+        // following six calendar days so customers can choose the next opening.
+        const weekEnd = parseLocalDate(lessonDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const weekResult = await fetchBookingAvailability({
+          serviceId: selectedServiceId,
+          from: lessonDate,
+          to: toDateKey(weekEnd),
+          timeZone: "Europe/London",
+        });
+        if (!active) return;
+        if (!weekResult.ok) {
+          setAvailabilityError(weekResult.message || "Unable to load availability for the next seven days.");
+          return;
+        }
+        setAvailableSlots(weekResult.slots);
+        if (weekResult.slots.length === 0) {
+          setAvailabilityError("No available slots were found for this day or the following six days. Try another date.");
+        } else {
+          setAvailabilityError("No slots were available on the selected date. Showing available times for the next seven days.");
+        }
+      } catch (error) {
         if (!active) return;
         setAvailabilityError(
           error instanceof Error
             ? error.message
             : "Unable to load current availability.",
         );
-      })
-      .finally(() => {
+      }
+    };
+
+    void loadAvailability().finally(() => {
         if (active) setAvailabilityLoading(false);
       });
 
     return () => {
       active = false;
     };
-  }, [selectedServiceId, lessonDate]);
+  }, [packageId, selectedServiceId, lessonDate]);
 
   const selectedSlot = availableSlots.find((slot) => slotKey(slot) === selectedSlotKey) || null;
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBookingError("");
-    setBookingMessage("");
-    setBookingReference("");
-    setDone(false);
 
     if (!studentRecord || accountLoading || accountError || accountMissing) {
       setBookingError("Sign in with a valid BSDA account before booking. No booking was created.");
@@ -238,34 +258,40 @@ export function Booking() {
     }
 
     if (!selectedSlot) {
-      setBookingError("Choose a current available time slot before submitting. No booking was created.");
+      setBookingError("Choose a current available time slot before checkout.");
+      return;
+    }
+
+    // This flow checks out a single Wix Bookings service. Do not charge the
+    // service price when the visitor arrived intending to purchase a package.
+    if (selectedPackage) {
+      setBookingError("Package purchases use a separate Wix Pricing Plans checkout. To pay for an individual lesson, open Booking from the service card instead.");
       return;
     }
 
     setBusy(true);
-    const f = new FormData(e.currentTarget);
     try {
-      const result = await submitBooking({
-        name: customerName,
-        phone: String(f.get("phone") || customerPhone),
-        email: customerEmail,
-        date: lessonDate,
-        serviceId: selectedServiceId,
-        slot: selectedSlot,
-        packageId: selectedPackage?.id,
-        paymentMethod: pay,
-      });
-
-      if (result.ok) {
-        setDone(true);
-        setBookingReference(result.reference);
-        setBookingMessage(result.message || "Wix accepted the booking request.");
-      } else {
-        setBookingError(result.message || "Wix could not create the booking.");
-      }
+      const result = await createWixBookingCheckout({ slot: selectedSlot });
+      window.location.assign(result.redirectUrl);
     } catch (error) {
-      setBookingError(error instanceof Error ? error.message : "Wix could not create the booking.");
-    } finally {
+      setBookingError(error instanceof Error ? error.message : "Wix could not prepare secure checkout.");
+      setBusy(false);
+    }
+  };
+
+  const startPackageCheckout = async () => {
+    if (!selectedPackage || !studentRecord || accountLoading || accountError || accountMissing) {
+      setBookingError("Sign in with a valid BSDA student account before purchasing a package.");
+      return;
+    }
+
+    setBookingError("");
+    setBusy(true);
+    try {
+      const result = await createWixPricingPlanCheckout(selectedPackage.id);
+      window.location.assign(result.redirectUrl);
+    } catch (error) {
+      setBookingError(error instanceof Error ? error.message : "Wix could not prepare package checkout.");
       setBusy(false);
     }
   };
@@ -273,10 +299,9 @@ export function Booking() {
   if (accountLoading) {
     return (
       <section className="page">
-        <div className="container authloading">
-          <span className="ey">Account verification</span>
-          <h1>Checking your BSDA account...</h1>
-          <p>Bookings are available only to signed-in users with a matching FullData record.</p>
+        <div className="container authloading booking-account-verification-loading" role="status" aria-label="Checking your BSDA account">
+          <span className="booking-account-verification-spinner" aria-hidden="true" />
+          <span className="sr-only">Checking your BSDA account...</span>
         </div>
       </section>
     );
@@ -318,10 +343,9 @@ export function Booking() {
   if (loading) {
     return (
       <section className="page">
-        <div className="container authloading">
-          <span className="ey">Booking</span>
-          <h1>Preparing your booking...</h1>
-          <p>Please wait while we prepare your booking.</p>
+        <div className="container authloading booking-account-verification-loading" role="status" aria-label="Preparing your booking">
+          <span className="booking-account-verification-spinner" aria-hidden="true" />
+          <span className="sr-only">Preparing your booking. Please wait...</span>
         </div>
       </section>
     );
@@ -342,6 +366,64 @@ export function Booking() {
     );
   }
 
+  // Capture the async-loaded package in a render-local value with its
+  // declared domain type. This avoids TypeScript incorrectly narrowing the
+  // state value to never in this conditional JSX branch.
+  const packageForCheckout: Package | null = selectedPackage;
+
+  if (packageForCheckout !== null) {
+    return (
+      <section className="page">
+        <div className="container">
+          <Heading
+            center
+            ey="Wix Pricing Plans"
+            title="Purchase your lesson package."
+            text="Review your selected package, then continue to Wix's secure checkout. After checkout, return to BSDA to schedule your lessons."
+          />
+          <div className="booking booking--spaced booking--package-checkout">
+            <div className="form">
+              <div className="payment">
+                <span className="ey">Selected package</span>
+                <h3>{packageForCheckout.name}</h3>
+                <p>{packageForCheckout.lessonHours > 0 ? `${packageForCheckout.lessonHours} hours · ` : ""}{formatMoney(packageForCheckout.priceMinor, packageForCheckout.currency)}</p>
+                {packageForCheckout.description && <p>{packageForCheckout.description}</p>}
+                {packageForCheckout.features.length > 0 && (
+                  <ul>
+                    {packageForCheckout.features.map((feature) => <li key={feature}>{feature}</li>)}
+                  </ul>
+                )}
+              </div>
+              <div className="payment">
+                <span className="ey">Secure payment</span>
+                <h3>Checkout with Wix</h3>
+                <p>Wix will handle the package checkout. This return page will not assume payment succeeded; the purchase must be confirmed by Wix before package benefits are considered active.</p>
+              </div>
+              {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
+              <div className="package-checkout-actions">
+                <button type="button" className="btn red full" disabled={busy} onClick={() => void startPackageCheckout()}>
+                  {busy ? "Preparing secure checkout..." : "Purchase package securely"} <Icon n="arrow" />
+                </button>
+                <button type="button" className="btn light full" onClick={() => navigate("/packages")}>Choose a different package</button>
+              </div>
+            </div>
+            <aside className="aside">
+              <Icon n="calendar" s={27} />
+              <h3>What happens next?</h3>
+              <ol>
+                <li>Wix processes your package purchase.</li>
+                <li>Return to BSDA after the Wix checkout flow.</li>
+                <li>Open the booking page and choose an eligible lesson time using your purchased plan.</li>
+              </ol>
+              <p>If you already own an eligible plan, choose a lesson service instead to see Wix's supported booking checkout options.</p>
+              <button type="button" className="btn light" onClick={() => navigate("/booking")}>Book an individual lesson <Icon n="arrow" s={15} /></button>
+            </aside>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="page">
       <div className="container">
@@ -355,19 +437,10 @@ export function Booking() {
         <div className="booking booking--spaced">
           <form className="form" onSubmit={submit}>
             <div className="payment">
-              <span className="ey">{selectedPackage ? "Selected package" : "Selected service"}</span>
-              {selectedPackage ? (
-                <>
-                  <h3>{selectedPackage.name}</h3>
-                  <p>{selectedPackage.lessonHours > 0 ? `${selectedPackage.lessonHours} hours · ` : ""}{formatMoney(selectedPackage.priceMinor, selectedPackage.currency)}</p>
-                </>
-              ) : (
-                <>
-                  <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
-                  <p>You can continue with this service, or select a package from the packages page.</p>
-                  <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
-                </>
-              )}
+              <span className="ey">Selected service</span>
+              <h3>{services.find((service) => service.id === selectedServiceId)?.name || "Selected service"}</h3>
+              <p>You can continue with this service, or select a package from the packages page.</p>
+              <button type="button" className="btn red" onClick={() => navigate("/packages")}>Browse packages <Icon n="arrow" /></button>
             </div>
 
             <div className="payment bookingSelectedServiceSummary">
@@ -484,36 +557,16 @@ export function Booking() {
             {availabilityError && <p className="formerror" role="status">{availabilityError}</p>}
 
             <div className="payment">
-              <span className="ey">Payment method preference</span>
-              <h3>How would you like to pay?</h3>
-              <p>Payment processing is not connected yet. This selection does not charge you or mark the booking as paid.</p>
-              <label className={pay === "bank" ? "radio active" : "radio"}>
-                <input type="radio" checked={pay === "bank"} onChange={() => setPay("bank")} />
-                Bank Transfer <small>Manual verification</small>
-              </label>
-              <label className={pay === "paybank" ? "radio active" : "radio"}>
-                <input type="radio" checked={pay === "paybank"} onChange={() => setPay("paybank")} />
-                Pay by Bank <small>Not connected yet</small>
-              </label>
+              <span className="ey">Secure payment</span>
+              <h3>Pay securely with Wix</h3>
+              <p>After confirming your booking details, you’ll continue to Wix’s secure checkout to review the service price and complete payment. BSDA never collects or stores your card or bank details.</p>
             </div>
 
-            <button disabled={busy || availabilityLoading || !selectedSlot || done} className="btn red full">
-              {busy ? "Submitting booking..." : "Submit booking"} <Icon n="arrow" />
+            <button disabled={busy || availabilityLoading || !selectedSlot} className="btn red full">
+              {busy ? "Preparing secure checkout..." : "Confirm Booking"} <Icon n="arrow" />
             </button>
 
             {bookingError && <div className="formerror" role="alert">{bookingError}</div>}
-            {done && (
-              <div className="success" role="status">
-                <Icon n="check" />
-                <span>
-                  {bookingMessage}
-                  <br />
-                  Reference: <strong>{bookingReference}</strong>
-                  <br />
-                  Payment has not been collected or verified.
-                </span>
-              </div>
-            )}
           </form>
 
           <aside className="aside">

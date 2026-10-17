@@ -134,8 +134,8 @@ export const POST: APIRoute = async ({ request }) => {
     // before creating the booking and match the actual service, schedule, and time.
     const availability = await availabilityTimeSlots.listAvailabilityTimeSlots({
       serviceId,
-      fromLocalDate: localStartDate.slice(0, 10),
-      toLocalDate: localStartDate.slice(0, 10),
+      fromLocalDate: `${localStartDate.slice(0, 10)}T00:00:00`,
+      toLocalDate: `${localStartDate.slice(0, 10)}T23:59:59`,
       timeZone,
       bookable: true,
     });

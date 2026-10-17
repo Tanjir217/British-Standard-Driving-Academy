@@ -4,37 +4,45 @@ import { Icon } from "../components/Icon";
 import { Heading } from "../components/Heading";
 import { Reveal } from "../components/Reveal";
 import { VideoShowcase } from "../components/VideoShowcase";
-import { PackageCard } from "../components/PackageCard";
-import { LessonCard } from "../components/LessonCard";
 import { FAQSection } from "../components/FAQSection";
 import { VideoEmbed } from "../components/VideoEmbed";
 import {
   getHomeReels,
   type VideoLibraryItem,
 } from "../services/videoLibraryService";
-import { lessons } from "../data/site";
-import { packageService } from "../services/packages/packageService";
-import type { Package } from "../services/domain/types";
 
-function formatMoney(amountMinor: number, currency: string) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
+type PromotionalBanner = {
+  id: string;
+  title: string;
+  image: unknown;
+  imageUrl: string;
+  altText: string;
+  linkUrl: string;
+  sortOrder: number;
+};
+
+function resolveBannerImage(image: unknown, imageUrl: string): string {
+  const candidate =
+    imageUrl ||
+    (typeof image === "string"
+      ? image
+      : image && typeof image === "object"
+        ? String((image as { url?: unknown; src?: unknown }).url ?? (image as { src?: unknown }).src ?? "")
+        : "");
+  if (!candidate) return "";
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : "";
+  }
+  return "";
 }
 
-function toPackageCard(plan: Package) {
-  return {
-    id: plan.id,
-    name: plan.name,
-    price: formatMoney(plan.priceMinor, plan.currency),
-    eyebrow:
-      plan.lessonHours > 0 ? `${plan.lessonHours} Hours` : "Driving Programme",
-    description: plan.description,
-    features: plan.features,
-  };
+function safeBannerLink(linkUrl: string): string {
+  const value = linkUrl.trim();
+  return value.startsWith("/") || /^https?:\/\//i.test(value) ? value : "";
 }
+
 
 export function Home() {
   const [reelPage, setReelPage] = useState(0);
@@ -43,53 +51,37 @@ export function Home() {
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 600px)").matches,
   );
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBanner[]>([]);
   const [testimonialIndex, setTestimonialIndex] = useState(6);
   const [lessonIndex, setLessonIndex] = useState(4);
   const [lessonResetting, setLessonResetting] = useState(false);
   const [testimonialResetting, setTestimonialResetting] = useState(false);
   const [reelUrls, setReelUrls] = useState<VideoLibraryItem[]>([]);
-  const [packageActiveIndex, setPackageActiveIndex] = useState(0);
-  const [packageInteracted, setPackageInteracted] = useState(false);
-  const packageTouchStartX = useRef<number | null>(null);
 
-  useEffect(() => {
-    // The desktop layout displays every package at once; only rotate the mobile carousel.
-    if (
-      packageInteracted ||
-      packages.length < 2 ||
-      !window.matchMedia("(max-width: 700px)").matches
-    )
-      return;
-    const timer = window.setInterval(() => {
-      setPackageActiveIndex((current) =>
-        Math.min(current + 1, packages.length - 1),
-      );
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [packageInteracted, packages.length]);
+
 
   useEffect(() => {
     let active = true;
 
-    packageService
-      .list()
+    fetch("/api/promotional-banners")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Promotional banners request failed.");
+        return response.json() as Promise<{ ok?: boolean; banners?: PromotionalBanner[] }>;
+      })
       .then((result) => {
-        if (active && result.ok) setPackages(result.data);
+        if (active && result.ok && Array.isArray(result.banners)) {
+          setPromotionalBanners(result.banners);
+        }
       })
       .catch((error) => {
-
-        console.error("Unable to load homepage packages.", error);
-
-        console.error("Unable to load driving packages.", error);
+        console.error("Unable to load homepage promotional banners.", error);
+        if (active) setPromotionalBanners([]);
       });
 
     return () => {
       active = false;
     };
   }, []);
-
-  const packageCards = packages.map(toPackageCard);
 
   useEffect(() => {
     const isMobile = window.matchMedia("(max-width: 600px)").matches;
@@ -418,6 +410,42 @@ export function Home() {
         </div>
       </section>
 
+      {promotionalBanners.some((banner) => resolveBannerImage(banner.image, banner.imageUrl)) && (
+        <section className="promotionalBanners section" aria-label="Promotional offers">
+          <div className="container">
+            <div className="promotionalBannersGrid">
+              {promotionalBanners.map((banner) => {
+                const imageSrc = resolveBannerImage(banner.image, banner.imageUrl);
+                if (!imageSrc) return null;
+                const link = safeBannerLink(banner.linkUrl);
+                const image = (
+                  <img
+                    src={imageSrc}
+                    alt={banner.altText || banner.title || "BSDA promotion"}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                );
+                return (
+                  <article className="promotionalBanner" key={banner.id || imageSrc}>
+                    {link ? (
+                      <a
+                        href={link}
+                        aria-label={banner.title || banner.altText || "View promotion"}
+                        target={link.startsWith("http") ? "_blank" : undefined}
+                        rel={link.startsWith("http") ? "noopener noreferrer" : undefined}
+                      >
+                        {image}
+                      </a>
+                    ) : image}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* <section className="homeMotionStats" aria-label="BSDA highlights">
         <div className="homeMotionTicker" aria-hidden="true">
           <div className="homeMotionTickerTrack">
@@ -486,7 +514,7 @@ export function Home() {
         </div>
       </section> */}
 
-      <section className="section soft">
+      {/* <section className="section soft">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -510,11 +538,11 @@ export function Home() {
               packageTouchStartX.current = null;
               if (startX === null || endX === undefined) return;
               const delta = startX - endX;
-              if (Math.abs(delta) < 40 || packages.length < 2) return;
+              if (Math.abs(delta) < 40 || homepageCards.length < 2) return;
               setPackageActiveIndex((current) =>
                 Math.max(
                   0,
-                  Math.min(packages.length - 1, current + (delta > 0 ? 1 : -1)),
+                  Math.min(homepageCards.length - 1, current + (delta > 0 ? 1 : -1)),
                 ),
               );
             }}
@@ -525,7 +553,7 @@ export function Home() {
               className="package-home-track"
               style={{ transform: `translateX(-${packageActiveIndex * 100}%)` }}
             >
-              {packageCards.map((p, i) => (
+              {homepageCards.map((p, i) => (
                 <div
                   className={
                     "package-home-slide" +
@@ -538,13 +566,28 @@ export function Home() {
                   }}
                 >
                   <Reveal delay={i * 90}>
-                    <PackageCard p={p} />
+                    {p.kind === "package" ? (
+                      <PackageCard p={p} />
+                    ) : (
+                      <article className="card">
+                        <span className="cardey">{p.eyebrow}</span>
+                        <h3>{p.name}</h3>
+                        {p.description && <p>{p.description}</p>}
+                        <div className="price">
+                          {p.price}
+                          <small>/ service</small>
+                        </div>
+                        <Link className="textlink" to={"/booking?service=" + p.id}>
+                          Book service <Icon n="arrow" s={15} />
+                        </Link>
+                      </article>
+                    )}
                   </Reveal>
                 </div>
               ))}
             </div>
             <div className="package-home-dots" aria-label="Choose a package">
-              {packageCards.map((p, i) => (
+              {homepageCards.map((p, i) => (
                 <button
                   key={p.id}
                   type="button"
@@ -560,7 +603,7 @@ export function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="section videoSection">
         <div className="container">
@@ -578,7 +621,7 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section dark">
+      {/* <section className="section dark">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -631,9 +674,9 @@ export function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="missionVision section">
+      {/* <section className="missionVision section">
         <div className="container">
           <div className="sectionIntro">
             <Heading
@@ -675,7 +718,7 @@ export function Home() {
             </article>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="socialReels section">
         <div className="container">

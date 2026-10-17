@@ -1,11 +1,20 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
-
-const COLLECTION_ID =
-  import.meta.env.BSDA_STUDENT_PROFILES_COLLECTION_ID || "StudentProfiles";
+import { members } from "@wix/members";
 
 type WixRecord = Record<string, unknown>;
+type EditableProfile = {
+  firstName: string;
+  lastName: string;
+  nickname: string;
+  phone: string;
+  profilePhotoUrl: string;
+  transmission: "manual" | "automatic" | "either";
+};
+
+const COLLECTION_ID = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
+const MAX_BODY_BYTES = 12_000;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -14,18 +23,18 @@ function json(body: unknown, status = 200): Response {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
     },
   });
 }
 
 function normalizeRecord(value: unknown): WixRecord | null {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const record = value as WixRecord;
   const nested = record.dataItem ?? record.item ?? record.data;
-  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
-    return nested as WixRecord;
-  }
-  return record;
+  return nested && typeof nested === "object" && !Array.isArray(nested)
+    ? nested as WixRecord
+    : record;
 }
 
 function recordsFromQuery(value: unknown): WixRecord[] {
@@ -33,41 +42,7 @@ function recordsFromQuery(value: unknown): WixRecord[] {
   const response = value as WixRecord;
   const possible = response.items ?? response.dataItems ?? response.results;
   if (!Array.isArray(possible)) return [];
-  return possible
-    .map(normalizeRecord)
-    .filter((item): item is WixRecord => item !== null);
-}
-
-function safeProfile(record: WixRecord) {
-  return {
-    id: String(record._id ?? record.id ?? ""),
-    memberId: String(record.memberId ?? ""),
-    fullName: String(record.fullName ?? record.title ?? ""),
-    email: String(record.email ?? ""),
-    phone: String(record.phone ?? ""),
-    profilePhotoUrl: String(record.profilePhotoUrl ?? ""),
-    transmission: record.transmission === "manual" || record.transmission === "automatic"
-      ? record.transmission
-      : "either",
-    assignedInstructorId: typeof record.assignedInstructorId === "string"
-      ? record.assignedInstructorId
-      : undefined,
-    enrolledPackageId: typeof record.enrolledPackageId === "string"
-      ? record.enrolledPackageId
-      : undefined,
-    lessonsCompleted: Number.isFinite(Number(record.lessonsCompleted))
-      ? Number(record.lessonsCompleted)
-      : 0,
-    lessonsRemaining: Number.isFinite(Number(record.lessonsRemaining))
-      ? Number(record.lessonsRemaining)
-      : 0,
-    progressPercent: Number.isFinite(Number(record.progressPercent))
-      ? Math.min(100, Math.max(0, Number(record.progressPercent)))
-      : 0,
-    status: ["active", "paused", "completed", "inactive"].includes(String(record.status))
-      ? String(record.status)
-      : "active",
-  };
+  return possible.map(normalizeRecord).filter((item): item is WixRecord => item !== null);
 }
 
 type AuthenticatedMember = {
@@ -75,372 +50,458 @@ type AuthenticatedMember = {
   loginEmail?: string | null;
   email?: string | null;
   contactId?: string | null;
-  contact?: { contactId?: string | null; email?: string | null } | null;
+  contact?: { contactId?: string | null; email?: string | null; firstName?: string | null; lastName?: string | null; phones?: string[] } | null;
+  profile?: { nickname?: string | null; photo?: { url?: string | null } | null } | null;
 };
 
-async function getAuthenticatedMember(request: Request): Promise<AuthenticatedMember | null> {
-  // Validate the Headless OAuth access token issued by Wix. FullData is used
-  // only after this succeeds; a CMS row alone is never proof of a live session.
-  const authorization = request.headers.get("authorization") || "";
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
-  const accessToken = match?.[1]?.trim();
-  if (!accessToken) return null;
-
-  const response = await fetch("https://www.wixapis.com/members/v1/members/my", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
-
-  if (response.status === 401 || response.status === 403) return null;
-  if (!response.ok) throw new Error(`WIX_MEMBER_SESSION_VALIDATION_FAILED_${response.status}`);
-
-  const payload = await response.json() as Record<string, any>;
-  const member = (payload.member ?? payload) as Record<string, any>;
-  const id = member._id ?? member.id;
-  if (typeof id !== "string" || !id) return null;
-  const contact = member.contact && typeof member.contact === "object" ? member.contact : null;
-
+async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
+  const response = await members.getCurrentMember();
+  const current = response.member as Record<string, any> | undefined;
+  const currentId = current?._id ?? current?.id;
+  if (!current || typeof currentId !== "string" || !currentId) return null;
+  const contact = current.contact && typeof current.contact === "object" ? current.contact : null;
   return {
-    ...member,
-    _id: id,
-    loginEmail: member.loginEmail ?? member.email ?? contact?.email ?? null,
-    contactId: member.contactId ?? contact?.contactId ?? null,
+    ...current,
+    _id: currentId,
+    loginEmail: current.loginEmail ?? current.email ?? contact?.email ?? null,
+    contactId: current.contactId ?? contact?.contactId ?? null,
+    contact: contact ? {
+      contactId: contact.contactId ?? null,
+      email: contact.email ?? null,
+      firstName: contact.firstName ?? null,
+      lastName: contact.lastName ?? null,
+      phones: Array.isArray(contact.phones) ? contact.phones.filter((phone: unknown): phone is string => typeof phone === "string") : [],
+    } : null,
+    profile: current.profile && typeof current.profile === "object" ? current.profile : null,
   } as AuthenticatedMember;
 }
 
-async function findProfileByMemberId(memberId: string): Promise<WixRecord | null> {
-  // StudentProfiles is intended to be private. Elevation is used only here,
-  // behind a server-side ownership filter; no collection query is exposed to
-  // the browser.
-  const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-  const query = elevatedQuery(COLLECTION_ID).eq("memberId", memberId).limit(2);
-  const result = await query.find();
-  const records = recordsFromQuery(result);
-
-  if (records.length > 1) {
-    console.error("[BSDA profile] Multiple profiles map to one Wix member.");
-    throw new Error("DUPLICATE_MEMBER_PROFILE");
-  }
-
-  return records[0] ?? null;
-}
-
 function imageUrl(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (!value || typeof value !== "object") return "";
-  const image = value as Record<string, unknown>;
-  for (const candidate of [image.url, image.src, image.imageUrl, image.uri]) {
-    if (typeof candidate === "string" && candidate) return candidate;
+  let candidate = "";
+  if (typeof value === "string") candidate = value;
+  else if (value && typeof value === "object") {
+    const image = value as Record<string, unknown>;
+    for (const item of [image.url, image.src, image.imageUrl, image.uri]) {
+      if (typeof item === "string" && item) {
+        candidate = item;
+        break;
+      }
+    }
+  }
+  if (/^https:\/\//i.test(candidate)) return candidate;
+  if (candidate.startsWith("wix:image://v1/")) {
+    const mediaId = candidate.slice("wix:image://v1/".length).split(/[\\/#?]/)[0];
+    return mediaId ? `https://static.wixstatic.com/media/${mediaId}` : "";
   }
   return "";
 }
 
-function fullDataProfile(record: WixRecord, member: AuthenticatedMember) {
+const STUDENT_PROFILES_COLLECTION = "StudentProfiles";
+
+function studentProfile(record: WixRecord, member: AuthenticatedMember, fullDataRecord: WixRecord) {
+  // StudentProfiles is the source of profile display data. FullData is used only
+  // to verify the student and derive eligibility/identity metadata.
   const firstName = typeof record.firstName === "string" ? record.firstName.trim() : "";
   const lastName = typeof record.lastName === "string" ? record.lastName.trim() : "";
   const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
-  const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname;
-  const email = typeof record.loginEmail === "string" ? record.loginEmail : (member.loginEmail || "");
-  const activity = String(record.activityStatus ?? record.status ?? "").toLowerCase();
-  const status = ["active", "paused", "completed", "inactive"].includes(activity)
-    ? activity
-    : "active";
+  const fullName = typeof record.fullName === "string" && record.fullName.trim()
+    ? record.fullName.trim()
+    : [firstName, lastName].filter(Boolean).join(" ") || nickname;
+  const email = typeof record.email === "string" ? record.email.trim() : "";
+  const status = String(record.status ?? "Active").trim() || "Active";
+  const transmissionValue = String(record.transmission ?? "either").trim().toLowerCase();
+  const transmission = ["manual", "automatic", "either"].includes(transmissionValue)
+    ? transmissionValue as "manual" | "automatic" | "either"
+    : "either";
+  const completed = record.lessonsCompleted == null ? 0 : Number(record.lessonsCompleted);
+  const remaining = record.lessonsRemaining == null ? 0 : Number(record.lessonsRemaining);
+  const progress = record.progressPercent == null ? 0 : Number(record.progressPercent);
+  const fullDataActivity = String(fullDataRecord.activityStatus ?? "").trim().toLowerCase();
+  const fullDataStatus = String(fullDataRecord.status ?? "").trim().toLowerCase();
+
   return {
     id: String(record._id ?? ""),
-    memberId: member._id,
-    fullName,
-    firstName,
-    lastName,
-    nickname,
-    email,
+    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id),
+    fullName, firstName, lastName, nickname, email,
     phone: typeof record.phone === "string" ? record.phone : "",
-    profilePhotoUrl: imageUrl(record.profilePhoto),
-    coverPhotoUrl: imageUrl(record.coverPhoto),
-    slug: typeof record.slug === "string" ? record.slug : "",
-    privacyStatus: typeof record.privacyStatus === "string" ? record.privacyStatus : "",
-    activityStatus: typeof record.activityStatus === "string" ? record.activityStatus : "",
+    profilePhotoUrl: imageUrl(record.profilePhotoUrl ?? record.profilePhoto),
+    coverPhotoUrl: imageUrl(record.coverPhotoUrl ?? record.coverPhoto),
+    transmission,
     status,
-    contactId: typeof record.contactId === "string" ? record.contactId : "",
-    lastLoginDate: record.lastLoginDate ?? null,
-    createdDate: record._createdDate ?? null,
+    bookingEligible: (!fullDataActivity || fullDataActivity === "active") &&
+      (!fullDataStatus || ["approved", "active"].includes(fullDataStatus)),
+    contactId: String(fullDataRecord.contactId ?? member.contactId ?? ""),
+    lastLoginDate: fullDataRecord.lastLoginDate ?? null,
+    createdDate: record._createdDate ?? record.joinedDate ?? null,
     updatedDate: record._updatedDate ?? null,
-    transmission: "either" as const,
-    lessonsCompleted: 0,
-    lessonsRemaining: 0,
-    progressPercent: 0,
+    lessonsCompleted: Number.isFinite(completed) ? completed : 0,
+    lessonsRemaining: Number.isFinite(remaining) ? remaining : 0,
+    progressPercent: Number.isFinite(progress) ? Math.min(100, Math.max(0, progress)) : 0,
   };
+}
+
+async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord): Promise<WixRecord | null> {
+  const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
+  const queries: Promise<unknown>[] = [];
+  const email = String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim().toLowerCase();
+  const contactId = String(fullDataRecord.contactId ?? member.contactId ?? "").trim();
+
+  // A member can have a changed Wix member ID after account/session migrations.
+  // Match by the verified FullData identity as well as the current Wix member ID.
+  const memberIds = [...new Set([member._id, contactId].filter(Boolean))];
+  for (const memberId of memberIds) {
+    queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("memberId", memberId).limit(100).find());
+  }
+  if (email) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("email", email).limit(100).find());
+
+  const results = await Promise.all(queries);
+  const byId = new Map<string, WixRecord>();
+  for (const result of results) {
+    for (const row of recordsFromQuery(result)) {
+      const id = String(row._id ?? "");
+      if (id) byId.set(id, row);
+    }
+  }
+
+  const candidates = [...byId.values()];
+  if (!candidates.length) return null;
+
+  // Prefer the row already tied to this Wix member, then the verified contact ID,
+  // then the oldest matching row. Keep its existing non-empty profile fields.
+  candidates.sort((a, b) => {
+    const score = (row: WixRecord) =>
+      (contactId && String(row.memberId ?? "") === contactId ? 4 : 0) +
+      (String(row.memberId ?? "") === member._id ? 2 : 0) +
+      (email && String(row.email ?? "").trim().toLowerCase() === email ? 1 : 0);
+    const scoreDiff = score(b) - score(a);
+    if (scoreDiff) return scoreDiff;
+    return String(a._createdDate ?? "").localeCompare(String(b._createdDate ?? ""));
+  });
+
+  const canonical = candidates[0];
+  const merged: WixRecord = { ...canonical };
+  for (const row of candidates.slice(1)) {
+    for (const [key, value] of Object.entries(row)) {
+      const current = merged[key];
+      if ((current == null || current === "") && value != null && value !== "") merged[key] = value;
+    }
+  }
+
+  const canonicalId = String(canonical._id ?? "");
+  if (!canonicalId) throw new Error("STUDENT_PROFILE_RECORD_ID_MISSING");
+  const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
+  const elevatedRemove = auth.elevate(items.remove) as (...args: any[]) => Promise<unknown>;
+
+  // Normalize the identity fields on the canonical row and merge duplicate data
+  // before removing duplicate rows belonging to this same verified account.
+  merged.memberId = contactId || member._id;
+  merged.email = email || String(merged.email ?? "").trim().toLowerCase();
+  merged.title = String(merged.fullName ?? merged.title ?? "").trim() || merged.title;
+  const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...merged, _id: canonicalId });
+  const normalized = normalizeRecord(updated) ?? { ...merged, _id: canonicalId };
+
+  for (const duplicate of candidates.slice(1)) {
+    const duplicateId = String(duplicate._id ?? "");
+    if (duplicateId && duplicateId !== canonicalId) {
+      await elevatedRemove(STUDENT_PROFILES_COLLECTION, duplicateId);
+    }
+  }
+
+  return normalized;
+}
+
+
+const profileProvisioning = new Map<string, Promise<{ record: WixRecord; created: boolean }>>();
+
+async function getOrCreateStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord) {
+  const key = String(fullDataRecord.contactId ?? member.contactId ?? member._id ??
+    fullDataRecord.email ?? member.loginEmail ?? "").trim().toLowerCase();
+  if (!key) throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
+
+  // React StrictMode and browser retries can request GET twice at the same time.
+  // Share one in-flight lookup/insert per student within this server process.
+  const inFlight = profileProvisioning.get(key);
+  if (inFlight) return inFlight;
+
+  const operation = (async () => {
+    const existing = await findStudentProfile(member, fullDataRecord);
+    if (existing) return { record: existing, created: false };
+    try {
+      const createdRecord = await createStudentProfile(member, fullDataRecord);
+      return { record: createdRecord, created: true };
+    } catch (insertError) {
+      // A second server instance may win the insert race. Re-read by stable
+      // identity and reuse that record instead of attempting another insert.
+      const racedRecord = await findStudentProfile(member, fullDataRecord);
+      if (racedRecord) return { record: racedRecord, created: false };
+      throw insertError;
+    }
+  })();
+  profileProvisioning.set(key, operation);
+
+  try {
+    return await operation;
+  } finally {
+    if (profileProvisioning.get(key) === operation) profileProvisioning.delete(key);
+  }
+}
+
+async function createStudentProfile(member: AuthenticatedMember, fullDataRecord: WixRecord) {
+  const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
+  const firstName = String(fullDataRecord.firstName ?? member.contact?.firstName ?? "").trim();
+  const lastName = String(fullDataRecord.lastName ?? member.contact?.lastName ?? "").trim();
+  const nickname = String(fullDataRecord.nickname ?? member.profile?.nickname ?? "").trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || nickname ||
+    String(fullDataRecord.fullName ?? "").trim();
+  const email = String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim().toLowerCase();
+  const phone = String(fullDataRecord.phone ?? member.contact?.phones?.[0] ?? "").trim();
+  if (!email || !fullName) throw new Error("STUDENT_PROFILE_SEED_DATA_MISSING");
+
+  const rawTransmission = String(fullDataRecord.transmission ?? "").toLowerCase();
+  const transmission = ["manual", "automatic", "either"].includes(rawTransmission) ? rawTransmission : "either";
+  const stableMemberId = String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim();
+  const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, {
+    _id: stableMemberId,
+    title: fullName,
+    memberId: stableMemberId,
+    fullName, firstName, lastName, nickname, email, phone,
+    profilePhotoUrl: imageUrl(fullDataRecord.profilePhoto),
+    transmission,
+    lessonsCompleted: Number.isFinite(Number(fullDataRecord.lessonsCompleted)) ? Number(fullDataRecord.lessonsCompleted) : 0,
+    lessonsRemaining: Number.isFinite(Number(fullDataRecord.lessonsRemaining)) ? Number(fullDataRecord.lessonsRemaining) : 0,
+    progressPercent: Number.isFinite(Number(fullDataRecord.progressPercent)) ? Number(fullDataRecord.progressPercent) : 0,
+    status: String(fullDataRecord.status ?? "Active"),
+    joinedDate: fullDataRecord.joinedDate ?? new Date(),
+  });
+  const record = normalizeRecord(inserted);
+  if (!record) throw new Error("STUDENT_PROFILE_INSERT_RETURNED_INVALID_RECORD");
+  return record;
 }
 
 async function findFullDataMember(member: AuthenticatedMember): Promise<WixRecord | null> {
   const elevatedQuery = auth.elevate(items.query) as (...args: any[]) => any;
-  const collectionId = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
-  const contactId = typeof member.contactId === "string" ? member.contactId.trim() : "";
-  const memberRecord = member as AuthenticatedMember & { email?: string | null };
-  const email = String(member.loginEmail ?? memberRecord.email ?? "").trim().toLowerCase();
+  const contactIds = [...new Set([
+    String(member.contactId ?? "").trim(),
+    String(member._id ?? "").trim(),
+  ].filter(Boolean))];
+  const email = String(member.loginEmail ?? member.email ?? member.contact?.email ?? "").trim().toLowerCase();
+  if (!contactIds.length && !email) throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
 
-  // Diagnostic evidence confirms the collection can be queried without a
-  // filter. Some Wix system-collection query/filter combinations may fail
-  // even though a plain query succeeds, so retrieve a bounded set and match
-  // only against identifiers supplied by the authenticated Wix session.
-  console.info("[BSDA FullData profile] Resolving authenticated member", {
-    collectionId,
-    hasContactId: Boolean(contactId),
-    hasLoginEmail: Boolean(email),
-    memberFields: Object.keys(member),
-  });
-
-  if (!contactId && !email) {
-    console.error("[BSDA FullData profile] Current Wix member response has no contactId or loginEmail.");
-    throw new Error("AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING");
+  // Query by stable identifiers rather than scanning up to 500 FullData rows.
+  // Try both Wix contactId and member ID because older FullData records may
+  // have stored either value in the contactId field.
+  for (const contactId of contactIds) {
+    const result = await elevatedQuery(COLLECTION_ID).eq("contactId", contactId).limit(2).find();
+    const matches = recordsFromQuery(result);
+    if (matches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    if (matches.length === 1) return matches[0];
   }
 
-  // Match the working local diagnostic's bounded scan window. The earlier
-  // 100-row limit could miss a valid member later in FullData.
-  const result = await elevatedQuery(collectionId).limit(500).find();
-  const records = recordsFromQuery(result);
-
-  const contactMatches = contactId
-    ? records.filter((record) => String(record.contactId ?? "").trim().toLowerCase() === contactId.toLowerCase())
-    : [];
-  if (contactMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-  if (contactMatches.length === 1) {
-    console.info("[BSDA FullData profile] FullData match found by contactId.");
-    return contactMatches[0];
+  // Email fallback is safe only after an exact match against the current,
+  // server-authenticated Wix member and no contactId match was found.
+  if (email) {
+    const result = await elevatedQuery(COLLECTION_ID).eq("email", email).limit(2).find();
+    const matches = recordsFromQuery(result);
+    if (matches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
+    if (matches.length === 1) return matches[0];
   }
 
-  const emailMatches = email
-    ? records.filter((record) =>
-        String(record.loginEmail ?? record.email ?? "").trim().toLowerCase() === email,
-      )
-    : [];
-  if (emailMatches.length > 1) throw new Error("DUPLICATE_FULLDATA_MEMBER");
-  if (emailMatches.length === 1) {
-    console.info("[BSDA FullData profile] FullData match found by email.");
-    return emailMatches[0];
-  }
-
-  console.info("[BSDA FullData profile] No matching record in queried rows.", {
-    queriedRecords: records.length,
-    matchedByContactId: contactMatches.length,
-    matchedByEmail: emailMatches.length,
-  });
   return null;
 }
 
-export const GET: APIRoute = async ({ request }) => {
+
+function validateEditableProfile(value: unknown): EditableProfile | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const body = value as Record<string, unknown>;
+  const allowedKeys = new Set(["firstName", "lastName", "nickname", "phone", "profilePhotoUrl", "transmission"]);
+  if (Object.keys(body).some((key) => !allowedKeys.has(key))) return null;
+  for (const key of ["firstName", "lastName", "nickname", "phone", "profilePhotoUrl"]) {
+    if (body[key] !== undefined && typeof body[key] !== "string") return null;
+  }
+
+  const firstName = String(body.firstName ?? "").trim();
+  const lastName = String(body.lastName ?? "").trim();
+  const nickname = String(body.nickname ?? "").trim();
+  const phone = String(body.phone ?? "").trim();
+  const profilePhotoUrl = String(body.profilePhotoUrl ?? "").trim();
+  const transmission = String(body.transmission ?? "either").trim().toLowerCase();
+
+  if (!["manual", "automatic", "either"].includes(transmission)) return null;
+  if (!firstName || firstName.length > 80 || !lastName || lastName.length > 80) return null;
+  if (nickname.length > 80 || phone.length > 40 || /[<>]/.test(firstName + lastName + nickname)) return null;
+  if (phone && !/^[+()0-9.\s-]{5,40}$/.test(phone)) return null;
+  if (profilePhotoUrl) {
+    if (profilePhotoUrl.length > 2048) return null;
+    const isWixImage = /^wix:image:\/\/v1\/[a-zA-Z0-9_.~%/#?=&-]+$/i.test(profilePhotoUrl);
+    let isHttps = false;
+    try {
+      const url = new URL(profilePhotoUrl);
+      isHttps = url.protocol === "https:" && Boolean(url.hostname);
+    } catch {
+      isHttps = false;
+    }
+    if (!isWixImage && !isHttps) return null;
+  }
+  return { firstName, lastName, nickname, phone, profilePhotoUrl, transmission: transmission as EditableProfile["transmission"] };
+}
+
+function originIsAllowed(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
   try {
-    const member = await getAuthenticatedMember(request);
-    if (!member) {
-      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
+    return new URL(origin).origin === new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
+async function readJson(request: Request): Promise<unknown> {
+  if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
+    throw new Error("UNSUPPORTED_MEDIA_TYPE");
+  }
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_BYTES) throw new Error("PAYLOAD_TOO_LARGE");
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error("INVALID_JSON");
+  }
+}
+
+async function persistEditableProfile(member: AuthenticatedMember, fullDataRecord: WixRecord, input: EditableProfile) {
+  const existing = await findStudentProfile(member, fullDataRecord);
+  const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
+  const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
+  const fullName = [input.firstName, input.lastName].filter(Boolean).join(" ");
+  const changes: WixRecord = {
+    title: fullName,
+    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim(),
+    fullName,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    nickname: input.nickname,
+    email: String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim().toLowerCase(),
+    phone: input.phone,
+    profilePhotoUrl: input.profilePhotoUrl,
+    transmission: input.transmission,
+    lessonsCompleted: existing?.lessonsCompleted ?? 0,
+    lessonsRemaining: existing?.lessonsRemaining ?? 0,
+    progressPercent: existing?.progressPercent ?? 0,
+    status: existing?.status ?? "Active",
+    joinedDate: existing?.joinedDate ?? new Date(),
+  };
+
+  if (existing) {
+    const recordId = String(existing._id ?? "");
+    if (!recordId) throw new Error("STUDENT_PROFILE_RECORD_ID_MISSING");
+    const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...existing, ...changes, _id: recordId });
+    return normalizeRecord(updated) ?? { ...existing, ...changes, _id: recordId };
+  }
+
+  const stableId = String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim();
+  try {
+    const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, { ...changes, _id: stableId });
+    const created = normalizeRecord(inserted);
+    if (!created) throw new Error("STUDENT_PROFILE_INSERT_RETURNED_INVALID_RECORD");
+    return created;
+  } catch (insertError) {
+    // If GET and PATCH raced, reuse the profile inserted by the other request.
+    const raced = await findStudentProfile(member, fullDataRecord);
+    if (!raced) throw insertError;
+    const recordId = String(raced._id ?? "");
+    if (!recordId) throw new Error("STUDENT_PROFILE_RECORD_ID_MISSING");
+    const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...raced, ...changes, _id: recordId });
+    return normalizeRecord(updated) ?? { ...raced, ...changes, _id: recordId };
+  }
+}
+
+export const GET: APIRoute = async () => {
+  try {
+    const member = await getAuthenticatedMember();
+    if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
+
+    // FullData verifies that the authenticated Wix member has a BSDA student record.
+    const fullDataRecord = await findFullDataMember(member);
+    if (!fullDataRecord) {
+      return json({ ok: false, code: "STUDENT_NOT_IN_FULLDATA", message: "This Wix account is not linked to an approved BSDA student record in FullData. Please contact the academy before accessing the student portal." }, 403);
     }
 
-    const record = await findFullDataMember(member);
-    if (!record) {
-      return json({ ok: true, profileState: "missing", profile: null, source: "Members/FullData" }, 200);
-    }
-
-    // FullData determines whether the authenticated member is eligible to
-    // book. It does not authenticate the browser session; Wix validates that
-    // session above, then this record's status is checked separately.
-    const activityStatus = String(record.activityStatus ?? "").trim().toLowerCase();
-    const approvalStatus = String(record.status ?? "").trim().toLowerCase();
-    if (activityStatus && activityStatus !== "active") {
-      return json({ ok: false, code: "MEMBER_INACTIVE", message: "Your BSDA account is not active. Please contact the academy." }, 403);
-    }
-    if (approvalStatus && !["approved", "active"].includes(approvalStatus)) {
-      return json({ ok: false, code: "MEMBER_NOT_APPROVED", message: "Your BSDA account is not approved for booking yet." }, 403);
-    }
+    // FullData is the identity/eligibility gate. StudentProfiles is the sole source
+    // for profile details; reconcile old duplicate rows before deciding to insert.
+    const result = await getOrCreateStudentProfile(member, fullDataRecord);
 
     return json({
       ok: true,
       profileState: "ready",
-      profile: fullDataProfile(record, member),
-      source: "Members/FullData",
+      profile: studentProfile(result.record, member, fullDataRecord),
+      source: STUDENT_PROFILES_COLLECTION,
+      created: result.created,
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA FullData profile] GET failed:", reason);
+    console.error("[BSDA StudentProfiles profile] GET failed:", reason);
+    if (/unauthenticated|not authenticated|not logged in|member is not logged in|unauthorized|session expired/i.test(reason)) {
+      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in to view your student profile." }, 401);
+    }
     if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
-      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix authenticated the session but did not provide contactId or loginEmail. Check the server log for the available member fields." }, 422);
+      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix did not provide a stable contact ID or email for this account." }, 422);
     }
     if (reason === "DUPLICATE_FULLDATA_MEMBER") {
-      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support." }, 409);
+      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your student record has duplicate entries and needs academy support." }, 409);
     }
-    return json({ ok: false, code: "FULLDATA_LOOKUP_FAILED", message: "We could not load your Wix member record from Members/FullData. Check the server log for the Wix error code and verify the site binding." }, 500);
+    if (reason === "FULLDATA_SCAN_LIMIT_REACHED") {
+      return json({ ok: false, code: "FULLDATA_SCAN_LIMIT_REACHED", message: "The FullData collection exceeds the safe lookup window." }, 503);
+    }
+    if (reason === "STUDENT_PROFILE_SEED_DATA_MISSING") {
+      return json({ ok: false, code: "STUDENT_PROFILE_SEED_DATA_MISSING", message: "Your verified FullData record is missing the name or email needed to create your student profile." }, 422);
+    }
+    return json({ ok: false, code: "STUDENT_PROFILE_LOOKUP_FAILED", message: "We could not load or create your StudentProfiles record. Verify the collection field IDs and backend permissions." }, 500);
   }
 };
-
-export const POST: APIRoute = async ({ request }) => {
-  let authenticatedMemberId = "";
-  if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
-    return json({ ok: false, code: "UNSUPPORTED_MEDIA_TYPE", message: "Send a JSON request body." }, 415);
-  }
-
-  let body: Record<string, unknown>;
-  try {
-    const raw = await request.text();
-    if (raw.length > 16_384) {
-      return json({ ok: false, code: "PAYLOAD_TOO_LARGE", message: "The submitted profile is too large." }, 413);
-    }
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return json({ ok: false, code: "VALIDATION_ERROR", message: "A profile object is required." }, 400);
-    }
-    body = parsed as Record<string, unknown>;
-  } catch {
-    return json({ ok: false, code: "INVALID_JSON", message: "The request body is not valid JSON." }, 400);
-  }
-
-  const firstName = typeof body.firstName === "string" ? body.firstName.trim() : "";
-  const lastName = typeof body.lastName === "string" ? body.lastName.trim() : "";
-  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const fullName = [firstName, lastName].filter(Boolean).join(" ").slice(0, 120);
-  const normalizedPhone = phone.slice(0, 40);
-
-  if (!firstName || !lastName || firstName.length > 60 || lastName.length > 60) {
-    return json({ ok: false, code: "VALIDATION_ERROR", message: "Enter a valid first and last name." }, 400);
-  }
-
-  try {
-    const member = await getAuthenticatedMember(request);
-    if (!member) {
-      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before creating your student profile." }, 401);
-    }
-
-    authenticatedMemberId = member._id;
-    const existing = await findProfileByMemberId(member._id);
-    if (existing) {
-      return json({ ok: true, profileState: "ready", profile: safeProfile(existing), created: false }, 200);
-    }
-
-    const email = typeof member.loginEmail === "string" ? member.loginEmail : "";
-    const record = {
-      // Deterministic item ID makes concurrent retries idempotent even when
-      // the collection does not enforce a unique memberId field.\n      _id: member._id,
-      title: fullName,
-      memberId: member._id,
-      fullName,
-      email,
-      phone: normalizedPhone,
-      status: "active",
-      transmission: "either",
-      lessonsCompleted: 0,
-      lessonsRemaining: 0,
-      progressPercent: 0,
-    };
-
-    const elevatedInsert = auth.elevate(items.insert) as (...args: any[]) => Promise<unknown>;
-    const inserted = await elevatedInsert(COLLECTION_ID, record);
-    const created = normalizeRecord(inserted) ?? record;
-    return json({ ok: true, profileState: "ready", profile: safeProfile(created), created: true }, 201);
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA profile] POST failed:", reason);
-    if (reason === "DUPLICATE_MEMBER_PROFILE") {
-      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your profile needs academy support." }, 409);
-    }
-
-    // A second concurrent request can collide on the deterministic _id after
-    // the first insert wins. Re-read by authenticated member before failing.
-    if (authenticatedMemberId) {
-      try {
-        const winner = await findProfileByMemberId(authenticatedMemberId);
-        if (winner) {
-          return json({ ok: true, profileState: "ready", profile: safeProfile(winner), created: false }, 200);
-        }
-      } catch {
-        // Preserve the generic failure response if the recovery lookup fails.
-      }
-    }
-    return json({ ok: false, code: "PROFILE_PROVISION_FAILED", message: "We could not save your student profile. Please try again." }, 500);
-  }
-};
-
 
 export const PATCH: APIRoute = async ({ request }) => {
-  if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
-    return json({ ok: false, code: "UNSUPPORTED_MEDIA_TYPE", message: "Send a JSON request body." }, 415);
-  }
+  if (!originIsAllowed(request)) return json({ ok: false, code: "INVALID_ORIGIN", message: "This profile update request could not be verified." }, 403);
 
-  let body: Record<string, unknown>;
+  let body: unknown;
   try {
-    const raw = await request.text();
-    if (raw.length > 8_192) return json({ ok: false, code: "PAYLOAD_TOO_LARGE", message: "The profile update is too large." }, 413);
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid object");
-    body = parsed as Record<string, unknown>;
-  } catch {
-    return json({ ok: false, code: "INVALID_JSON", message: "Send a valid JSON object." }, 400);
-  }
-
-  const allowedKeys = new Set(["firstName", "lastName", "phone", "transmission"]);
-  if (Object.keys(body).some((key) => !allowedKeys.has(key))) {
-    return json({ ok: false, code: "FIELD_NOT_ALLOWED", message: "One or more submitted fields cannot be changed here." }, 400);
-  }
-
-  try {
-    const member = await getAuthenticatedMember(request);
-    if (!member) {
-      return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before updating your profile." }, 401);
-    }
-
-    const existing = await findProfileByMemberId(member._id);
-    if (!existing) {
-      return json({ ok: false, code: "PROFILE_NOT_FOUND", message: "Your student profile has not been created yet." }, 404);
-    }
-
-    const currentName = String(existing.fullName ?? existing.title ?? "").trim().split(/\s+/);
-    const existingFirstName = currentName.shift() || "";
-    const existingLastName = currentName.join(" ");
-    const firstName = typeof body.firstName === "string" ? body.firstName.trim() : existingFirstName;
-    const lastName = typeof body.lastName === "string" ? body.lastName.trim() : existingLastName;
-    if (!firstName || firstName.length > 60 || lastName.length > 60) {
-      return json({ ok: false, code: "VALIDATION_ERROR", message: "Enter a valid first and last name." }, 400);
-    }
-
-    const fullName = [firstName, lastName].filter(Boolean).join(" ").slice(0, 120);
-    const phone = body.phone === undefined
-      ? String(existing.phone ?? "")
-      : typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : null;
-    if (phone === null) {
-      return json({ ok: false, code: "VALIDATION_ERROR", message: "Phone number must be text." }, 400);
-    }
-
-    const transmission = body.transmission === undefined
-      ? String(existing.transmission ?? "either")
-      : body.transmission;
-    if (transmission !== "manual" && transmission !== "automatic" && transmission !== "either") {
-      return json({ ok: false, code: "VALIDATION_ERROR", message: "Transmission must be manual, automatic, or either." }, 400);
-    }
-
-    const updatedRecord = {
-      ...existing,
-      _id: String(existing._id ?? existing.id ?? ""),
-      memberId: member._id,
-      title: fullName,
-      fullName,
-      email: typeof member.loginEmail === "string" ? member.loginEmail : String(existing.email ?? ""),
-      phone,
-      transmission,
+    body = await readJson(request);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "";
+    const messages: Record<string, { status: number; message: string }> = {
+      UNSUPPORTED_MEDIA_TYPE: { status: 415, message: "Send a JSON request body." },
+      PAYLOAD_TOO_LARGE: { status: 413, message: "The profile update is too large." },
+      INVALID_JSON: { status: 400, message: "Send a valid JSON object." },
     };
-    if (!updatedRecord._id) {
-      return json({ ok: false, code: "PROFILE_INVALID", message: "Your profile needs academy support." }, 409);
-    }
+    const failure = messages[reason] ?? { status: 400, message: "The profile update is invalid." };
+    return json({ ok: false, code: reason || "INVALID_PROFILE", message: failure.message }, failure.status);
+  }
 
-    const elevatedUpdate = auth.elevate(items.update) as (...args: any[]) => Promise<unknown>;
-    const updated = await elevatedUpdate(COLLECTION_ID, updatedRecord);
-    const profile = normalizeRecord(updated) ?? updatedRecord;
-    return json({ ok: true, profileState: "ready", profile: safeProfile(profile) });
+  const profile = validateEditableProfile(body);
+  if (!profile) {
+    return json({ ok: false, code: "PROFILE_INVALID", message: "Enter a first name, last name, valid phone number, and a valid HTTPS or Wix image URL." }, 400);
+  }
+
+  try {
+    const member = await getAuthenticatedMember();
+    if (!member) return json({ ok: false, code: "UNAUTHENTICATED", message: "Sign in before editing your profile." }, 401);
+    const fullDataRecord = await findFullDataMember(member);
+    if (!fullDataRecord) {
+      return json({ ok: false, code: "STUDENT_NOT_IN_FULLDATA", message: "This Wix account is not linked to a BSDA student record in FullData. Your profile was not changed." }, 403);
+    }
+    const record = await persistEditableProfile(member, fullDataRecord, profile);
+    return json({ ok: true, profileState: "ready", profile: studentProfile(record, member, fullDataRecord), source: STUDENT_PROFILES_COLLECTION });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown error";
-    console.error("[BSDA profile] PATCH failed:", reason);
-    if (reason === "DUPLICATE_MEMBER_PROFILE") {
-      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your profile needs academy support." }, 409);
+    console.error("[BSDA StudentProfiles profile] PATCH failed:", reason);
+    if (reason === "AUTHENTICATED_MEMBER_IDENTIFIERS_MISSING") {
+      return json({ ok: false, code: "MEMBER_IDENTIFIERS_MISSING", message: "Wix did not provide a stable contact ID or email for this account." }, 422);
     }
-    return json({ ok: false, code: "PROFILE_UPDATE_FAILED", message: "We could not update your student profile. Please try again." }, 500);
+    if (reason === "DUPLICATE_FULLDATA_MEMBER") {
+      return json({ ok: false, code: "PROFILE_CONFLICT", message: "Your member record needs academy support before it can be updated." }, 409);
+    }
+    if (reason === "FULLDATA_SCAN_LIMIT_REACHED") {
+      return json({ ok: false, code: "FULLDATA_SCAN_LIMIT_REACHED", message: "The FullData collection exceeds the safe lookup window. Ask the academy to verify your record before creating a duplicate." }, 503);
+    }
+    return json({ ok: false, code: "PROFILE_SAVE_FAILED", message: "We could not save your profile to StudentProfiles. Verify the collection field IDs and elevated insert/update permissions." }, 500);
   }
 };

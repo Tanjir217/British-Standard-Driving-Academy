@@ -25,6 +25,8 @@ export const GET: APIRoute = async ({ url }) => {
     return json({ ok: false, code: "VALIDATION_ERROR", message: "A service ID and valid from/to dates are required." }, 400);
   }
 
+  // Validate the requested calendar-day range independently of timezone. Wix expects
+  // LOCAL_DATE_TIME values, not date-only strings, for these two SDK parameters.
   const from = Date.parse(fromLocalDate + "T00:00:00Z");
   const to = Date.parse(toLocalDate + "T00:00:00Z");
   const daySpan = (to - from) / 86_400_000;
@@ -35,8 +37,8 @@ export const GET: APIRoute = async ({ url }) => {
   try {
     const result = await availabilityTimeSlots.listAvailabilityTimeSlots({
       serviceId,
-      fromLocalDate,
-      toLocalDate,
+      fromLocalDate: `${fromLocalDate}T00:00:00`,
+      toLocalDate: `${toLocalDate}T23:59:59`,
       timeZone,
       bookable: true,
     });

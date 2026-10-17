@@ -1,7 +1,6 @@
 import type { Student } from "../domain/types";
 import type { ServiceResult } from "../api/types";
-import { members as managedMembers } from "@wix/members";
-import { wixClient } from "../wix/client";
+import { getCurrentMember } from "../auth/authService";
 import { getStudentProfile } from "./studentProfileApi";
 
 export interface StudentService {
@@ -33,13 +32,13 @@ export const studentService: StudentService = {
           email: profile.email,
           phone: profile.phone || undefined,
           profilePhotoUrl: profile.profilePhotoUrl || undefined,
-          transmission: profile.transmission,
+          transmission: profile.transmission ?? "either",
           assignedInstructorId: profile.assignedInstructorId,
           enrolledPackageId: profile.enrolledPackageId,
-          lessonsCompleted: profile.lessonsCompleted,
-          lessonsRemaining: profile.lessonsRemaining,
-          progressPercent: profile.progressPercent,
-          status: profile.status,
+          lessonsCompleted: profile.lessonsCompleted ?? 0,
+          lessonsRemaining: profile.lessonsRemaining ?? 0,
+          progressPercent: profile.progressPercent ?? 0,
+          status: profile.status === "inactive" || profile.status === "paused" || profile.status === "completed" ? profile.status : "active",
         },
       };
     } catch (error) {
@@ -62,25 +61,20 @@ export const studentService: StudentService = {
 
   async getCurrentMemberId() {
     try {
-      const managedResponse = await managedMembers.getCurrentMember();
-      const managedId = managedResponse.member?._id;
-      if (managedId) return { ok: true, data: managedId };
-
-      const response = await wixClient.members.getCurrentMember();
-      const memberId = response.member?._id;
-      if (!memberId) {
+      const member = await getCurrentMember();
+      if (!member?._id) {
         return {
           ok: false,
           error: { code: "UNAUTHENTICATED", message: "No signed-in Wix member." },
         };
       }
-      return { ok: true, data: memberId };
+      return { ok: true, data: member._id };
     } catch {
       return {
         ok: false,
         error: {
           code: "UNAUTHENTICATED",
-          message: "Unable to identify the current Wix member.",
+          message: "Unable to verify the current Wix-managed member session.",
         },
       };
     }

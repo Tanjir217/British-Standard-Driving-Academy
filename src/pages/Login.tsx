@@ -1,209 +1,45 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import {
-  beginManagedMemberLogin,
-  beginMemberLogin,
-  completeMemberVerification,
-  createMemberAccount,
-  requestPasswordReset,
-  signInWithEmail,
-} from "../services/auth/authService";
-
-type Mode = "signin" | "register" | "reset";
+import { beginManagedMemberLogin, getCurrentMember } from "../services/auth/authService";
 
 export function Login() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("signin");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [verificationRequired, setVerificationRequired] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const params = new URLSearchParams(location.search);
   const returnTo = params.get("returnTo") || "/portal";
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const update = (field: keyof typeof form, value: string) =>
-    setForm((current) => ({ ...current, [field]: value }));
-
-  const clearMessages = () => {
-    setError("");
-    setNotice("");
-    setVerificationRequired(false);
-  };
-
-  const switchMode = (next: Mode) => {
-    clearMessages();
-    setMode(next);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    clearMessages();
-
-    if (mode === "reset") {
-      if (!form.email.trim()) {
-        setError("Enter the email address linked to your BSDA account.");
-        return;
-      }
-
-      setBusy(true);
-      try {
-        await requestPasswordReset(form.email.trim());
-        setNotice("If that email is registered, a password reset email has been sent.");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "We could not send the reset email.");
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
-
-    if (mode === "register" && form.password !== form.confirmPassword) {
-      setError("Your passwords do not match.");
-      return;
-    }
-
-    if (form.password.length < 8) {
-      setError("Use a password with at least 8 characters.");
-      return;
-    }
-
-    setBusy(true);
-
-    // Keep only non-sensitive identity fields as a temporary display fallback
-    // across the Wix OAuth redirect. Never store passwords or use this value
-    // for authorization; the authenticated Wix member remains authoritative.
-    try {
-      sessionStorage.setItem("bsda.pending.member.identity", JSON.stringify({
-        email: form.email.trim(),
-        firstName: mode === "register" ? form.firstName.trim() : "",
-        lastName: mode === "register" ? form.lastName.trim() : "",
-        phone: mode === "register" ? form.phone.trim() : "",
-      }));
-    } catch {
-      // Storage can be disabled; login must still proceed.
-    }
-
-    try {
-      const result =
-        mode === "signin"
-          ? await signInWithEmail(form.email.trim(), form.password, returnTo)
-          : await createMemberAccount(form.email.trim(), form.password, {
-              firstName: form.firstName.trim(),
-              lastName: form.lastName.trim(),
-              phones: form.phone.trim() ? [form.phone.trim()] : undefined,
-            }, returnTo);
-
-      if (result.state === "REDIRECT") {
-        setNotice(
-          mode === "register"
-            ? "Account created successfully. Taking you to your student portal..."
-            : "Sign in successful. Taking you to your student portal...",
-        );
-        window.setTimeout(() => {
-          window.location.assign(result.authUrl);
-        }, 350);
-        return;
-      }
-
-      if (result.state === "EMAIL_VERIFICATION_REQUIRED") {
-        setVerificationRequired(true);
-        setNotice("We sent a verification code to your email. Enter it below to finish setting up your account.");
-        return;
-      }
-
-      if (result.state === "OWNER_APPROVAL_REQUIRED") {
-        setNotice("Your account is waiting for BSDA approval. We will let you know when it is ready.");
-        return;
-      }
-
-      navigate(returnTo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "We could not complete your request.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleVerification = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    setNotice("");
-
-    try {
-      const result = await completeMemberVerification(verificationCode.trim(), returnTo);
-
-      if (result.state === "REDIRECT") {
-        setNotice("Email verified successfully. Taking you to your student portal...");
-        window.setTimeout(() => {
-          window.location.assign(result.authUrl);
-        }, 350);
-        return;
-      }
-
-      // completeMemberVerification either returns REDIRECT or throws
-      // for an unsuccessful verification state. Keep this branch exhaustive
-      // against the service return type instead of checking for a non-existent
-      // SUCCESS state.
-      setError("That verification code could not be accepted.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "We could not verify your email.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    setBusy(true);
-    clearMessages();
-
-    try {
-      const authUrl = await beginMemberLogin(returnTo, "google");
-      window.location.href = authUrl;
-    } catch (err) {
-      setBusy(false);
-      setError(err instanceof Error ? err.message : "Google sign in could not be started.");
-    }
-  };
-
-  const title =
-    mode === "register"
-      ? "Start your driving journey."
-      : mode === "reset"
-        ? "Reset your account."
-        : "Welcome back.";
-
-  const eyebrow =
-    mode === "register"
-      ? "Create your BSDA account"
-      : mode === "reset"
-        ? "Account recovery"
-        : "Student account";
+  useEffect(() => {
+    // A protected portal profile check can fail even when Wix still has a
+    // member session. In forced-login mode, keep the login screen visible
+    // instead of bouncing the visitor back into the failing portal.
+    if (params.get("force") === "1") return;
+    let active = true;
+    getCurrentMember()
+      .then((member) => {
+        if (active && member) navigate(returnTo, { replace: true });
+      })
+      .catch(() => {
+        // The secure sign-in button remains available when no session exists
+        // or the session endpoint cannot currently be reached.
+      });
+    return () => {
+      active = false;
+    };
+  }, [navigate, returnTo, location.search]);
 
   return (
     <main className="authscreen">
       <div className="authshell">
         <section className="authvisual">
           <div className="authvisualtop">
-            <img src="/bsda-logo.jpg" alt="British Standard Driving Academy" onClick={() => navigate("/")}/>
+            <img
+              src="/bsda-logo.jpg"
+              alt="British Standard Driving Academy"
+              onClick={() => navigate("/")}
+            />
             <button type="button" onClick={() => navigate("/")}>
-            Back to Home <Icon n="arrow" s={17} />
+              Back to Home <Icon n="arrow" s={17} />
             </button>
           </div>
 
@@ -215,8 +51,8 @@ export function Login() {
               <em>Drive with confidence.</em>
             </h1>
             <p>
-              One account for your lessons, bookings, learning materials and
-              progress with British Standard Driving Academy.
+              One secure Wix member account for your lessons, bookings,
+              learning materials and progress with British Standard Driving Academy.
             </p>
 
             <div className="authroad">
@@ -245,242 +81,40 @@ export function Login() {
             className="authmobileback"
             onClick={() => navigate("/")}
           >
-            Back to Home <Icon n="arrow" s={16} /> 
+            Back to Home <Icon n="arrow" s={16} />
           </button>
           <div className="authformcard">
             <div className="authformhead">
-              <span className="authmobileey">{eyebrow}</span>
-              <h2>{title}</h2>
+              <span className="authmobileey">Student account</span>
+              <h2>Welcome to BSDA.</h2>
               <p>
-                {mode === "register"
-                  ? "Create your member account and keep your BSDA learning journey in one place."
-                  : mode === "reset"
-                    ? "Enter your email and we will send instructions to reset your password."
-                    : "Sign in to continue to your BSDA student portal."}
+                Sign in or create your student account using Wix's secure
+                member login. Your authenticated session will connect directly
+                to your BSDA student portal.
               </p>
             </div>
 
-            {!verificationRequired && (
-              <>
-                <div className="authmode">
-                  <button
-                    type="button"
-                    className={mode === "signin" ? "active" : ""}
-                    onClick={() => switchMode("signin")}
-                  >
-                    Sign in
-                  </button>
-                  <button
-                    type="button"
-                    className={mode === "register" ? "active" : ""}
-                    onClick={() => switchMode("register")}
-                  >
-                    Create account
-                  </button>
-                </div>
-
-                {error && <div className="autherror">{error}</div>}
-                {notice && <div className="authnotice">{notice}</div>}
-
-                <form onSubmit={handleSubmit} className="authform">
-                  {mode === "register" && (
-                    <div className="authfields two">
-                      <label>
-                        First name
-                        <input
-                          value={form.firstName}
-                          onChange={(e) => update("firstName", e.target.value)}
-                          autoComplete="given-name"
-                          required
-                        />
-                      </label>
-                      <label>
-                        Last name
-                        <input
-                          value={form.lastName}
-                          onChange={(e) => update("lastName", e.target.value)}
-                          autoComplete="family-name"
-                          required
-                        />
-                      </label>
-                    </div>
-                  )}
-
-                  <label>
-                    Email address
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => update("email", e.target.value)}
-                      autoComplete="email"
-                      required
-                    />
-                  </label>
-
-                  {mode === "register" && (
-                    <label>
-                      Phone number <span className="optional">Optional</span>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => update("phone", e.target.value)}
-                        autoComplete="tel"
-                      />
-                    </label>
-                  )}
-
-                  {mode !== "reset" && (
-                    mode === "register" ? (
-                      <div className="authfields two authpasswordfields">
-                        <label>
-                          Password
-                          <span className="auth-password-input">
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              value={form.password}
-                              onChange={(e) => update("password", e.target.value)}
-                              autoComplete="new-password"
-                              required
-                            />
-                            <button
-                              type="button"
-                              className="auth-password-toggle"
-                              onClick={() => setShowPassword((visible) => !visible)}
-                              aria-label={showPassword ? "Hide password" : "Show password"}
-                              aria-pressed={showPassword}
-                            >
-                              <Icon n={showPassword ? "eye-off" : "eye"} s={17} />
-                            </button>
-                          </span>
-                        </label>
-                        <label>
-                          Confirm password
-                          <span className="auth-password-input">
-                            <input
-                              type={showConfirmPassword ? "text" : "password"}
-                              value={form.confirmPassword}
-                              onChange={(e) => update("confirmPassword", e.target.value)}
-                              autoComplete="new-password"
-                              required
-                            />
-                            <button
-                              type="button"
-                              className="auth-password-toggle"
-                              onClick={() => setShowConfirmPassword((visible) => !visible)}
-                              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                              aria-pressed={showConfirmPassword}
-                            >
-                              <Icon n={showConfirmPassword ? "eye-off" : "eye"} s={17} />
-                            </button>
-                          </span>
-                        </label>
-                      </div>
-                    ) : (
-                      <label>
-                        Password
-                        <span className="auth-password-input">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            value={form.password}
-                            onChange={(e) => update("password", e.target.value)}
-                            autoComplete="current-password"
-                            required
-                          />
-                          <button
-                            type="button"
-                            className="auth-password-toggle"
-                            onClick={() => setShowPassword((visible) => !visible)}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                            aria-pressed={showPassword}
-                          >
-                            <Icon n={showPassword ? "eye-off" : "eye"} s={17} />
-                          </button>
-                        </span>
-                      </label>
-                    )
-                  )}
-
-                  {mode === "signin" && (
-                    <button
-                      type="button"
-                      className="authforgot"
-                      onClick={() => switchMode("reset")}
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-
-                  <button className="btn red authsubmit" disabled={busy}>
-                    {busy
-                      ? "Please wait..."
-                      : mode === "register"
-                        ? "Create account"
-                        : mode === "reset"
-                          ? "Send reset email"
-                          : "Sign in"}
-                    <Icon n="arrow" s={18} />
-                  </button>
-                </form>
-
-                {mode === "signin" && (
-                  <>
-                    <div className="authdivider"><span>or</span></div>
-                    <button
-                      type="button"
-                      className="authprovider"
-                      disabled={busy}
-                      onClick={signInWithGoogle}
-                    >
-                      <span className="googlemark">G</span>
-                      Continue with Google
-                    </button>
-                    <button
-                      type="button"
-                      className="authprovider"
-                      disabled={busy}
-                      onClick={() => beginManagedMemberLogin(returnTo)}
-                    >
-                      Continue with Wix secure sign-in
-                    </button>
-                  </>
-                )}
-
-                {mode === "reset" && (
-                  <button
-                    type="button"
-                    className="authswitch"
-                    onClick={() => switchMode("signin")}
-                  >
-                    ← Back to sign in
-                  </button>
-                )}
-              </>
-            )}
-
-            {verificationRequired && (
-              <form onSubmit={handleVerification} className="authform">
-                {error && <div className="autherror">{error}</div>}
-                {notice && <div className="authnotice">{notice}</div>}
-                <label>
-                  Verification code
-                  <input
-                    inputMode="numeric"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    placeholder="Enter the code from your email"
-                    required
-                  />
-                </label>
-                <button className="btn red authsubmit" disabled={busy}>
-                  {busy ? "Verifying..." : "Verify email"}
-                  <Icon n="check" s={18} />
-                </button>
-              </form>
-            )}
+            <div className="authform">
+              <button
+                type="button"
+                className="btn red authsubmit"
+                onClick={() => beginManagedMemberLogin(returnTo)}
+              >
+                Continue to secure sign-in <Icon n="arrow" s={18} />
+              </button>
+              <p className="authnotice">
+                Use the Wix login page to sign in, create an account, verify
+                your email, or recover your password. You only need to
+                authenticate once.
+              </p>
+            </div>
 
             <div className="authsecure">
               <Icon n="lock" s={15} />
-              <span>Your password is authenticated by Wix. BSDA does not store your password.</span>
+              <span>
+                Wix handles authentication and session security. BSDA does not
+                receive or store your password.
+              </span>
             </div>
           </div>
         </section>

@@ -1,5 +1,3 @@
-import { getWixTokens } from "../wix/client";
-
 export interface StudentProfileApiRecord {
   id: string;
   memberId: string;
@@ -18,13 +16,14 @@ export interface StudentProfileApiRecord {
   lastLoginDate?: string | null;
   createdDate?: string | null;
   updatedDate?: string | null;
-  transmission: "manual" | "automatic" | "either";
+  transmission?: "manual" | "automatic" | "either";
   assignedInstructorId?: string;
   enrolledPackageId?: string;
-  lessonsCompleted: number;
-  lessonsRemaining: number;
-  progressPercent: number;
-  status: "active" | "paused" | "completed" | "inactive";
+  lessonsCompleted: number | null;
+  lessonsRemaining: number | null;
+  progressPercent: number | null;
+  status?: string;
+  bookingEligible?: boolean;
 }
 
 type ProfileResponse = {
@@ -48,24 +47,12 @@ export class StudentProfileApiError extends Error {
 }
 
 async function fetchAuthenticatedProfile(input: RequestInit): Promise<Response> {
-  const accessToken = getWixTokens()?.accessToken?.value;
-  if (!accessToken) {
-    throw new StudentProfileApiError(
-      "Your Wix sign-in session is not available in this browser. Please sign in again.",
-      "UNAUTHENTICATED",
-      401,
-    );
-  }
-
-  // Send the active Headless OAuth access token to our same-origin API.
-  // The server validates it with Wix before resolving the FullData record.
   return fetch("/api/students/profile", {
     ...input,
     credentials: "same-origin",
     cache: "no-store",
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
       ...(input.headers || {}),
     },
   });
@@ -97,25 +84,17 @@ export async function getStudentProfile(): Promise<ProfileResponse> {
   return readResponse(response);
 }
 
-export async function createStudentProfile(input: {
+
+export type StudentProfileUpdate = {
   firstName: string;
   lastName: string;
-  phone?: string;
-}): Promise<ProfileResponse> {
-  const response = await fetchAuthenticatedProfile({
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  return readResponse(response);
-}
+  nickname: string;
+  phone: string;
+  profilePhotoUrl: string;
+  transmission: "manual" | "automatic" | "either";
+};
 
-export async function updateStudentProfile(input: {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  transmission?: "manual" | "automatic" | "either";
-}): Promise<ProfileResponse> {
+export async function updateStudentProfile(input: StudentProfileUpdate): Promise<ProfileResponse> {
   const response = await fetchAuthenticatedProfile({
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

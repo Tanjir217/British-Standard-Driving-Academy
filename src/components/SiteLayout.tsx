@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Brand } from "./Brand";
 import { Icon } from "./Icon";
+import { ExitIntentPopup } from "./ExitIntentPopup";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [headerOpen, setHeaderOpen] = useState(false);
@@ -142,6 +143,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         </Link>
       </div>
       <main>{children}</main>
+      <ExitIntentPopup />
 
       <footer>
         <div className="container footlead">

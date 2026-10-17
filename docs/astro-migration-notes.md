@@ -19,18 +19,24 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Student profile endpoint contract
 
-- `GET /api/students/profile`: 401 if no authenticated Wix member; 200 with `profileState: "missing"` and `profile: null` if the member has no profile; 200 with a safe profile otherwise.
-- `POST /api/students/profile`: validates JSON and names, derives member identity from the Wix session, returns an existing profile on repeat requests, or attempts to insert a new record.
-- The member ID in the request body is never trusted.
-- CMS access is elevated only inside server code and only after the authenticated member is identified.
+- `GET /api/students/profile`: reads the authenticated member's FullData profile; contactId is matched first, with email fallback only if Wix did not return contactId.
+- `PATCH /api/students/profile`: updates the authenticated member's allowed personal fields in FullData or creates a pending row when no profile exists.
+- `GET /api/students/lessons`: returns lesson rows from `LessonRecords` filtered by the authenticated student's FullData contactId.
+- `GET /api/students/bookings`: queries Wix Bookings by `contactDetails.contactId` and rechecks ownership before returning results.
+- `GET /api/students/enrollment`: reads only the current member's Pricing Plans orders.
+- `GET /api/students/learning-materials`: returns enabled student-video slots from `SiteContent`.
+- Profile writes target the same `Members/FullData` collection read by the profile endpoint. Only first name, last name, nickname, phone, and profile image URL are editable; contactId, loginEmail, status, and booking eligibility are server-controlled.
+- Protected CMS access stays server-side and is never authorized by a browser-supplied contactId.
+- Student login/registration use Wix Astro's built-in `/api/auth/login` and `/api/auth/logout` routes; do not use custom Headless `auth.login()` / `auth.register()` in the student portal.
+- `GET /api/auth/session` exposes only the current member identity from the managed session. Student API clients use same-origin cookies and never attach browser-held member bearer tokens.
 
 ## Required before calling the endpoint production-ready
 
-1. Verify the exact StudentProfiles collection ID and field keys in the intended Wix site.
-2. Verify the site's schema accepts the fields written by the endpoint and confirm collection permissions.
-3. Confirm that the Wix Astro integration supplies the expected member context for this request and that the frontend login flow establishes that session. The existing Vite OAuth/session flow is not assumed to be interchangeable with the integration's built-in `/api/auth/login` and `/api/auth/logout` routes.
-4. Add an enforced uniqueness strategy for the memberId ownership field to eliminate races between simultaneous profile-creation requests.
-5. Run install, type-check, build, local auth tests, CMS read/write tests, and preview tests using the installed Wix CLI and the intended non-production Wix site.
+1. Confirm the actual Wix site context for managed member sessions. The student portal intentionally has no legacy OAuth-token fallback; verify the single Wix Astro-managed flow.
+2. Confirm `LessonRecords.studentId` stores the student's FullData `contactId`, and confirm the exact collection ID and field IDs.
+3. Verify `SiteContent` read permissions and that student portal keys `portal-video-1` through `portal-video-6` are enabled.
+4. Verify the current-member Pricing Plans orders API is available in the deployed Wix context and returns plan names/statuses as expected.
+5. Run install, type-check, build, local auth tests, Wix CMS/Bookings/Pricing Plans integration tests, and preview tests using the intended non-production Wix site.
 
 ## Do not
 
@@ -41,9 +47,8 @@ The Wix Astro integration, endpoint code, and CLI package must be validated agai
 
 ## Implemented endpoint source files on this branch
 
-- `GET /api/students/profile`: authenticated member's profile or a structured missing-profile state.
-- `POST /api/students/profile`: validates name fields, derives member ID from the Wix session, returns an existing profile on repeat calls, and uses a deterministic item ID to reduce duplicate creation races.
-- `PATCH /api/students/profile`: member-owned updates limited to name, phone, and transmission fields.
+- `GET /api/students/profile`, `PATCH /api/students/profile`: read and edit the current student's FullData profile.
+- `GET /api/students/lessons`, `/api/students/bookings`, `/api/students/enrollment`, and `/api/students/learning-materials`: authenticated student-specific data endpoints.
 - `GET /api/admin/authorization`: fail-closed authorization against the protected `AdminStaffAccess` collection (`memberId`, `enabled` fields currently assumed from earlier repository work).
 - `GET /api/admin/students`: protected StudentProfiles listing.
 - `GET /api/admin/lessons`, `POST /api/admin/lessons`, `PATCH /api/admin/lessons`: protected lesson record operations.
@@ -101,3 +106,10 @@ The user's screenshot showed the OAuth authorize endpoint returning `Invalid red
 
 The React callback route is `/auth/callback`, and the local dev server in the current test is `http://localhost:4321`. After saving the allowed URI, retry account creation/sign-in and confirm that the browser returns to `/auth/callback` and the callback completes. The production URI is listed for later production verification; adding it does not mean the Astro backend has been deployed or that production login is currently working.
 
+
+
+## Student profile self-service (2026-10-16)
+- Portal profile editing writes only to `Members/FullData` through the protected PATCH endpoint.
+- New records are marked pending so completing personal information cannot grant booking approval.
+- The profile photo field accepts a public HTTPS URL or Wix Media URI; local file upload is not implemented.
+- FullData elevated insert/update behavior and the actual `profilePhoto` CMS field type still require a live Wix integration test. No successful CMS write is claimed until that test passes.
