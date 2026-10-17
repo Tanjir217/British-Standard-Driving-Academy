@@ -123,7 +123,7 @@ function studentProfile(record: WixRecord, member: AuthenticatedMember, fullData
 
   return {
     id: String(record._id ?? ""),
-    memberId: member._id,
+    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id),
     fullName, firstName, lastName, nickname, email,
     phone: typeof record.phone === "string" ? record.phone : "",
     profilePhotoUrl: imageUrl(record.profilePhotoUrl ?? record.profilePhoto),
@@ -150,9 +150,11 @@ async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: W
 
   // A member can have a changed Wix member ID after account/session migrations.
   // Match by the verified FullData identity as well as the current Wix member ID.
-  if (member._id) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("memberId", member._id).limit(100).find());
+  const memberIds = [...new Set([member._id, contactId].filter(Boolean))];
+  for (const memberId of memberIds) {
+    queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("memberId", memberId).limit(100).find());
+  }
   if (email) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("email", email).limit(100).find());
-  if (contactId) queries.push(elevatedQuery(STUDENT_PROFILES_COLLECTION).eq("contactId", contactId).limit(100).find());
 
   const results = await Promise.all(queries);
   const byId = new Map<string, WixRecord>();
@@ -170,8 +172,8 @@ async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: W
   // then the oldest matching row. Keep its existing non-empty profile fields.
   candidates.sort((a, b) => {
     const score = (row: WixRecord) =>
-      (String(row.memberId ?? "") === member._id ? 4 : 0) +
-      (contactId && String(row.contactId ?? "") === contactId ? 2 : 0) +
+      (contactId && String(row.memberId ?? "") === contactId ? 4 : 0) +
+      (String(row.memberId ?? "") === member._id ? 2 : 0) +
       (email && String(row.email ?? "").trim().toLowerCase() === email ? 1 : 0);
     const scoreDiff = score(b) - score(a);
     if (scoreDiff) return scoreDiff;
@@ -194,7 +196,7 @@ async function findStudentProfile(member: AuthenticatedMember, fullDataRecord: W
 
   // Normalize the identity fields on the canonical row and merge duplicate data
   // before removing duplicate rows belonging to this same verified account.
-  merged.memberId = member._id;
+  merged.memberId = contactId || member._id;
   merged.email = email || String(merged.email ?? "").trim().toLowerCase();
   merged.title = String(merged.fullName ?? merged.title ?? "").trim() || merged.title;
   const updated = await elevatedUpdate(STUDENT_PROFILES_COLLECTION, { ...merged, _id: canonicalId });
@@ -225,7 +227,7 @@ async function createStudentProfile(member: AuthenticatedMember, fullDataRecord:
   const transmission = ["manual", "automatic", "either"].includes(rawTransmission) ? rawTransmission : "either";
   const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, {
     title: fullName,
-    memberId: member._id,
+    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id),
     fullName, firstName, lastName, nickname, email, phone,
     profilePhotoUrl: imageUrl(fullDataRecord.profilePhoto),
     transmission,
