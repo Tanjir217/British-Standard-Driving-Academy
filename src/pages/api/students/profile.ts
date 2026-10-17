@@ -228,8 +228,16 @@ async function getOrCreateStudentProfile(member: AuthenticatedMember, fullDataRe
   const operation = (async () => {
     const existing = await findStudentProfile(member, fullDataRecord);
     if (existing) return { record: existing, created: false };
-    const createdRecord = await createStudentProfile(member, fullDataRecord);
-    return { record: createdRecord, created: true };
+    try {
+      const createdRecord = await createStudentProfile(member, fullDataRecord);
+      return { record: createdRecord, created: true };
+    } catch (insertError) {
+      // A second server instance may win the insert race. Re-read by stable
+      // identity and reuse that record instead of attempting another insert.
+      const racedRecord = await findStudentProfile(member, fullDataRecord);
+      if (racedRecord) return { record: racedRecord, created: false };
+      throw insertError;
+    }
   })();
   profileProvisioning.set(key, operation);
 
@@ -253,9 +261,11 @@ async function createStudentProfile(member: AuthenticatedMember, fullDataRecord:
 
   const rawTransmission = String(fullDataRecord.transmission ?? "").toLowerCase();
   const transmission = ["manual", "automatic", "either"].includes(rawTransmission) ? rawTransmission : "either";
+  const stableMemberId = String(fullDataRecord.contactId ?? member.contactId ?? member._id).trim();
   const inserted = await elevatedInsert(STUDENT_PROFILES_COLLECTION, {
+    _id: stableMemberId,
     title: fullName,
-    memberId: String(fullDataRecord.contactId ?? member.contactId ?? member._id),
+    memberId: stableMemberId,
     fullName, firstName, lastName, nickname, email, phone,
     profilePhotoUrl: imageUrl(fullDataRecord.profilePhoto),
     transmission,
