@@ -365,9 +365,6 @@ export function Portal() {
                 </span>
               </div>
               {profileMessage && <p className="portal-section-message" role="status">{profileMessage}</p>}
-              {studentProfile?.profilePhotoUrl && (
-                <img className="portal-profile-photo" src={profileImagePreviewUrl(studentProfile.profilePhotoUrl)} alt="Your profile" />
-              )}
               <dl className="portal-profile-details">
                 <div><dt>First name</dt><dd>{studentProfile?.firstName || profileDraft.firstName || "Not provided"}</dd></div>
                 <div><dt>Last name</dt><dd>{studentProfile?.lastName || profileDraft.lastName || "Not provided"}</dd></div>
