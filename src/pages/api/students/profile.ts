@@ -98,18 +98,15 @@ function imageUrl(value: unknown): string {
 const STUDENT_PROFILES_COLLECTION = "StudentProfiles";
 
 function studentProfile(record: WixRecord, member: AuthenticatedMember, fullDataRecord: WixRecord) {
-  const firstName = typeof record.firstName === "string" ? record.firstName.trim() :
-    (typeof fullDataRecord.firstName === "string" ? fullDataRecord.firstName.trim() : "");
-  const lastName = typeof record.lastName === "string" ? record.lastName.trim() :
-    (typeof fullDataRecord.lastName === "string" ? fullDataRecord.lastName.trim() : "");
-  const nickname = typeof record.nickname === "string" ? record.nickname.trim() :
-    (typeof fullDataRecord.nickname === "string" ? fullDataRecord.nickname.trim() : "");
+  // StudentProfiles is the source of profile display data. FullData is used only
+  // to verify the student and derive eligibility/identity metadata.
+  const firstName = typeof record.firstName === "string" ? record.firstName.trim() : "";
+  const lastName = typeof record.lastName === "string" ? record.lastName.trim() : "";
+  const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
   const fullName = typeof record.fullName === "string" && record.fullName.trim()
     ? record.fullName.trim()
     : [firstName, lastName].filter(Boolean).join(" ") || nickname;
-  const email = typeof record.email === "string" && record.email.trim()
-    ? record.email.trim()
-    : String(fullDataRecord.loginEmail ?? fullDataRecord.email ?? member.loginEmail ?? member.email ?? "").trim();
+  const email = typeof record.email === "string" ? record.email.trim() : "";
   const status = String(record.status ?? "Active").trim() || "Active";
   const transmissionValue = String(record.transmission ?? "either").trim().toLowerCase();
   const transmission = ["manual", "automatic", "either"].includes(transmissionValue)
