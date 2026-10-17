@@ -91,6 +91,7 @@ export type StudentProfileUpdate = {
   nickname: string;
   phone: string;
   profilePhotoUrl: string;
+  transmission: "manual" | "automatic" | "either";
 };
 
 export async function updateStudentProfile(input: StudentProfileUpdate): Promise<ProfileResponse> {
