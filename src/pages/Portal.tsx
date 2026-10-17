@@ -10,6 +10,7 @@ import { VideoEmbed } from "../components/VideoEmbed";
 import { signOutMember } from "../services/auth/authService";
 import {
   getStudentProfile,
+  StudentProfileApiError,
   type StudentProfileApiRecord,
   updateStudentProfile,
   type StudentProfileUpdate,
@@ -70,15 +71,24 @@ export function Portal() {
             phone: response.profile.phone || "",
             profilePhotoUrl: response.profile.profilePhotoUrl || "",
           });
-          setProfileMessage("Your profile is saved in FullData.");
+          setProfileMessage("Your profile is saved in StudentProfiles.");
         } else {
-          setProfileMessage("Complete your profile to create your student record in FullData.");
+          setProfileMessage("Complete your profile to finish setting up your StudentProfiles record.");
         }
       } catch (profileError) {
         if (!active) return;
-        // Any failed initial profile request means the protected portal cannot
-        // be entered. Send the visitor to login instead of rendering an error page.
-        navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+        // Only an explicit unauthenticated response should start the login flow.
+        // CMS or profile-storage failures must not be mistaken for a signed-out user.
+        if (profileError instanceof StudentProfileApiError &&
+            (profileError.status === 401 || profileError.code === "UNAUTHENTICATED")) {
+          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          return;
+        }
+        setProfileMessage(
+          profileError instanceof Error
+            ? profileError.message
+            : "We couldn't load your student profile. Please retry in a moment.",
+        );
       } finally {
         if (active) setLoading(false);
       }
@@ -212,7 +222,7 @@ export function Portal() {
       });
       setProfilePhotoFile(null);
       setProfilePhotoPreview("");
-      setProfileMessage("Your profile has been saved to FullData.");
+      setProfileMessage("Your profile has been saved to StudentProfiles.");
       setIsEditingProfile(false);
     } catch (saveError) {
       setProfileMessage(saveError instanceof Error ? saveError.message : "Your profile could not be saved.");
@@ -223,7 +233,45 @@ export function Portal() {
 
   // Keep the protected portal invisible while its first request is being
   // checked; failures navigate to login rather than showing an account error page.
-  if (loading) return null;
+  if (loading) {
+    return (
+      <section className="page portal-skeleton-page" aria-busy="true" aria-live="polite">
+        <div className="container portal-skeleton">
+          <span className="portal-skeleton-screen-reader">Loading your student profile...</span>
+          <div className="portal-skeleton-head">
+            <div className="portal-skeleton-heading">
+              <span className="portal-skeleton-line portal-skeleton-eyebrow" />
+              <span className="portal-skeleton-line portal-skeleton-title" />
+              <span className="portal-skeleton-line portal-skeleton-email" />
+            </div>
+            <span className="portal-skeleton-line portal-skeleton-signout" />
+          </div>
+          <div className="portal-skeleton-grid">
+            <div className="portal-skeleton-card portal-skeleton-status-card">
+              <span className="portal-skeleton-line portal-skeleton-label" />
+              <span className="portal-skeleton-line portal-skeleton-status" />
+              <span className="portal-skeleton-line portal-skeleton-copy" />
+              <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
+            </div>
+            <div className="portal-skeleton-card">
+              <span className="portal-skeleton-icon" />
+              <span className="portal-skeleton-line portal-skeleton-card-title" />
+              <span className="portal-skeleton-line portal-skeleton-copy" />
+              <span className="portal-skeleton-line portal-skeleton-progress" />
+            </div>
+          </div>
+          <div className="portal-skeleton-profile">
+            <div className="portal-skeleton-heading">
+              <span className="portal-skeleton-line portal-skeleton-label" />
+              <span className="portal-skeleton-line portal-skeleton-profile-title" />
+              <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-medium" />
+            </div>
+            <span className="portal-skeleton-line portal-skeleton-book-button" />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "Learner";
   const displayName = firstName || "Learner";
