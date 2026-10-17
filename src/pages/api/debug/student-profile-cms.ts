@@ -2,9 +2,9 @@ import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
 
-// Keep this diagnostic aligned with the collection configuration used by the
-// working student profile endpoint. Wix CMS collection IDs are case-sensitive.
-const COLLECTION_ID = import.meta.env.BSDA_FULLDATA_COLLECTION_ID || "Members/FullData";
+// This diagnostic intentionally queries only the user-specified StudentProfile collection.
+// Wix CMS collection IDs are case-sensitive; this is not the FullData collection.
+const COLLECTION_ID = "StudentProfile";
 const SAMPLE_LIMIT = 5;
 
 function json(body: unknown, status = 200): Response {
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request }) => {
     },
     astroToWix: {
       sdkModule: "@wix/data",
-      operation: "auth.elevate(items.query)(collectionId).limit(5).find()",
+      operation: "auth.elevate(items.query)(\"StudentProfile\").limit(5).find()",
       collectionId: COLLECTION_ID,
       limit: SAMPLE_LIMIT,
       requestBody: "No application-level body is supplied by this SDK query call; the SDK constructs the Wix API request.",
