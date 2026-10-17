@@ -7,7 +7,7 @@ import { listBookingsForCurrentStudent, type StudentBookingRecord } from "../ser
 import { listEnrollmentsForCurrentStudent, type StudentEnrollment } from "../services/students/studentEnrollmentApi";
 import { listStudentLearningVideos, type StudentLearningVideo } from "../services/students/studentLearningMaterialsApi";
 import { VideoEmbed } from "../components/VideoEmbed";
-import { signOutMember } from "../services/auth/authService";
+import { getCurrentMember, signOutMember } from "../services/auth/authService";
 import {
   getStudentProfile,
   StudentProfileApiError,
@@ -60,25 +60,41 @@ export function Portal() {
     let active = true;
     async function loadProfile() {
       try {
+        // Verify the server-managed Wix session before requesting or rendering
+        // student data. Cached browser state is not proof of authentication.
+        let currentMember;
+        try {
+          currentMember = await getCurrentMember();
+        } catch {
+          if (!active) return;
+          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          return;
+        }
+        if (!active) return;
+        if (!currentMember) {
+          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          return;
+        }
+
         const response = await getStudentProfile();
         if (!active) return;
-        if (response.profile) {
-          setStudentProfile(response.profile);
-          setProfileDraft({
-            firstName: response.profile.firstName || "",
-            lastName: response.profile.lastName || "",
-            nickname: response.profile.nickname || "",
-            phone: response.profile.phone || "",
-            profilePhotoUrl: response.profile.profilePhotoUrl || "",
-          });
-          setProfileMessage("Your profile is saved in StudentProfiles.");
-        } else {
-          setProfileMessage("Complete your profile to finish setting up your StudentProfiles record.");
+        if (!response.profile) {
+          // Never render a placeholder or dummy learner on a protected route.
+          navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
+          return;
         }
+
+        setStudentProfile(response.profile);
+        setProfileDraft({
+          firstName: response.profile.firstName || "",
+          lastName: response.profile.lastName || "",
+          nickname: response.profile.nickname || "",
+          phone: response.profile.phone || "",
+          profilePhotoUrl: response.profile.profilePhotoUrl || "",
+        });
+        setProfileMessage("Your profile is saved in StudentProfiles.");
       } catch (profileError) {
         if (!active) return;
-        // Only an explicit unauthenticated response should start the login flow.
-        // CMS or profile-storage failures must not be mistaken for a signed-out user.
         if (profileError instanceof StudentProfileApiError &&
             (profileError.status === 401 || profileError.code === "UNAUTHENTICATED")) {
           navigate("/login?returnTo=" + encodeURIComponent("/portal") + "&force=1", { replace: true });
@@ -273,8 +289,8 @@ export function Portal() {
     );
   }
 
-  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "Learner";
-  const displayName = firstName || "Learner";
+  const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "";
+  const displayName = firstName;
   const sectionItems = [
     { id: "profile" as const, label: "Personal profile", icon: "users" },
     { id: "bookings" as const, label: "Bookings", icon: "calendar" },
