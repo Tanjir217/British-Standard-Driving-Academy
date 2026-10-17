@@ -10419,3 +10419,33 @@ refactor/codebase-cleanup
 @media (prefers-reduced-motion: reduce) {
   .lesson-path-overlay, .lesson-path-dialog { animation: none; }
 }
+
+
+/* Login page viewport-fit fix: let the auth panel define the section height.
+   This avoids a forced viewport-height area and the blank space below the card. */
+@media (min-width: 981px) {
+  .authscreen {
+    min-height: 0;
+    height: auto;
+    padding: 24px;
+    align-items: center;
+  }
+
+  .authshell {
+    height: auto;
+    min-height: 0;
+    align-self: center;
+  }
+}
+
+@media (min-width: 981px) and (max-height: 760px) {
+  .authscreen {
+    min-height: 0;
+    height: auto;
+    padding: 24px;
+  }
+
+  .authvisual {
+    min-height: 0;
+  }
+}
