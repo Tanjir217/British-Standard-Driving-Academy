@@ -11,7 +11,6 @@ import { signOutMember } from "../services/auth/authService";
 import {
   getStudentProfile,
   type StudentProfileApiRecord,
-  StudentProfileApiError,
   updateStudentProfile,
   type StudentProfileUpdate,
 } from "../services/students/studentProfileApi";
@@ -36,7 +35,6 @@ export function Portal() {
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [lessons, setLessons] = useState<StudentLessonRecord[]>([]);
   const [lessonsMessage, setLessonsMessage] = useState("");
   const [bookings, setBookings] = useState<StudentBookingRecord[]>([]);
@@ -469,61 +467,3 @@ export function Portal() {
 function PortalSectionSkeleton() {
   return <div className="portal-section-skeleton" role="status" aria-label="Loading section details"><span /><span /><span /><span /></div>;
 }
-
-function StudentPortalSkeleton() {
-  return (
-    <section className="page portal portal-skeleton-page" aria-busy="true" aria-label="Loading student profile">
-      <div className="container dashboard portal-skeleton">
-        <div className="portal-skeleton-head">
-          <div className="portal-skeleton-heading">
-            <span className="portal-skeleton-line portal-skeleton-eyebrow" />
-            <span className="portal-skeleton-line portal-skeleton-title" />
-            <span className="portal-skeleton-line portal-skeleton-email" />
-          </div>
-          <span className="portal-skeleton-line portal-skeleton-signout" />
-        </div>
-
-        <div className="portal-skeleton-grid">
-          <div className="portal-skeleton-card portal-skeleton-status-card">
-            <span className="portal-skeleton-line portal-skeleton-label" />
-            <span className="portal-skeleton-line portal-skeleton-status" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
-          </div>
-          <div className="portal-skeleton-card">
-            <span className="portal-skeleton-icon" />
-            <span className="portal-skeleton-line portal-skeleton-card-title" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
-          </div>
-          <div className="portal-skeleton-card">
-            <span className="portal-skeleton-icon" />
-            <span className="portal-skeleton-line portal-skeleton-card-title" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-progress" />
-            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
-          </div>
-          <div className="portal-skeleton-card">
-            <span className="portal-skeleton-icon" />
-            <span className="portal-skeleton-line portal-skeleton-card-title" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-line portal-skeleton-copy" />
-            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-short" />
-          </div>
-        </div>
-
-        <div className="portal-skeleton-profile">
-          <div>
-            <span className="portal-skeleton-line portal-skeleton-label" />
-            <span className="portal-skeleton-line portal-skeleton-profile-title" />
-            <span className="portal-skeleton-line portal-skeleton-copy portal-skeleton-copy-medium" />
-          </div>
-          <span className="portal-skeleton-line portal-skeleton-book-button" />
-        </div>
-        <span className="portal-skeleton-screen-reader">Loading your BSDA student profile…</span>
-      </div>
-    </section>
-  );
-}
-
