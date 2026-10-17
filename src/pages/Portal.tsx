@@ -223,7 +223,7 @@ export function Portal() {
 
   // Keep the protected portal invisible while its first request is being
   // checked; failures navigate to login rather than showing an account error page.
-  if (loading || error) return null;
+  if (loading) return null;
 
   const firstName = studentProfile?.firstName?.trim() || studentProfile?.fullName?.trim().split(/\s+/)[0] || "Learner";
   const displayName = firstName || "Learner";
